@@ -4,13 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Package, Loader2, ImageIcon } from "lucide-react";
 import { materialFromInventory } from "./installCalculator";
+import { channelDraftValue, channelNumber, issuesForField } from "./channelLetterPricingAvailability";
 import { GenerateImage } from "@/api/integrations";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+// Held/blank values render an em-dash instead of laundering into $0.00.
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 
-export default function MaterialsList({ item, inventory, onChange }) {
+export default function MaterialsList({ item, itemIndex = null, inventory, onChange, issues = [] }) {
   const materials = item.materials || [];
   const [generatingIdx, setGeneratingIdx] = useState(null);
+  // Material issues carry index = install-item index, itemIndex = material index.
+  const matIssues = (field, mi) => issuesForField(issues, field, mi, itemIndex);
+  const matInvalid = (field, mi) => matIssues(field, mi).length > 0;
 
   // Build options of inventory items applicable to this line
   const eligibleInventory = (inventory || []).filter(inv => {
@@ -54,7 +59,11 @@ export default function MaterialsList({ item, inventory, onChange }) {
   const updateMaterial = (idx, patch) => {
     const next = [...materials];
     next[idx] = { ...next[idx], ...patch };
-    next[idx].total_cost = (parseFloat(next[idx].unit_cost) || 0) * (parseFloat(next[idx].quantity) || 0);
+    // Null-propagating: a blank/malformed input makes the row total
+    // unavailable instead of laundering it to $0.
+    const u = channelNumber(next[idx].unit_cost);
+    const q = channelNumber(next[idx].quantity);
+    next[idx].total_cost = (u === null || q === null) ? null : u * q;
     onChange(next);
   };
 
@@ -80,7 +89,11 @@ export default function MaterialsList({ item, inventory, onChange }) {
     setGeneratingIdx(null);
   };
 
-  const totalMaterials = materials.reduce((s, m) => s + (parseFloat(m.total_cost) || 0), 0);
+  const totalMaterials = materials.reduce((s, m) => {
+    if (s === null) return null;
+    const v = channelNumber(m.total_cost);
+    return v === null ? null : s + v;
+  }, 0);
 
   return (
     <div className="space-y-2">
@@ -187,21 +200,37 @@ export default function MaterialsList({ item, inventory, onChange }) {
                     <Input
                       type="number"
                       step="0.01"
-                      value={m.unit_cost ?? 0}
+                      value={m.unit_cost ?? ""}
                       onFocus={(e) => e.target.select()}
-                      onChange={(e) => updateMaterial(idx, { unit_cost: parseFloat(e.target.value) || 0 })}
-                      className="h-7 text-xs text-right"
+                      onChange={(e) => updateMaterial(idx, { unit_cost: channelDraftValue(e.target.value) })}
+                      className={`h-7 text-xs text-right ${matInvalid("unit_cost", idx) ? "border-red-500" : ""}`}
+                      aria-invalid={matInvalid("unit_cost", idx) || undefined}
+                      aria-describedby={matInvalid("unit_cost", idx) ? `cli-${itemIndex}-mat-${idx}-unit-issue` : undefined}
+                      title={matIssues("unit_cost", idx)[0]?.message}
                     />
+                    {matInvalid("unit_cost", idx) && (
+                      <p id={`cli-${itemIndex}-mat-${idx}-unit-issue`} className="text-[10px] text-red-600" role="alert">
+                        {matIssues("unit_cost", idx)[0].message}
+                      </p>
+                    )}
                   </td>
                   <td className="px-2 py-1">
                     <Input
                       type="number"
                       step="0.01"
-                      value={m.quantity ?? 0}
+                      value={m.quantity ?? ""}
                       onFocus={(e) => e.target.select()}
-                      onChange={(e) => updateMaterial(idx, { quantity: parseFloat(e.target.value) || 0 })}
-                      className="h-7 text-xs text-right"
+                      onChange={(e) => updateMaterial(idx, { quantity: channelDraftValue(e.target.value) })}
+                      className={`h-7 text-xs text-right ${matInvalid("quantity", idx) ? "border-red-500" : ""}`}
+                      aria-invalid={matInvalid("quantity", idx) || undefined}
+                      aria-describedby={matInvalid("quantity", idx) ? `cli-${itemIndex}-mat-${idx}-qty-issue` : undefined}
+                      title={matIssues("quantity", idx)[0]?.message}
                     />
+                    {matInvalid("quantity", idx) && (
+                      <p id={`cli-${itemIndex}-mat-${idx}-qty-issue`} className="text-[10px] text-red-600" role="alert">
+                        {matIssues("quantity", idx)[0].message}
+                      </p>
+                    )}
                   </td>
                   <td className="px-2 py-1 text-right font-medium tabular-nums">{fmt(m.total_cost)}</td>
                   <td className="px-1 py-1">

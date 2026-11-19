@@ -5,8 +5,10 @@ import {
   ListChecks, Type, HardHat, Users, MapPin, Wrench, Package, Calculator, Clock
 } from "lucide-react";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+// Held/unavailable values render an em-dash instead of laundering into $0.00.
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 const num = (v) => parseFloat(v) || 0;
+const hrs = (v) => (Number.isFinite(v) ? v.toFixed(2) : "—");
 
 const Section = ({ icon: Icon, title, subtitle, color = "purple", children }) => (
   <Card className="bg-white border-0 shadow-sm">
@@ -40,7 +42,7 @@ export default function SummaryDetailsCard({ project }) {
   const personnel = project.personnel || [];
 
   // Letter purchase fees (already rolled into total_letters_cost)
-  const lettersSubtotal = num(project.letters_subtotal);
+  const lettersSubtotal = Number.isFinite(project.letters_subtotal) ? project.letters_subtotal : null;
   const fees = [
     { label: "Delivery Fee", v: num(project.letters_delivery_fee) },
     { label: "Design Fee", v: num(project.letters_design_fee) },
@@ -52,6 +54,11 @@ export default function SummaryDetailsCard({ project }) {
 
   return (
     <div className="space-y-3">
+      {project.__held && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+          Saved amounts (not current pricing) — fix the flagged values to reprice.
+        </div>
+      )}
       {/* ─────────── INSTALLATION LINE ITEMS ─────────── */}
       {items.length > 0 && (
         <Section icon={ListChecks} title="Installation Line Items" subtitle={`${items.length} item${items.length === 1 ? "" : "s"}`}>
@@ -79,7 +86,7 @@ export default function SummaryDetailsCard({ project }) {
                   <Td align="right" className="tabular-nums">{num(it.qty_letters)}</Td>
                   <Td align="right" className="text-xs text-slate-600 capitalize">{(it.letter_size || "").replace(/_/g, " ")}</Td>
                   <Td align="right" className="tabular-nums">{num(it.installation_height_feet)}ft</Td>
-                  <Td align="right" className="tabular-nums">{num(it.labor_hours).toFixed(2)}</Td>
+                  <Td align="right" className="tabular-nums">{hrs(it.labor_hours)}</Td>
                   <Td align="right" className="tabular-nums">{fmt(it.labor_cost)}</Td>
                   <Td align="right" className="tabular-nums">{fmt(it.materials_cost)}</Td>
                   <Td align="right" className="tabular-nums font-semibold">{fmt(it.item_total_cost)}</Td>
@@ -89,11 +96,13 @@ export default function SummaryDetailsCard({ project }) {
             <tfoot className="bg-slate-50 border-t-2 border-slate-200 text-sm">
               <tr>
                 <td colSpan="6" className="px-3 py-2 text-right font-medium">Installation Subtotals</td>
-                <td className="px-3 py-2 text-right tabular-nums font-medium">{num(project.labor_hours).toFixed(2)}</td>
+                <td className="px-3 py-2 text-right tabular-nums font-medium">{hrs(project.labor_hours)}</td>
                 <td className="px-3 py-2 text-right tabular-nums font-medium">{fmt(project.labor_cost)}</td>
                 <td className="px-3 py-2 text-right tabular-nums font-medium">{fmt(project.total_materials_cost)}</td>
                 <td className="px-3 py-2 text-right tabular-nums font-bold">
-                  {fmt(num(project.labor_cost) + num(project.total_materials_cost))}
+                  {fmt(Number.isFinite(project.labor_cost) && Number.isFinite(project.total_materials_cost)
+                    ? project.labor_cost + project.total_materials_cost
+                    : null)}
                 </td>
               </tr>
             </tfoot>
@@ -140,7 +149,9 @@ export default function SummaryDetailsCard({ project }) {
                 <tr>
                   <td colSpan="6" className="px-3 py-1 text-right text-slate-600">Letters Markup ({lettersMarkupPct}%)</td>
                   <td className="px-3 py-1 text-right tabular-nums">
-                    {fmt(num(project.total_letters_cost) - lettersSubtotal - fees.reduce((s, f) => s + f.v, 0))}
+                    {fmt(Number.isFinite(project.total_letters_cost) && lettersSubtotal !== null
+                      ? project.total_letters_cost - lettersSubtotal - fees.reduce((s, f) => s + f.v, 0)
+                      : null)}
                   </td>
                 </tr>
               )}
@@ -220,7 +231,7 @@ export default function SummaryDetailsCard({ project }) {
                 <tr key={i} className="border-t border-slate-100">
                   <Td className="font-medium">{p.name || <span className="text-slate-400 italic">Unnamed</span>}</Td>
                   <Td><Badge variant="outline" className="text-xs">{p.role || "Installer"}</Badge></Td>
-                  <Td align="right" className="tabular-nums">{num(p.hours).toFixed(2)}</Td>
+                  <Td align="right" className="tabular-nums">{hrs(p.hours)}</Td>
                   <Td align="right" className="tabular-nums">{fmt(p.hourly_rate)}</Td>
                   <Td align="right" className="tabular-nums font-semibold">{fmt(p.total_cost)}</Td>
                 </tr>
@@ -237,7 +248,7 @@ export default function SummaryDetailsCard({ project }) {
       )}
 
       {/* ─────────── TRAVEL ─────────── */}
-      {num(project.total_travel_cost) > 0 && (
+      {(num(project.total_travel_cost) > 0 || project.total_travel_cost === null) && (
         <Section icon={MapPin} title="Travel & Fuel" subtitle="Round-trip from shop to job site" color="orange">
           <div className="p-4 text-sm grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
@@ -316,7 +327,9 @@ export default function SummaryDetailsCard({ project }) {
 }
 
 const Row = ({ label, value, hideIfZero }) => {
-  const v = num(value);
+  // A held (null) value still renders — as "—" — so an audit line never
+  // silently drops out of the total breakdown.
+  const v = value === null || value === undefined ? null : num(value);
   if (hideIfZero && v === 0) return null;
   return (
     <div className="flex justify-between">

@@ -1,0 +1,68 @@
+{
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "observed_at": "2026-10-23T12:39:00.189Z",
+  "profile_id": "6adaf8efc137885e5c4143d0",
+  "approval": {
+    "approved": true,
+    "profile_id": "6adaf8efc137885e5c4143d0",
+    "document_count": 1866,
+    "manifest_sha256": "7650b5c2098171be64280930d7d0ea0f64a118482cdb608d0fa671e6b0100fa7",
+    "scope": "User approved exact 1866-entry disassociation after durable backup; then directed Continue."
+  },
+  "backup": {
+    "verified": true,
+    "backup_path": "docs/permitting-portland-full-precleanup-backup-2026-10-23.json",
+    "backup_bytes": 1373483,
+    "backup_sha256": "6bdf01ceb79543383090121496a849b371169243601515610733c05c3af5312b",
+    "full_profile_sha256": "ae156bf17d653a78d3f2b7eb9a76a3d88e60b4b272257dc7e8bfe5bd17674047",
+    "full_queue_sha256": "84104b42d4b65876f65ef9453afa4286f123fade31717bbc9c98ccfad0d1a5fa",
+    "documents_sha256": "0a0bcd4a1180c867d9a1848ab50e8c3251fa22418211781cf2171f5f48d6fb6d",
+    "profile_version": "2026-10-23T11:06:08.916000",
+    "queue_version": "2026-10-23T11:06:10.059000",
+    "manifest_sha256": "7650b5c2098171be64280930d7d0ea0f64a118482cdb608d0fa671e6b0100fa7",
+    "items_verified": 1866,
+    "checkpoint_id": "6adb553adf6cd61eef8185b3"
+  },
+  "result": {
+    "success": true,
+    "status": "applied_verified",
+    "write_attempts": 1,
+    "acknowledgement": {
+      "success": true,
+      "updated": 1,
+      "has_more": false
+    },
+    "write_error": null,
+    "before_version": "2026-10-23T11:06:08.916000",
+    "after_version": "2026-10-23T12:38:59.063000",
+    "removed_documents": 1866,
+    "remaining_documents": 0,
+    "other_changed_fields": [],
+    "documents_before_sha256": "0a0bcd4a1180c867d9a1848ab50e8c3251fa22418211781cf2171f5f48d6fb6d",
+    "documents_after_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "quarantine_preserved": true,
+    "pending_urls_preserved": 88,
+    "auto_refresh": false
+  },
+  "llm_calls": 0,
+  "archive_uploads": 0,
+  "source_url_replacements": 0,
+  "other_entity_writes": 0,
+  "deployment_or_publication": false,
+  "queue_unchanged": true,
+  "queue_changed_fields": [],
+  "queue_status": "blocked",
+  "queue_version": "2026-10-23T11:06:10.059000",
+  "remaining_risks": [
+    "Wrong-state website/permitting/GIS URLs and Oregon AI summary deliberately retained outside cleanup approval.",
+    "Identity/type, correct Ohio sources, and upstream recurrence prevention remain unresolved.",
+    "88 pending URLs remain quarantined; do not resume discovery from the wrong source.",
+    "Code checkpoint is not an automatic entity restore. Full saved backup allows a separately reviewed restoration if necessary."
+  ],
+  "full_stop": {
+    "unit": "approved_Portland_1866_document_disassociation",
+    "complete": true,
+    "next_unit_started": false,
+    "next_unit": "Prevent recurrence through official queue identity and source-jurisdiction validation; separately reconcile remaining wrong profile fields."
+  }
+}

@@ -1,6 +1,8 @@
 #env
 .env
 .env.*
+.cb-creds.json
+.permit-creds.json
 
 # Logs
 logs
@@ -29,15 +31,26 @@ dist-ssr
 
 .env
 base44/.app.jsonc
+dist-nomin
 
 .playwright-mcp/
 
 # Local test credentials
+.cb-creds.json
 .audit-work/creds.mjs
 .permit-creds.json
 .permit-session-token
 .permit-token.txt
 .audit-work/session-token.txt
+
+# Agent/build scratch - never commit
+.tmp-*
+tmp_*
+*.mpnew
+NUL
+nul
+C:/
+.audit-tmp/
 
 # CoreBridge migration data (customer PII) - never commit
 imports/

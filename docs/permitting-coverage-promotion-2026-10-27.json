@@ -1,0 +1,21 @@
+{
+  "work_unit": "hollow audit follow-up - doc->permitting_url promotion + verification",
+  "date": "2026-10-27",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "audit_verification": {
+    "sourced_rows": 1596, "truly_empty": 0, "no_profile_after_repairs": 2,
+    "no_profile_note": "Louisville/Lexington city rows map to county profiles by design (merged governments); Withamsville/Lake Lorelei/Burlington rows retyped to unincorporated_community to match correct profiles"
+  },
+  "doc_url_promotion": {
+    "profiles_with_docs_no_url": 201, "promoted": 158, "skipped_conservative": 43,
+    "rule": "best doc scored by permitting/zoning/ordinance relevance + official/code-library domain; non-permitting docs (auditor, aggregator, real-estate pages) not promoted"
+  },
+  "verification": {
+    "invalid_permitting_url": 0, "invalid_website_url": 0, "wrong_state_domains": 0,
+    "idempotency_guard_verified_in_sandbox": true
+  },
+  "final_counts": {
+    "queue": { "sources_found": 1596, "blocked": 168, "duplicate": 13, "verified_current": 1 },
+    "profiles": { "total": 1675, "with_permitting_url": 1339, "with_documents": 1371 }
+  }
+}

@@ -14,8 +14,10 @@ import CostBreakdownBar from "./CostBreakdownBar";
 import InstallHeightSlider from "./InstallHeightSlider";
 import { TYPE_LABELS } from "./installCalculator";
 import { WALL_MATERIAL_MAP } from "./wallMaterials";
+import { channelDraftValue, issuesForField } from "./channelLetterPricingAvailability";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+// Held/blank values render an em-dash instead of laundering into $0.00.
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 
 const TYPE_BADGE_COLOR = {
   flush_mount: "bg-blue-50 text-blue-700 border-blue-200",
@@ -24,10 +26,28 @@ const TYPE_BADGE_COLOR = {
   dimensional_lettering: "bg-teal-50 text-teal-700 border-teal-200",
 };
 
-export default function InstallLineItem({ item, index, inventory, settings = {}, onUpdate, onRemove, onDuplicate, compact = false }) {
+export default function InstallLineItem({ item, index, inventory, settings = {}, onUpdate, onRemove, onDuplicate, compact = false, issues = [] }) {
   const [expanded, setExpanded] = useState(!compact);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const isRaceway = item.installation_type === "raceway";
+
+  // Pricing diagnostics — per-field aria-invalid + inline message. Item-level
+  // issues carry index = item index; material issues on this item use
+  // different field names (unit_cost/quantity) so they never collide here.
+  const fieldIssues = (field) => issuesForField(issues, field, null, index);
+  const invalidCls = (field) => (fieldIssues(field).length ? "border-red-500" : "");
+  const ariaFor = (field) => (fieldIssues(field).length
+    ? { "aria-invalid": true, "aria-describedby": `cli-${index}-${field}-issue` }
+    : {});
+  const FieldIssue = ({ field }) => {
+    const fi = fieldIssues(field);
+    if (!fi.length) return null;
+    return (
+      <p id={`cli-${index}-${field}-issue`} className="text-[10px] text-red-600 mt-0.5" role="alert">
+        {fi[0].message}
+      </p>
+    );
+  };
 
   // Count active "advanced" toggles to show on the collapsed header
   const activeConditionsCount = [
@@ -74,6 +94,11 @@ export default function InstallLineItem({ item, index, inventory, settings = {},
         <Badge variant="outline" className={`capitalize ${TYPE_BADGE_COLOR[item.installation_type]}`}>
           {TYPE_LABELS[item.installation_type]}
         </Badge>
+        {item.__held && (
+          <Badge variant="outline" className="text-[10px] text-amber-700 border-amber-300 bg-amber-50">
+            Saved value — not repriced
+          </Badge>
+        )}
         {conditionBadges.map((b, i) => (
           <Badge key={i} variant="outline" className={`text-[10px] ${b.color}`}>
             {b.label}
@@ -124,7 +149,6 @@ export default function InstallLineItem({ item, index, inventory, settings = {},
                 return (
                   <button type="button"
                     key={opt.value || "default"}
-                    type="button"
                     onClick={() => update({ install_environment: opt.value || undefined })}
                     className={`text-xs px-2 py-1.5 rounded-md border transition-all ${
                       active
@@ -147,9 +171,11 @@ export default function InstallLineItem({ item, index, inventory, settings = {},
                 type="number"
                 value={item.qty_letters}
                 onFocus={(e) => e.target.select()}
-                onChange={(e) => update({ qty_letters: parseFloat(e.target.value) || 0 })}
-                className="h-9 mt-1.5"
+                onChange={(e) => update({ qty_letters: channelDraftValue(e.target.value) })}
+                className={`h-9 mt-1.5 ${invalidCls("qty_letters")}`}
+                {...ariaFor("qty_letters")}
               />
+              <FieldIssue field="qty_letters" />
               {isRaceway && (
                 <div className="mt-3">
                   <Label className="text-xs font-semibold text-slate-700">Raceway Length (ft)</Label>
@@ -157,9 +183,11 @@ export default function InstallLineItem({ item, index, inventory, settings = {},
                     type="number"
                     value={item.raceway_length_feet}
                     onFocus={(e) => e.target.select()}
-                    onChange={(e) => update({ raceway_length_feet: parseFloat(e.target.value) || 0 })}
-                    className="h-9 mt-1.5"
+                    onChange={(e) => update({ raceway_length_feet: channelDraftValue(e.target.value) })}
+                    className={`h-9 mt-1.5 ${invalidCls("raceway_length_feet")}`}
+                    {...ariaFor("raceway_length_feet")}
                   />
+                  <FieldIssue field="raceway_length_feet" />
                 </div>
               )}
             </div>
@@ -235,14 +263,16 @@ export default function InstallLineItem({ item, index, inventory, settings = {},
 
           {/* Materials */}
           <div className="border-t pt-3">
-            <MaterialsList item={item} inventory={inventory} onChange={(materials) => update({ materials })} />
+            <MaterialsList item={item} itemIndex={index} inventory={inventory} onChange={(materials) => update({ materials })} issues={issues} />
           </div>
 
           {/* Per-item summary strip */}
           <div className="border-t pt-3 grid grid-cols-3 gap-3 text-xs">
             <div className="bg-slate-50 rounded p-2">
               <div className="text-slate-500">Labor</div>
-              <div className="font-semibold tabular-nums">{(item.labor_hours || 0).toFixed(2)} hrs · {fmt(item.labor_cost)}</div>
+              <div className="font-semibold tabular-nums">
+                {Number.isFinite(item.labor_hours) ? item.labor_hours.toFixed(2) : "—"} hrs · {fmt(item.labor_cost)}
+              </div>
             </div>
             <div className="bg-slate-50 rounded p-2">
               <div className="text-slate-500">Materials</div>

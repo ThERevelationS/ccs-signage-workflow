@@ -25,9 +25,14 @@
         "receive",
         "issue",
         "adjust",
-        "return"
+        "return",
+        "reserve"
       ],
-      "description": "receive = stock received in; issue = consumed on a job; adjust = manual correction; return = job stock returned."
+      "description": "receive = stock received in; issue = consumed on a job; adjust = manual correction; return = job stock returned; reserve = stock committed to an approved estimate."
+    },
+    "estimate_id": {
+      "type": "string",
+      "description": "AllInOneEstimate this movement reserved or issued stock for, when applicable."
     },
     "delta": {
       "type": "number",

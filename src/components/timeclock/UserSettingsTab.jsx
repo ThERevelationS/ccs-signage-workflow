@@ -1,12 +1,16 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
   Mail, 
   QrCode, 
   Camera, 
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Monitor,
+  ShieldCheck,
+  Timer,
 } from "lucide-react";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
@@ -55,13 +59,48 @@ export default function UserSettingsTab({ currentUser, sessionToken: sessionToke
 
   const hasFaceData = currentUser?.face_descriptors && currentUser.face_descriptors.length > 0;
 
-  return (
-    <div className="space-y-6">
-      {/* Personal Workspace — per-employee appearance/taskbar/startup prefs */}
-      <WorkspaceSettingsCenter />
+  const [settingsTab, setSettingsTab] = useState("workspace");
+  const trackerSectionRef = useRef(null);
 
-      {/* Password Reset Section */}
-      <div className="clay-card p-5">
+  useEffect(() => {
+    // WorkspaceSettingsCenter's "Jump to Time Tracker" button dispatches this —
+    // the tracker lives behind a sub-tab now, so switching + scrolling needs a
+    // cross-component signal (the button also exists where no tracker mounts).
+    const open = () => {
+      setSettingsTab("tracker");
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        trackerSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }));
+    };
+    window.addEventListener("ccs:openTimeTracker", open);
+    return () => window.removeEventListener("ccs:openTimeTracker", open);
+  }, []);
+
+  return (
+    <Tabs value={settingsTab} onValueChange={setSettingsTab}>
+      <TabsList className="mb-4">
+        <TabsTrigger value="workspace" className="gap-1.5">
+          <Monitor className="w-4 h-4" />
+          Workspace
+        </TabsTrigger>
+        <TabsTrigger value="security" className="gap-1.5">
+          <ShieldCheck className="w-4 h-4" />
+          Security & Badge
+        </TabsTrigger>
+        <TabsTrigger value="tracker" className="gap-1.5">
+          <Timer className="w-4 h-4" />
+          Time Tracker
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="workspace">
+        {/* Personal Workspace — per-employee appearance/taskbar/startup prefs */}
+        <WorkspaceSettingsCenter />
+      </TabsContent>
+
+      <TabsContent value="security" className="space-y-6">
+        {/* Password Reset Section */}
+        <div className="clay-card p-5">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <Mail className="w-5 h-5 text-purple-600" />
           Change Password
@@ -135,11 +174,14 @@ export default function UserSettingsTab({ currentUser, sessionToken: sessionToke
           )}
         </div>
       </div>
+      </TabsContent>
 
-      {/* Time Tracker Section (salary employees) — anchor target for the Settings Center "Time Clock" pointer */}
-      <div id="time-tracker-settings" className="scroll-mt-4">
-        <TimeTrackerSettings currentUser={currentUser} sessionToken={sessionToken} />
-      </div>
+      <TabsContent value="tracker">
+        {/* Time Tracker Section (salary employees) — anchor target for the Settings Center "Time Clock" pointer */}
+        <div id="time-tracker-settings" ref={trackerSectionRef} className="scroll-mt-4">
+          <TimeTrackerSettings currentUser={currentUser} sessionToken={sessionToken} />
+        </div>
+      </TabsContent>
 
       {/* Face Enrollment Dialog */}
       <FaceEnrollmentDialog
@@ -151,6 +193,6 @@ export default function UserSettingsTab({ currentUser, sessionToken: sessionToke
           if (onUserUpdated) onUserUpdated();
         }}
       />
-    </div>
+    </Tabs>
   );
 }

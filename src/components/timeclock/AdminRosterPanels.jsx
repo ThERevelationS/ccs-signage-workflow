@@ -36,7 +36,7 @@ export default function AdminRosterPanels({ sessionToken }) {
     if (announceBusy) return;
     setAnnounceBusy(mode); setAnnounceMsg("");
     try {
-      const res = await base44.functions.invoke("timeClockAction", { action: "send_timeclock_announcement", mode, session_token: sessionToken, scope: "admin", request_id: newRequestId() });
+      const res = await base44.functions.invoke("timeClockActionV2", { action: "send_timeclock_announcement", mode, session_token: sessionToken, scope: "admin", request_id: newRequestId() });
       const data = res?.data || res;
       setAnnounceMsg(data?.success === true ? `Sent to ${data.sent || 0} ${data.sent === 1 ? "person" : "people"}.` : (data?.error || "Failed"));
     } catch (err) { setAnnounceMsg(err?.response?.data?.error || err?.message || "Failed"); }
@@ -233,7 +233,7 @@ export default function AdminRosterPanels({ sessionToken }) {
                 onClick={async () => {
                   setSchedBusy(true);
                   try {
-                    const res = await base44.functions.invoke("timeClockAction", { action: "upsert_shift_template", session_token: sessionToken, scope: "admin", request_id: newRequestId(), template: { user_email: schedForm.email, start_time: schedForm.start, end_time: schedForm.end, days: schedForm.days, label: schedForm.label } });
+                    const res = await base44.functions.invoke("timeClockActionV2", { action: "upsert_shift_template", session_token: sessionToken, scope: "admin", request_id: newRequestId(), template: { user_email: schedForm.email, start_time: schedForm.start, end_time: schedForm.end, days: schedForm.days, label: schedForm.label } });
                     if ((res?.data || res)?.success === true) { setSchedForm({ ...schedForm, email: "", label: "" }); await load(); }
                   } finally { setSchedBusy(false); }
                 }}
@@ -252,7 +252,7 @@ export default function AdminRosterPanels({ sessionToken }) {
                     </div>
                     <button type="button"
                       onClick={async () => {
-                        await base44.functions.invoke("timeClockAction", { action: "delete_shift_template", session_token: sessionToken, scope: "admin", request_id: newRequestId(), template_id: t.id }).catch(() => null);
+                        await base44.functions.invoke("timeClockActionV2", { action: "delete_shift_template", session_token: sessionToken, scope: "admin", request_id: newRequestId(), template_id: t.id }).catch(() => null);
                         await load();
                       }}
                       className="ml-2 shrink-0 text-[10px] text-red-400 hover:text-red-600">Remove</button>

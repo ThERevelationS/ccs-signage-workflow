@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -247,6 +246,10 @@ export default function TaskAssignmentRules() {
   const [testResult, setTestResult] = useState(null);
   const [settingRecord, setSettingRecord] = useState(null);
   const [settingsError, setSettingsError] = useState("");
+  const [escalationRecord, setEscalationRecord] = useState(null);
+  const [escalationRows, setEscalationRows] = useState([]);
+  const [escalationSaving, setEscalationSaving] = useState(false);
+  const [escalationMsg, setEscalationMsg] = useState("");
 
   // Form state
   const [form, setForm] = useState(defaultRule());

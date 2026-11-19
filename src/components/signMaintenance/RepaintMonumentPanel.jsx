@@ -21,14 +21,16 @@ import {
   defaultMonumentRepaintConfig, computeMonumentRepaint,
 } from "./repaintCalculator";
 import DimLetterPaintSubPanel from "./DimLetterPaintSubPanel";
+import { hasIssueFor, maintenanceDraftValue } from "./maintenancePricingAvailability";
 
 // A "slider + typed input" pair that stay in sync. Range params expected: {min,max,step}.
-function SliderWithInput({ value, onChange, range, unit, label, accent = "cyan" }) {
-  const handleNumber = (v) => {
-    const n = parseFloat(v);
-    if (!Number.isFinite(n)) return onChange(range.min);
-    onChange(Math.min(range.max, Math.max(range.min, n)));
-  };
+// The typed input preserves raw drafts ("" or malformed) so the availability
+// scanner — not a silent clamp — reports unavailable pricing; the slider keeps
+// a numeric-safe value regardless.
+function SliderWithInput({ value, onChange, range, unit, label, accent = "cyan", invalid = {} }) {
+  const handleNumber = (v) => onChange(maintenanceDraftValue(v));
+  const numeric = typeof value === "number" && Number.isFinite(value) ? value : null;
+  const sliderValue = numeric === null ? range.min : Math.min(range.max, Math.max(range.min, numeric));
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
@@ -39,9 +41,10 @@ function SliderWithInput({ value, onChange, range, unit, label, accent = "cyan" 
             min={range.min}
             max={range.max}
             step={range.step}
-            value={value}
+            value={value ?? ""}
             onChange={(e) => handleNumber(e.target.value)}
             className="h-7 w-20 text-xs tabular-nums text-right"
+            {...invalid}
           />
           <span className="text-[11px] text-slate-500 font-medium w-5">{unit}</span>
         </div>
@@ -50,7 +53,7 @@ function SliderWithInput({ value, onChange, range, unit, label, accent = "cyan" 
         min={range.min}
         max={range.max}
         step={range.step}
-        value={[Math.min(range.max, Math.max(range.min, value))]}
+        value={[sliderValue]}
         onValueChange={(v) => onChange(v[0])}
         className={`[&_[role=slider]]:bg-${accent}-600 [&_[role=slider]]:border-${accent}-600`}
       />
@@ -62,9 +65,18 @@ function SliderWithInput({ value, onChange, range, unit, label, accent = "cyan" 
   );
 }
 
-export default function RepaintMonumentPanel({ item, onChange, settings }) {
+export default function RepaintMonumentPanel({ item, onChange, settings, issues = [], issueBoxId }) {
   const cfg = item.repaint_config || defaultMonumentRepaintConfig();
   const setCfg = (patch) => onChange({ repaint_config: { ...cfg, ...patch } });
+  const invalid = (field) => hasIssueFor(issues, `repaint_config.${field}`)
+    ? { "aria-invalid": "true", "aria-describedby": issueBoxId }
+    : {};
+  // Held when any repaint/dim-letter issue exists — the readout must not show
+  // numbers the calculator derived from unavailable pricing.
+  const repaintHeld = (issues || []).some(i =>
+    i.field === "repaint_config"
+    || (typeof i.field === "string" && (i.field.startsWith("repaint_config.") || i.field.startsWith("dim_letter_paint."))));
+  const stat = (v, suffix = "") => (repaintHeld ? "—" : `${v}${suffix}`);
 
   const calc = computeMonumentRepaint({ ...item, repaint_config: cfg }, settings) || {};
 
@@ -96,6 +108,7 @@ export default function RepaintMonumentPanel({ item, onChange, settings }) {
             value={cfg.length_ft ?? 8}
             onChange={(v) => setCfg({ length_ft: v })}
             accent="amber"
+            invalid={invalid("length_ft")}
           />
           <SliderWithInput
             label="Cabinet Height"
@@ -104,6 +117,7 @@ export default function RepaintMonumentPanel({ item, onChange, settings }) {
             value={cfg.height_ft ?? 4}
             onChange={(v) => setCfg({ height_ft: v })}
             accent="amber"
+            invalid={invalid("height_ft")}
           />
           <SliderWithInput
             label="Return Depth"
@@ -112,6 +126,7 @@ export default function RepaintMonumentPanel({ item, onChange, settings }) {
             value={cfg.return_depth_in ?? 6}
             onChange={(v) => setCfg({ return_depth_in: v })}
             accent="amber"
+            invalid={invalid("return_depth_in")}
           />
         </div>
 
@@ -120,7 +135,7 @@ export default function RepaintMonumentPanel({ item, onChange, settings }) {
           <div>
             <Label className="text-[11px] uppercase tracking-wide text-slate-500">Paint Scope</Label>
             <Select value={cfg.paint_mode || "entire_panel"} onValueChange={(v) => setCfg({ paint_mode: v })}>
-              <SelectTrigger className="h-9 mt-1 text-sm"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 mt-1 text-sm" {...invalid("paint_mode")}><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="entire_panel">Entire Panel (face + returns)</SelectItem>
                 <SelectItem value="returns_only">Returns / Retainers Only</SelectItem>
@@ -150,7 +165,7 @@ export default function RepaintMonumentPanel({ item, onChange, settings }) {
               value={String(cfg.retainer_width_in ?? 2)}
               onValueChange={(v) => setCfg({ retainer_width_in: parseFloat(v) })}
             >
-              <SelectTrigger className="h-9 mt-1 text-sm max-w-[200px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 mt-1 text-sm max-w-[200px]" {...invalid("retainer_width_in")}><SelectValue /></SelectTrigger>
               <SelectContent>
                 {RETAINER_WIDTHS_IN.map(w => (
                   <SelectItem key={w} value={String(w)}>{w}" wide retainer</SelectItem>
@@ -181,7 +196,7 @@ export default function RepaintMonumentPanel({ item, onChange, settings }) {
             {/* When "Dimensional Letters" is a face feature, expose the
                 "paint them too?" sub-panel which uses Paint Estimator rates. */}
             {(cfg.features || []).includes("dimensional_letters") && (
-              <DimLetterPaintSubPanel cfg={cfg} settings={settings} onChange={setCfg} />
+              <DimLetterPaintSubPanel cfg={cfg} settings={settings} onChange={setCfg} issues={issues} issueBoxId={issueBoxId} />
             )}
           </div>
         )}
@@ -203,6 +218,7 @@ export default function RepaintMonumentPanel({ item, onChange, settings }) {
             value={[cfg.paint_condition || 1]}
             onValueChange={(v) => setCfg({ paint_condition: v[0] })}
             className="[&_[role=slider]]:bg-amber-600 [&_[role=slider]]:border-amber-600"
+            {...invalid("paint_condition")}
           />
           <div className="flex justify-between text-[10px] text-slate-400 mt-1 px-0.5">
             <span>1 · Like New</span>
@@ -210,16 +226,17 @@ export default function RepaintMonumentPanel({ item, onChange, settings }) {
           </div>
         </div>
 
-        {/* Calc readout */}
+        {/* Calc readout — held ("—") while repaint pricing is unavailable so a
+            number derived from missing settings is never displayed as truth. */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-amber-200">
-          <Stat label="Face SqFt"     value={calc.face_sqft?.toFixed(1) || "0"} icon={<Ruler className="w-3 h-3" />} />
-          <Stat label="Returns SqFt"  value={calc.returns_sqft?.toFixed(1) || "0"} />
-          <Stat label="Total SqFt"    value={calc.total_sqft?.toFixed(1) || "0"} accent />
-          <Stat label="Paint (gal)"   value={calc.gallons?.toFixed(2) || "0"} accent />
-          <Stat label="Paint Cost"    value={`$${(calc.paint_material_cost || 0).toFixed(2)}`} />
-          <Stat label="Coats"         value={`${calc.primerCoats || 0}+${calc.finishCoats || 0}`} />
-          <Stat label="Feature ×"     value={(calc.feature_multiplier || 1).toFixed(2)} />
-          <Stat label="Condition ×"   value={(calc.condition_multiplier || 1).toFixed(2)} />
+          <Stat label="Face SqFt"     value={stat(calc.face_sqft?.toFixed(1) || "0")} icon={<Ruler className="w-3 h-3" />} />
+          <Stat label="Returns SqFt"  value={stat(calc.returns_sqft?.toFixed(1) || "0")} />
+          <Stat label="Total SqFt"    value={stat(calc.total_sqft?.toFixed(1) || "0")} accent />
+          <Stat label="Paint (gal)"   value={stat(calc.gallons?.toFixed(2) || "0")} accent />
+          <Stat label="Paint Cost"    value={repaintHeld ? "—" : `$${(calc.paint_material_cost || 0).toFixed(2)}`} />
+          <Stat label="Coats"         value={repaintHeld ? "—" : `${calc.primerCoats || 0}+${calc.finishCoats || 0}`} />
+          <Stat label="Feature ×"     value={repaintHeld ? "—" : (calc.feature_multiplier || 1).toFixed(2)} />
+          <Stat label="Condition ×"   value={repaintHeld ? "—" : (calc.condition_multiplier || 1).toFixed(2)} />
         </div>
       </CardContent>
     </Card>

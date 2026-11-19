@@ -12,8 +12,10 @@ import {
   durationUnitLabel,
   isOwnedEquipment,
 } from "./equipmentSuggester";
+import { channelDraftValue, channelNumber, issuesForField } from "./channelLetterPricingAvailability";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+// Held/blank values render an em-dash instead of laundering into $0.00.
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 
 /**
  * Dedicated ladder picker for the Crew & Equipment page. Ladders live in the same
@@ -27,7 +29,25 @@ export default function LadderSelector({
   equipmentInventory = [],
   projectLaborHours = 0,
   crewSize = 0,
+  issues = [],
 }) {
+  // Pricing diagnostics — per-field aria-invalid + inline message (ladder rows
+  // share the selectedEquipment index space used by the availability issues).
+  const rowIssues = (idx, field) => issuesForField(issues, field, null, idx);
+  const rowInvalid = (idx, field) => rowIssues(idx, field).length > 0;
+  const rowAria = (idx, field) => (rowInvalid(idx, field)
+    ? { "aria-invalid": true, "aria-describedby": `cll-${idx}-${field}-issue` }
+    : {});
+  const RowIssue = ({ idx, field }) => {
+    const fi = rowIssues(idx, field);
+    if (!fi.length) return null;
+    return (
+      <p id={`cll-${idx}-${field}-issue`} className="text-[10px] text-red-600 mt-0.5" role="alert">
+        {fi[0].message}
+      </p>
+    );
+  };
+
   const ladderInventory = useMemo(
     () => equipmentInventory.filter((e) => e.is_active !== false && e.equipment_type === "ladder"),
     [equipmentInventory]
@@ -61,7 +81,11 @@ export default function LadderSelector({
     onChange(next);
   };
 
-  const totalCost = ladderRows.reduce((s, { row }) => s + (parseFloat(row.total_cost) || 0), 0);
+  const totalCost = ladderRows.reduce((s, { row }) => {
+    if (s === null) return null;
+    const v = channelNumber(row.total_cost);
+    return v === null ? null : s + v;
+  }, 0);
 
   return (
     <Card className="bg-white border-0 shadow-sm">
@@ -132,10 +156,12 @@ export default function LadderSelector({
                       step="0.5"
                       value={row.duration}
                       onFocus={(e) => e.target.select()}
-                      onChange={(e) => handleUpdate(idx, { duration: parseFloat(e.target.value) || 0 })}
-                      className="h-8 mt-0.5"
+                      onChange={(e) => handleUpdate(idx, { duration: channelDraftValue(e.target.value) })}
+                      className={`h-8 mt-0.5 ${rowInvalid(idx, "duration") ? "border-red-500" : ""}`}
                       disabled={row.pricing_mode === "owned_flat" || row.pricing_mode === "per_project_flat"}
+                      {...rowAria(idx, "duration")}
                     />
+                    <RowIssue idx={idx} field="duration" />
                   </div>
                   <div className="md:col-span-2">
                     <Label className="text-xs">Unit Cost</Label>
@@ -144,9 +170,11 @@ export default function LadderSelector({
                       step="0.01"
                       value={row.unit_cost}
                       onFocus={(e) => e.target.select()}
-                      onChange={(e) => handleUpdate(idx, { unit_cost: parseFloat(e.target.value) || 0 })}
-                      className="h-8 mt-0.5"
+                      onChange={(e) => handleUpdate(idx, { unit_cost: channelDraftValue(e.target.value) })}
+                      className={`h-8 mt-0.5 ${rowInvalid(idx, "unit_cost") ? "border-red-500" : ""}`}
+                      {...rowAria(idx, "unit_cost")}
                     />
+                    <RowIssue idx={idx} field="unit_cost" />
                   </div>
                   <div className="md:col-span-3">
                     {isOwnedEquipment(row) ? (

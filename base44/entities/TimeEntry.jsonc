@@ -90,7 +90,8 @@
         "server",
         "legacy_client",
         "admin_correction",
-        "employee_attested_missed_clock_in"
+        "employee_attested_missed_clock_in",
+        "employee_attested_missed_shift"
       ],
       "description": "Authority/source used for punch timestamps"
     },
@@ -293,6 +294,11 @@
       "format": "date-time",
       "description": "Trusted backend timestamp when an employee reported a missing Clock In and supplied the reconstructed start"
     },
+    "missed_shift_reported_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when an employee reported an entirely missed shift and supplied attested start/end times"
+    },
     "punch_resolution_pending_at": {
       "type": "string",
       "format": "date-time",
@@ -310,6 +316,27 @@
     "stale_shift_acknowledged_request_id": {
       "type": "string",
       "description": "Idempotency request id for the latest worked-through acknowledgement"
+    },
+    "work_day_group_id": {
+      "type": "string",
+      "description": "Shared group id when this completed shift is confirmed as part of a multi-segment work day"
+    },
+    "work_day_anchor_date": {
+      "type": "string",
+      "description": "Company date (YYYY-MM-DD) all grouped segments count toward for Time Tracker day totals"
+    },
+    "work_day_confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp of the same-work-day confirmation"
+    },
+    "work_day_confirmed_by": {
+      "type": "string",
+      "description": "Actor email that confirmed the work-day grouping"
+    },
+    "work_day_declined_signature": {
+      "type": "string",
+      "description": "Cluster signature declined for work-day grouping; suppresses re-prompting the identical cluster"
     }
   },
   "required": [

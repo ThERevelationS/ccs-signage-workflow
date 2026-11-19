@@ -10,9 +10,18 @@ import RepaintMonumentPanel from "./RepaintMonumentPanel";
 import { defaultMonumentRepaintConfig } from "./repaintCalculator";
 import { SIGN_TYPES_BY_ID, LETTER_SIZES, CABINET_SIZES, sizeAxisFor, ACTIONS } from "./constants";
 import { materialFromInventory } from "./maintenanceCalculator";
+import { hasIssueFor, maintenanceDraftValue } from "./maintenancePricingAvailability";
 
-export default function ServiceItemRow({ item, index, onUpdate, onRemove, onDuplicate, settings = {}, rates = [], materialRules = [] }) {
+// Held money display: a real finite number formats, anything else shows an
+// em dash instead of a fabricated $0.00.
+const moneyOrHeld = (v) => (typeof v === "number" && Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
+
+export default function ServiceItemRow({ item, index, onUpdate, onRemove, onDuplicate, settings = {}, rates = [], materialRules = [], issues = [] }) {
   const update = (patch) => onUpdate(index, { ...item, ...patch });
+  const issueBoxId = `maintenance-item-${index}-issues`;
+  const invalid = (field, materialIndex = null) => hasIssueFor(issues, field, index, materialIndex)
+    ? { "aria-invalid": "true", "aria-describedby": issueBoxId }
+    : {};
 
   const applicableMaterialRules = React.useMemo(() => (materialRules || []).filter((rule) => {
     if (rule.is_active === false || rule._master_missing) return false;
@@ -106,6 +115,14 @@ export default function ServiceItemRow({ item, index, onUpdate, onRemove, onDupl
           </div>
         </div>
 
+        {issues.length > 0 && (
+          <div id={issueBoxId} role="status" className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 space-y-1">
+            <div className="font-semibold flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Pricing unavailable — fix before saving</div>
+            {issues.slice(0, 4).map((iss, i) => <div key={i}>{iss.message}</div>)}
+            {issues.length > 4 && <div>…and {issues.length - 4} more</div>}
+          </div>
+        )}
+
         <div>
           <Label className="text-[11px] uppercase tracking-wide text-slate-500 block mb-1.5">Sign Type</Label>
           <SignTypePicker value={item.sign_type} onChange={handleSignTypeChange} />
@@ -128,8 +145,9 @@ export default function ServiceItemRow({ item, index, onUpdate, onRemove, onDupl
               <Input
                 type="number" min="0" step="1"
                 value={item.qty ?? (axis === "cabinet" ? 1 : 10)}
-                onChange={(e) => update({ qty: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => update({ qty: maintenanceDraftValue(e.target.value) })}
                 className="h-9 text-sm tabular-nums mt-1"
+                {...invalid("qty")}
               />
             </div>
             <div>
@@ -163,13 +181,13 @@ export default function ServiceItemRow({ item, index, onUpdate, onRemove, onDupl
                 <Label className="text-[11px] uppercase tracking-wide text-slate-500">Materials</Label>
                 <div className="text-[10px] text-slate-400 mt-0.5">Master Inventory cost × usage rule. Quantities can be overridden for this service item.</div>
               </div>
-              <div className="text-right"><div className="text-[9px] text-slate-400">MATERIAL TOTAL</div><div className="text-sm font-bold tabular-nums">${(parseFloat(item.materials_cost) || 0).toFixed(2)}</div></div>
+              <div className="text-right"><div className="text-[9px] text-slate-400">MATERIAL TOTAL</div><div className="text-sm font-bold tabular-nums">{moneyOrHeld(item.materials_cost)}</div></div>
             </div>
 
             {(needsSqft || needsLinearFeet) && (
               <div className="grid sm:grid-cols-2 gap-2 rounded border border-slate-200 bg-white p-2.5">
-                {needsSqft && <label className="text-[10px] font-semibold text-slate-500">FACE / WORK AREA (SQ FT)<Input type="number" min="0" step="0.01" value={item.face_sqft || 0} onChange={(e) => update({ face_sqft: parseFloat(e.target.value) || 0 })} className="h-8 mt-1 text-xs" /></label>}
-                {needsLinearFeet && <label className="text-[10px] font-semibold text-slate-500">LINEAR FEET<Input type="number" min="0" step="0.01" value={item.linear_feet || 0} onChange={(e) => update({ linear_feet: parseFloat(e.target.value) || 0 })} className="h-8 mt-1 text-xs" /></label>}
+                {needsSqft && <label className="text-[10px] font-semibold text-slate-500">FACE / WORK AREA (SQ FT)<Input type="number" min="0" step="0.01" value={item.face_sqft ?? ""} onChange={(e) => update({ face_sqft: maintenanceDraftValue(e.target.value) })} className="h-8 mt-1 text-xs" {...invalid("face_sqft")} /></label>}
+                {needsLinearFeet && <label className="text-[10px] font-semibold text-slate-500">LINEAR FEET<Input type="number" min="0" step="0.01" value={item.linear_feet ?? ""} onChange={(e) => update({ linear_feet: maintenanceDraftValue(e.target.value) })} className="h-8 mt-1 text-xs" {...invalid("linear_feet")} /></label>}
               </div>
             )}
 
@@ -180,9 +198,9 @@ export default function ServiceItemRow({ item, index, onUpdate, onRemove, onDupl
                 {(item.materials || []).map((material, materialIndex) => (
                   <div key={`${material.maintenance_rule_id || material.inventory_item_id || materialIndex}-${materialIndex}`} className="grid grid-cols-[minmax(0,1fr)_90px_85px_85px_28px] gap-2 items-center rounded border border-slate-200 bg-white px-2.5 py-2">
                     <div className="min-w-0"><div className="text-[10px] font-bold text-slate-800 truncate flex items-center gap-1">{material.item_name || "Material"}{material.link_missing && <AlertTriangle className="w-3 h-3 text-amber-600 flex-shrink-0" />}</div><div className="text-[8px] text-slate-400 truncate">{material.inventory_entity ? `${material.inventory_entity} · ` : ""}${material.usage_basis ? String(material.usage_basis).replaceAll("_", " ") : material.pricing_mode || "manual"}</div></div>
-                    <div className="text-right"><div className="text-[8px] text-slate-400">UNIT COST</div><div className="text-[10px] font-semibold">${(parseFloat(material.unit_cost) || 0).toFixed(2)} / {material.unit || "unit"}</div></div>
-                    <div><div className="text-[8px] text-slate-400">QUANTITY</div><Input type="number" min="0" step="any" value={material.quantity ?? 0} onChange={(e) => updateMaterial(materialIndex, { quantity: parseFloat(e.target.value) || 0, quantity_override: true })} className="h-7 mt-0.5 px-1.5 text-[10px]" /></div>
-                    <div className="text-right"><div className="text-[8px] text-slate-400">TOTAL</div><div className="text-[11px] font-bold">${(parseFloat(material.total_cost) || 0).toFixed(2)}</div>{material.quantity_override && <button type="button" onClick={() => updateMaterial(materialIndex, { quantity_override: false, quantity: material.auto_quantity ?? material.quantity })} className="text-[8px] text-cyan-700 inline-flex items-center gap-0.5"><RotateCcw className="w-2.5 h-2.5" /> Auto</button>}</div>
+                    <div className="text-right"><div className="text-[8px] text-slate-400">UNIT COST</div><div className="text-[10px] font-semibold">{moneyOrHeld(material.unit_cost)} / {material.unit || "unit"}</div></div>
+                    <div><div className="text-[8px] text-slate-400">QUANTITY</div><Input type="number" min="0" step="any" value={material.quantity ?? ""} onChange={(e) => updateMaterial(materialIndex, { quantity: maintenanceDraftValue(e.target.value), quantity_override: true })} className="h-7 mt-0.5 px-1.5 text-[10px]" {...invalid("quantity", materialIndex)} /></div>
+                    <div className="text-right"><div className="text-[8px] text-slate-400">TOTAL</div><div className="text-[11px] font-bold">{moneyOrHeld(material.total_cost)}</div>{material.quantity_override && <button type="button" onClick={() => updateMaterial(materialIndex, { quantity_override: false, quantity: material.auto_quantity ?? material.quantity })} className="text-[8px] text-cyan-700 inline-flex items-center gap-0.5"><RotateCcw className="w-2.5 h-2.5" /> Auto</button>}</div>
                     <button type="button" onClick={() => { if (!confirm(`Remove "${material.item_name || "this material"}" from this service item?`)) return; update({ materials: (item.materials || []).filter((_, idx) => idx !== materialIndex) }); }} className="w-7 h-7 rounded hover:bg-red-50 text-slate-400 hover:text-red-600" title="Remove material"><Trash2 className="w-3.5 h-3.5 mx-auto" /></button>
                   </div>
                 ))}
@@ -199,7 +217,7 @@ export default function ServiceItemRow({ item, index, onUpdate, onRemove, onDupl
 
         {/* Specialized estimator panels per (sign_type × action) */}
         {isMonumentRepaint && (
-          <RepaintMonumentPanel item={item} settings={settings} onChange={update} />
+          <RepaintMonumentPanel item={item} settings={settings} onChange={update} issues={issues} issueBoxId={issueBoxId} />
         )}
       </CardContent>
     </Card>

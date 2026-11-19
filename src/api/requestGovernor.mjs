@@ -2,6 +2,21 @@ export function rateLimitStatus(err) {
   return err?.status ?? err?.response?.status;
 }
 
+// A pooled call whose response never arrives would hold its slot forever — a
+// handful of stalled invokes can deadlock the whole pool (seen in production
+// as the nav Time Tracker stuck on "Loading clock..."). Pooled calls are
+// bounded by run()'s timeoutMs; the error is recognizable so callers can retry.
+export function governorCallTimeout(label, timeoutMs) {
+  const err = new Error(`${label} did not respond within ${Math.round(timeoutMs / 1000)}s.`);
+  err.code = "CCS_CALL_TIMEOUT";
+  err.timeoutMs = timeoutMs;
+  return err;
+}
+
+export function isGovernorCallTimeout(err) {
+  return err?.code === "CCS_CALL_TIMEOUT";
+}
+
 export function isPlatformRateLimit(err) {
   if (rateLimitStatus(err) === 429) return true;
   const text = [
@@ -115,6 +130,7 @@ export function createRequestGovernor({
     respectCooldown = false,
     shouldRetry = null,
     maxAttempts = maxRetries,
+    timeoutMs = 0,
   } = {}) => {
     stats.total += 1;
     stats.byLabel[label] = (stats.byLabel[label] || 0) + 1;
@@ -127,7 +143,14 @@ export function createRequestGovernor({
       }
       if (pool) await acquire(pool);
       try {
-        const result = await fn();
+        // Promise.race subscribes to both sides, so a loser that settles late
+        // (or rejects) is still handled — no unhandled rejection noise.
+        const result = timeoutMs > 0
+          ? await Promise.race([
+              Promise.resolve().then(fn),
+              sleep(timeoutMs).then(() => { throw governorCallTimeout(label, timeoutMs); }),
+            ])
+          : await fn();
         if (pool) release(pool);
         record(label, now() - started, false);
         return result;

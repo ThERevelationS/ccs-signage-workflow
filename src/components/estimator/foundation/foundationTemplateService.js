@@ -50,3 +50,4 @@ export async function deleteFoundationTemplate(templateId) {
   });
   return true;
 }
+

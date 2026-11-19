@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { 
   UserPlus, 
@@ -9,11 +9,9 @@ import {
 } from "lucide-react";
 import FaceRecognition from "./FaceRecognition";
 import { descriptorDistance } from "./faceScanRuntime";
-import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
+import { enrollFaceDescriptorsAdmin } from "@/components/admin/authorizedUserAdminPersistence";
+import { getSessionToken } from "@/components/auth/EmailGate";
 import { triggerNotification } from "@/components/workflow/NotificationService";
-import { staffEntities } from "@/components/staff/staffEntities";
-
-const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 // Stacking: every enrollment session merges its captures into the stored
 // template set instead of replacing it - repeated enrollments over time build
@@ -100,16 +98,17 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
       setSaveError("The captured face data was recorded for a different employee. Close and recapture before saving.");
       return;
     }
-    const { merged, added, stored, dropped } = mergeFaceDescriptors(user?.face_descriptors, faceDescriptors);
-    if (!added) {
-      setSaveError(stored
-        ? "These captures match templates already stored - vary your angle, distance, or lighting for new coverage."
-        : "Every capture was a near-duplicate. Vary your pose between captures.");
+    // Stored descriptors never leave the backend, so dedupe within this
+    // capture batch only; the enroll_face action merges it against the real
+    // stored set and reports the counts.
+    const { merged: batch, added: batchAdded } = mergeFaceDescriptors([], faceDescriptors);
+    if (!batchAdded) {
+      setSaveError("Every capture was a near-duplicate. Vary your pose between captures.");
       return;
     }
-    const mergedGrade = gradeFor(merged);
-    if (mergedGrade.grade === "F" || (mergedGrade.grade === "D" && !stored)) {
-      setSaveError(`Enrollment quality ${mergedGrade.grade}: ${mergedGrade.tip}. Recapture with more pose/distance variation.`);
+    const batchGrade = gradeFor(batch);
+    if (batchGrade.grade === "F" || batchGrade.grade === "D") {
+      setSaveError(`Enrollment quality ${batchGrade.grade}: ${batchGrade.tip}. Recapture with more pose/distance variation.`);
       return;
     }
     const requestSeq = ++saveSeqRef.current;
@@ -117,16 +116,17 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
     setIsSaving(true);
     setSaveError("");
     try {
-      await updateAuthorizedEmailIfUnchanged({
-        entity: AuthorizedEmail,
+      const result = await enrollFaceDescriptorsAdmin({
         record: user,
-        nextFields: { face_descriptors: merged },
-        exactVersion: false,
-        enforceIdentity: false,
-        label: `Face enrollment for ${user?.full_name || user?.email || user?.id}`
+        descriptors: batch,
+        sessionToken: getSessionToken(),
       });
       if (!current()) return;
-      setMergeInfo({ added, total: merged.length, dropped });
+      if (!result?.added) {
+        setSaveError("These captures match templates already stored - vary your angle, distance, or lighting for new coverage.");
+        return;
+      }
+      setMergeInfo({ added: result.added, total: result.total, dropped: result.dropped });
       triggerNotification("user_face_enrolled", null, {
         recordData: user,
         eventDescription: "User face ID enrolled",
@@ -167,6 +167,7 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
             <UserPlus className="w-5 h-5 text-purple-600" />
             Enroll Face for {user?.full_name || user?.email}
           </DialogTitle>
+          <DialogDescription className="sr-only">Capture camera images and save face descriptors for clock-in verification.</DialogDescription>
         </DialogHeader>
 
         {saved ? (

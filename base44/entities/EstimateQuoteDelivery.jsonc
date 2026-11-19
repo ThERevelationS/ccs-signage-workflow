@@ -67,9 +67,44 @@
     "delivery_status": {
       "type": "string",
       "enum": [
-        "sent"
+        "sent",
+        "failed"
       ],
       "default": "sent"
+    },
+    "transport": {
+      "type": "string",
+      "description": "Send-time transport that produced the outcome (gmail_api, smtp)."
+    },
+    "failure_reason": {
+      "type": "string",
+      "description": "Send-time failure detail when delivery_status is failed."
+    },
+    "delivery_events": {
+      "type": "array",
+      "description": "Append-only send-time event trail (sent/failed + timestamp + transport). Provider webhook/bounce telemetry is unavailable — this is send-time outcome only.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "transport": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "telemetry_note": {
+      "type": "string",
+      "description": "Fixed note marking the telemetry boundary: send-time outcome only; provider webhook/bounce data is unavailable."
     },
     "sent_at": {
       "type": "string",

@@ -565,7 +565,7 @@ export function buildMergeAuditRow({ keep, lose, actor, runKey, status, entities
 // Durable merge progress (D6)
 // ---------------------------------------------------------------------------
 
-export type EntityMergeStatus = 'pending' | 'done' | 'failed' | 'skipped';
+export type EntityMergeStatus = 'pending' | 'done' | 'failed' | 'skipped' | 'skipped_missing_entity';
 
 export interface EntityMergeProgress {
   status: EntityMergeStatus;
@@ -590,7 +590,7 @@ export interface MergeProgress {
 
 // Fresh progress state — or normalization of a stored merge_run blob so a
 // resumed run starts from trustworthy shapes only.
-export function initialMergeProgress({ runKey, keepId, actor, at, stored }: any = {}): MergeProgress {
+export function initialMergeProgress({ runKey, keepId, actor, at, stored, allowSkippedMissingEntity = false }: any = {}): MergeProgress {
   const base: MergeProgress = {
     run_key: clean(runKey),
     keep_id: clean(keepId),
@@ -605,7 +605,7 @@ export function initialMergeProgress({ runKey, keepId, actor, at, stored }: any 
     for (const [entity, entry] of Object.entries<any>(storedEntities)) {
       if (!entry || typeof entry !== 'object') continue;
       base.entities[entity] = {
-        status: (['done', 'failed', 'skipped'] as EntityMergeStatus[]).includes(entry.status) ? entry.status : 'pending',
+        status: (['done', 'failed', 'skipped', ...(allowSkippedMissingEntity ? ['skipped_missing_entity'] : [])] as EntityMergeStatus[]).includes(entry.status) ? entry.status : 'pending',
         scanned: num(entry.scanned),
         relinked: num(entry.relinked),
         skipped: num(entry.skipped),
@@ -651,12 +651,13 @@ export function recordEntityResult(progress: MergeProgress, spec: RelinkSpec, re
 // Overall completion: 'done' when every REQUIRED spec is done/skipped;
 // 'partial' when at least one required entity finished 'failed'; otherwise
 // 'in_progress'.
-export function mergeCompletionStatus(progress: MergeProgress, specs: RelinkSpec[] = CUSTOMER_RELINK_SPECS): 'done' | 'partial' | 'in_progress' {
+export function mergeCompletionStatus(progress: MergeProgress, specs: RelinkSpec[] = CUSTOMER_RELINK_SPECS, { allowSkippedMissingEntity = false }: { allowSkippedMissingEntity?: boolean } = {}): 'done' | 'partial' | 'in_progress' {
   let sawFailure = false;
   let sawPending = false;
   for (const spec of specs) {
     const status = progress?.entities?.[spec.entity]?.status;
     if (status === 'done' || status === 'skipped') continue;
+    if (allowSkippedMissingEntity && status === 'skipped_missing_entity') continue;
     if (status === 'failed') {
       if (spec.optional) continue;
       sawFailure = true;

@@ -15,7 +15,7 @@ Working ledger for the unattended backlog sweep. Source of truth for item status
 
 | Phase | Scope | Items | Status |
 |---|---|---|---|
-| A | §15 Data Integrity & Concurrency | #351–375 (25) | |
+| A | §15 Data Integrity & Concurrency | #351–375 (25) | DONE |
 | B | §4–11 feature completions + standalone | #77,78,79,83,88,92,104,118,127,145,167,170,174,180,185,192,201,205,242,244,246,251,255,257,262,271 + reorder/drive/map/job-msgs | |
 | C | §14 Notifications & Alerts | #326–350 (25) | |
 | D | §12 Reporting & Dashboards | #277–300 (11) | |

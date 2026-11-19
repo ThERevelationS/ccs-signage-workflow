@@ -1,0 +1,78 @@
+{
+  "name": "TimeClockAdminNote",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "description": "Idempotency key for the employee's note submission"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Employee who sent the note"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Employee display name snapshot"
+    },
+    "note": {
+      "type": "string",
+      "description": "Employee note text for administrators"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "acknowledged"
+      ],
+      "default": "new",
+      "description": "Admin-facing read state"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when the note was submitted"
+    },
+    "acknowledged_by": {
+      "type": "string",
+      "description": "Administrator email that acknowledged the note"
+    },
+    "acknowledged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp of acknowledgement"
+    },
+    "resolution_note": {
+      "type": "string",
+      "description": "Optional admin reply/context stored with acknowledgement"
+    }
+  },
+  "required": [
+    "user_email",
+    "request_id",
+    "note",
+    "status",
+    "requested_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}

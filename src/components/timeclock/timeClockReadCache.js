@@ -44,13 +44,13 @@ if (typeof window !== "undefined") {
   });
 }
 
-// Drop-in for base44.functions.invoke("timeClockAction", { action, ... }).
+// Drop-in for base44.functions.invoke("timeClockActionV2", { action, ... }).
 // Read allowlist actions share the cache; anything else invokes directly and
 // clears the cache first.
 export async function invokeTimeClockAction({ action, sessionToken, payload = {} } = {}) {
   const call = () =>
     base44.functions
-      .invoke("timeClockAction", { action, session_token: sessionToken, ...payload })
+      .invoke("timeClockActionV2", { action, session_token: sessionToken, ...payload })
       .then((response) => response?.data ?? response);
 
   if (!READ_ONLY_ACTIONS.has(action)) {
@@ -61,7 +61,7 @@ export async function invokeTimeClockAction({ action, sessionToken, payload = {}
 
   if (Date.now() - lastWriteAt < POST_WRITE_BYPASS_MS) {
     return base44.functions
-      .invoke("timeClockAction", { action, session_token: sessionToken, ...payload, bypass: true })
+      .invoke("timeClockActionV2", { action, session_token: sessionToken, ...payload, bypass: true })
       .then((response) => response?.data ?? response);
   }
 

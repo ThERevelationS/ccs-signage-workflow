@@ -113,6 +113,33 @@
     "cogs_account": {
       "type": "string",
       "description": "GL cost-of-goods-sold account code this item's consumption posts to on accounting export."
+    },
+    "is_kit": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, this row is a kit/bundle definition rather than a stocked part. Kit rows are selectable in the estimate Add Product flow and expand into their component inventory lines."
+    },
+    "kit_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "inventory_item_id": {
+            "type": "string",
+            "description": "Component Master Inventory record id."
+          },
+          "quantity": {
+            "type": "number",
+            "default": 1,
+            "description": "Component quantity included per kit."
+          }
+        }
+      },
+      "description": "Component lines for kit rows: [{inventory_item_id, quantity}]."
+    },
+    "kit_price": {
+      "type": "number",
+      "description": "Optional explicit kit sell price. When blank, kit pricing is the sum of component cost_per_unit x quantity."
     }
   },
   "required": [

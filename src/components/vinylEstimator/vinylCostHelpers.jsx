@@ -11,7 +11,9 @@ const num = (v, d = 0) => {
 // Returns: { byPartIdx: { idx: { partsPlaced, sqFt, vinylCost, inkCost, cutCost, machineCost, laborCost, totalCost, costEach } } }
 export const computePerPartCosts = (calc, items) => {
   const byPartIdx = {};
-  if (!calc || !calc.shelves || calc.usedSqFt <= 0) return byPartIdx;
+  // Held calcs null the tainted fields — a null usedSqFt must not slip
+  // through `<= 0` semantics, so require a real positive number.
+  if (!calc || !calc.shelves || !(calc.usedSqFt > 0)) return byPartIdx;
 
   const totalUsedSqIn = calc.shelves.reduce(
     (s, sh) => s + sh.items.reduce((ss, it) => ss + it.w * it.h, 0), 0
@@ -54,19 +56,22 @@ export const computePerPartCosts = (calc, items) => {
 };
 
 // --- Workflow margin / yield metrics. Feature #20, #21.
+// Held calcs carry null for tainted fields — propagate that instead of
+// laundering it into 0 so the header badge shows "—" rather than a fake $0.
 export const computeWorkflowMetrics = (calc) => {
   const used = num(calc?.usedSqFt);
   const pulled = num(calc?.totalRollSqFtPulled);
-  const totalCost = num(calc?.totalCost);
-  const materialCost = num(calc?.materialCost);
+  const totalCost = calc?.totalCost;       // may be null when held
+  const materialCost = calc?.materialCost; // may be null when held
 
   return {
     sqFtUsed: used,
     sqFtPulled: pulled,
     yieldPercent: pulled > 0 ? (used / pulled) * 100 : 0,
     wastePercent: pulled > 0 ? Math.max(0, (1 - used / pulled) * 100) : 0,
-    costPerSqFt: used > 0 ? totalCost / used : 0,
-    materialPercent: totalCost > 0 ? (materialCost / totalCost) * 100 : 0,
+    costPerSqFt: used > 0 && Number.isFinite(totalCost) ? totalCost / used : null,
+    materialPercent: Number.isFinite(totalCost) && totalCost > 0 && Number.isFinite(materialCost)
+      ? (materialCost / totalCost) * 100 : null,
   };
 };
 
@@ -76,7 +81,9 @@ export const computeStockUsage = (calc, vinyl) => {
   if (!calc || !vinyl) return null;
   const rollLengthIn = num(vinyl.roll_length_yards) * 36;
   if (rollLengthIn <= 0) return null;
-  const consumedIn = num(calc.lengthConsumedIn);
+  // Held calcs null the consumed length — no honest stock check.
+  if (!Number.isFinite(calc.lengthConsumedIn)) return null;
+  const consumedIn = calc.lengthConsumedIn;
   const rollsNeeded = consumedIn / rollLengthIn;
   return {
     rollLengthIn,

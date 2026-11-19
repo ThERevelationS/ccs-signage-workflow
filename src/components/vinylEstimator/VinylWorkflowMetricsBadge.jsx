@@ -1,6 +1,6 @@
 // Inline per-workflow margin / yield meter shown in the card header. Feature #20, #21.
 
-import React from "react";
+
 
 export default function VinylWorkflowMetricsBadge({ metrics }) {
   if (!metrics || metrics.sqFtPulled <= 0) return null;
@@ -15,7 +15,7 @@ export default function VinylWorkflowMetricsBadge({ metrics }) {
       <div className={`flex items-center gap-2 text-[10px] px-2 py-0.5 rounded border ${tone}`}>
         <span>Yield: <b className="tabular-nums">{yieldPct.toFixed(0)}%</b></span>
         <span className="text-slate-500">·</span>
-        <span>${metrics.costPerSqFt.toFixed(2)}/sqft</span>
+        <span>{Number.isFinite(metrics.costPerSqFt) ? `$${metrics.costPerSqFt.toFixed(2)}/sqft` : "—/sqft"}</span>
       </div>
       {/* Yield bar */}
       <div className="w-32 h-1 rounded-full overflow-hidden bg-slate-200" title={`${yieldPct.toFixed(1)}% used, ${metrics.wastePercent.toFixed(1)}% waste`}>

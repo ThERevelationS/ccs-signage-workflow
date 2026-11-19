@@ -7,23 +7,26 @@ import { Save, Copy, FileDown, Calculator, TrendingUp } from "lucide-react";
 // Note: Markup % control intentionally removed — all markups are managed on the Customer Pricing tab.
 import CostBreakdownBar from "./CostBreakdownBar";
 
-const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
+// Held/blank values render an em-dash instead of laundering into $0.00.
+const fmt = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 
 export default function InstallSummaryCard({
   project, onUpdate, onSave, isSaving, isEditing, onCopySummary, onExportCSV
 }) {
   const itemsCount = (project.items || []).length;
-  const labor = parseFloat(project.labor_cost) || 0;
+  // Keep possibly-null values — a held group must show "—", never $0.00.
+  const labor = project.labor_cost;
   // When a crew is assigned, personnel pricing replaces the flat-rate labor in the subtotal
   const laborViaCrew = !!project.labor_priced_via_personnel;
   const laborInSubtotal = laborViaCrew ? 0 : labor;
-  const materials = parseFloat(project.total_materials_cost) || 0;
-  const equipment = parseFloat(project.total_equipment_cost) || 0;
-  const personnel = parseFloat(project.total_personnel_cost) || 0;
-  const travel = parseFloat(project.total_travel_cost) || 0;
-  const letters = parseFloat(project.total_letters_cost) || 0;
-  const subtotal = parseFloat(project.subtotal) || 0;
-  const total = parseFloat(project.total_cost) || 0;
+  const materials = project.total_materials_cost;
+  const equipment = project.total_equipment_cost;
+  const personnel = project.total_personnel_cost;
+  const travel = project.total_travel_cost;
+  const letters = project.total_letters_cost;
+  const subtotal = project.subtotal;
+  const total = project.total_cost;
+  const showSeg = (v) => v === null || (Number.isFinite(v) && v > 0);
 
   const segments = [
     { label: "Labor",      value: laborInSubtotal, color: "bg-purple-400" },
@@ -32,7 +35,7 @@ export default function InstallSummaryCard({
     { label: "Personnel",  value: personnel, color: "bg-sky-400" },
     { label: "Travel",     value: travel,    color: "bg-orange-400" },
     { label: "Letters",    value: letters,   color: "bg-pink-400" },
-  ];
+  ].map(s => ({ ...s, value: Number.isFinite(s.value) ? s.value : 0 }));
 
   return (
     <Card className="border-0 shadow-xl sticky top-8 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -53,28 +56,33 @@ export default function InstallSummaryCard({
       </div>
 
       <CardContent className="space-y-4 pt-2 pb-5 px-5">
+        {project.__held && (
+          <p className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-400/30 rounded-md px-2.5 py-1.5">
+            Saved amounts (not current pricing) — fix the flagged values to reprice.
+          </p>
+        )}
         {/* Cost rollup rows */}
         <div className="space-y-1.5 text-sm">
           {!laborViaCrew && (
-            <Row label={`Labor (${(project.labor_hours || 0).toFixed(2)} hrs)`} value={labor} dot="bg-purple-400" />
+            <Row label={`Labor (${Number.isFinite(project.labor_hours) ? project.labor_hours.toFixed(2) : "—"} hrs)`} value={labor} dot="bg-purple-400" />
           )}
           <Row label="Materials" value={materials} dot="bg-emerald-400" />
-          {equipment > 0 && (
+          {showSeg(equipment) && (
             <Row label={`Equipment (${(project.selected_equipment || []).length})`} value={equipment} dot="bg-amber-400" />
           )}
-          {personnel > 0 && (
+          {showSeg(personnel) && (
             <Row
               label={laborViaCrew
-                ? `Crew Labor (${(project.personnel || []).length} crew · ${(project.labor_hours || 0).toFixed(2)} hrs)`
+                ? `Crew Labor (${(project.personnel || []).length} crew · ${Number.isFinite(project.labor_hours) ? project.labor_hours.toFixed(2) : "—"} hrs)`
                 : `Personnel (${(project.personnel || []).length})`}
               value={personnel}
               dot="bg-sky-400"
             />
           )}
-          {travel > 0 && (
+          {showSeg(travel) && (
             <Row label={`Travel (${(parseFloat(project.travel_miles_round_trip) || 0).toFixed(1)} mi)`} value={travel} dot="bg-orange-400" />
           )}
-          {letters > 0 && (
+          {showSeg(letters) && (
             <Row label={`Letters (${(project.letter_purchases || []).length})`} value={letters} dot="bg-pink-400" />
           )}
           <div className="flex justify-between border-t border-white/10 pt-2 mt-2">
@@ -84,7 +92,7 @@ export default function InstallSummaryCard({
         </div>
 
         {/* Breakdown bar */}
-        {subtotal > 0 && (
+        {Number.isFinite(subtotal) && subtotal > 0 && (
           <div className="bg-white/5 rounded-lg p-3 space-y-2 border border-white/5">
             <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-400">
               <span className="flex items-center gap-1">
@@ -98,7 +106,7 @@ export default function InstallSummaryCard({
         {/* Total — markups live in the Customer Pricing tab */}
         <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl px-4 py-3 shadow-lg border border-purple-400/30">
           <div className="text-[10px] text-purple-100 uppercase tracking-widest font-semibold">Subtotal (Before Markup)</div>
-          <div className="text-3xl font-bold tabular-nums leading-tight">{fmt(subtotal || total)}</div>
+          <div className="text-3xl font-bold tabular-nums leading-tight">{fmt(Number.isFinite(subtotal) ? subtotal : total)}</div>
           <div className="text-[10px] text-purple-200 mt-0.5">
             See <span className="font-semibold">Customer Pricing</span> tab for tier-based pricing.
           </div>

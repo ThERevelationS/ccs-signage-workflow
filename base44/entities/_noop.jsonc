@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "properties": {
+    "x": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "name": "_noop",
+  "rls": {
+    "create": { "user_condition": { "role": "___noop_backend_only__" } },
+    "read": { "user_condition": { "role": "___noop_backend_only__" } },
+    "update": { "user_condition": { "role": "___noop_backend_only__" } },
+    "delete": { "user_condition": { "role": "___noop_backend_only__" } }
+  }
+}

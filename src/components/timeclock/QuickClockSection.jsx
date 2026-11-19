@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { format } from "date-fns";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { playSoundEffect } from "@/components/announcements/AnnouncementContext";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import MissedPunchResolutionDialog from "@/components/timeclock/MissedPunchResolutionDialog";
@@ -389,10 +390,10 @@ export default function QuickClockSection({
       let key = localStorage.getItem("ccs_kiosk_device_id");
       if (!key) { key = `kiosk-${Math.random().toString(36).slice(2, 10)}`; localStorage.setItem("ccs_kiosk_device_id", key); }
       const regPayload = () => ({ action: "register_device", device_key: key, device_name: `Kiosk ${key.slice(-4)}`, scope: "kiosk", request_id: `devreg-${Date.now().toString(36)}` });
-      base44.functions.invoke("timeClockAction", regPayload()).catch(() => {
+      base44.functions.invoke("timeClockActionV2", regPayload()).catch(() => {
         // First attempt lost (429/offline) — retry once after the mount burst; a
         // failed registration silently drops this kiosk from the device list.
-        setTimeout(() => base44.functions.invoke("timeClockAction", regPayload()).catch((e) => console.warn("Kiosk device registration failed:", e?.message || e)), 15000);
+        setTimeout(() => base44.functions.invoke("timeClockActionV2", regPayload()).catch((e) => console.warn("Kiosk device registration failed:", e?.message || e)), 15000);
       });
     } catch {}
   }, []);
@@ -411,7 +412,7 @@ export default function QuickClockSection({
     activeActionCountRef.current.set(actionScope, actionCountForScope(actionScope) + 1);
     statusRefreshSequenceRef.current += 1;
     try {
-      const response = await base44.functions.invoke("timeClockAction", payload);
+      const response = await base44.functions.invoke("timeClockActionV2", payload);
       const data = response?.data || response;
       if (!data?.success) {
         const error = new Error(data?.error || "Time Clock action was not confirmed.");
@@ -632,7 +633,7 @@ export default function QuickClockSection({
 
     if (!quiet) setIsLoading(true);
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "status",
         session_token: authoritativeSessionToken,
         target_email: email,
@@ -708,8 +709,24 @@ export default function QuickClockSection({
 
   useEffect(() => {
     if (!authoritativeTransition || !authoritativeSessionToken || !authoritativeSessionUser?.email) return undefined;
-    const poll = setInterval(() => { if (!document.hidden) refreshAuthoritativeSessionState({ quiet: true }); }, 3000);
-    return () => clearInterval(poll);
+    let cancelled = false;
+    let timer = null;
+    let failures = 0;
+    const tick = async () => {
+      // Honor the shared 429 breaker like every other poller, and back off on
+      // consecutive failures — a wedged transition otherwise polls forever and
+      // feeds the rate-limit storm that caused the wedge.
+      if (document.hidden || isFleetCoolingDown()) {
+        timer = setTimeout(tick, 3000);
+        return;
+      }
+      const status = await refreshAuthoritativeSessionState({ quiet: true });
+      if (cancelled) return;
+      failures = status?.success ? 0 : failures + 1;
+      timer = setTimeout(tick, Math.min(3000 * (failures + 1), 30000));
+    };
+    timer = setTimeout(tick, 3000);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [authoritativeTransition, authoritativeSessionToken, authoritativeSessionUser?.email, refreshAuthoritativeSessionState]);
 
   const resetState = async () => {

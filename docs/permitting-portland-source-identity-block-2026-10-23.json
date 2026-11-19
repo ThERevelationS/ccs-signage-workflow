@@ -1,0 +1,141 @@
+{
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "status": "necessary_source_identity_safety_stop",
+  "profile_id": "6adaf8efc137885e5c4143d0",
+  "saved_identity": {
+    "name": "Portland",
+    "state": "OH",
+    "type": "village",
+    "parent_county": "Meigs County",
+    "verification_status": "needs_verification",
+    "website_url": "https://www.portland.gov",
+    "permitting_url": "https://www.portland.gov/ppd/sign-permits",
+    "created_date": "2026-10-23T06:04:31.652000"
+  },
+  "official_source_identity_evidence": {
+    "url": "https://www.portland.gov/ppd",
+    "observed_text": "City of Portland, Oregon",
+    "corroborating_public_contact": "311@portlandoregon.gov",
+    "captured_html_sha256": "f465619301895f0ddb6a8dfe480305f8dd11bce60fc4541595900bdeda84f45b",
+    "observed_during": "Read-only investigation after run46, before quarantine.",
+    "finding": "The saved OH/Meigs profile is assigned an Oregon municipal source. No corrected OH source or jurisdiction type is inferred."
+  },
+  "root_gap": "Same-host fetch scoping does not establish jurisdiction/state identity. The existing wrong source assignment was expanded by deterministic collection.",
+  "own_collection_impact": {
+    "recorded_successful_cycle_attempts_against_profile": 232,
+    "by_run": {
+      "drain-run25.json": 1,
+      "drain-run26.json": 1,
+      "drain-run28.json": 1,
+      "drain-run29.json": 1,
+      "drain-run30.json": 2,
+      "drain-run31.json": 2,
+      "drain-run32.json": 1,
+      "drain-run33.json": 2,
+      "drain-run34.json": 2,
+      "drain-run35.json": 2,
+      "drain-run36.json": 2,
+      "drain-run37.json": 3,
+      "drain-run38.json": 4,
+      "drain-run39.json": 5,
+      "drain-run40.json": 7,
+      "drain-run41.json": 8,
+      "drain-run42.json": 11,
+      "drain-run43.json": 15,
+      "drain-run44.json": 24,
+      "drain-run45.json": 48,
+      "drain-run46.json": 90
+    },
+    "current_document_count": 1866,
+    "attribution_boundary": "232 recorded attempts identify this runner's contribution, not the provenance of all 1866 documents. The existing source was already assigned when processed.",
+    "run46_interrupted_cycle": "A conditional write was attempted before a document conflict. Exact interrupted-cycle outcome was not retained; excluded from totals and not replayed."
+  },
+  "quarantine": {
+    "profile_id": "6adaf8efc137885e5c4143d0",
+    "name": "Portland",
+    "state": "OH",
+    "observed_at": "2026-10-23T10:34:24.505Z",
+    "before_version": "2026-10-23T10:31:36.708000",
+    "after_version": "2026-10-23T10:34:23.215000",
+    "blocked": true,
+    "block_reason": "Source identity mismatch: profile is Portland, OH / Meigs County; portland.gov identifies itself as City of Portland, Oregon. Preserve all evidence and pending URLs; resume only after verified identity/source repair.",
+    "documents_before": 1866,
+    "documents_after": 1866,
+    "documents_byte_identical": true,
+    "original_frontier_preserved_except_block_fields": true,
+    "pending_pages_preserved": true,
+    "pending_pages": 88,
+    "other_profile_fields_unchanged": true,
+    "llm_calls": 0,
+    "archive_uploads": 0,
+    "deleted_documents": 0
+  },
+  "quarantine_scope": "Only discovery_scan_state.blocked/block_reason changed. This excludes the cursor from deterministic backlog selection. Existing documents remain stored; this is not a guarantee that every other consumer excludes them.",
+  "final_frontier_audit": {
+    "started_at": "2026-10-23T10:34:26.870Z",
+    "finished_at": "2026-10-23T10:34:35.321Z",
+    "read_only": true,
+    "eligible_before": 0,
+    "eligible_after": 0,
+    "states": {
+      "OH": {
+        "frontier_profiles": 821,
+        "no_frontier_remaining": 62,
+        "pending_pages": 88,
+        "profiles_with_pending": 1,
+        "review_gaps": 4253,
+        "review_gap_reasons": {
+          "page_fetch_failed": 712,
+          "depth_frontier": 3481,
+          "page_link_limit": 60
+        },
+        "external_referrals": 15648,
+        "blocked_frontiers": 1,
+        "pending_profiles": [
+          {
+            "id": "6adaf8efc137885e5c4143d0",
+            "name": "Portland",
+            "pending_pages": 88,
+            "blocked": true,
+            "block_reason": "Source identity mismatch: profile is Portland, OH / Meigs County; portland.gov identifies itself as City of Portland, Oregon. Preserve all evidence and pending URLs; resume only after verified identity/source repair.",
+            "manual_documents": false,
+            "auto_refresh": true,
+            "method": "official-page-frontier-v1"
+          }
+        ]
+      },
+      "KY": {
+        "frontier_profiles": 113,
+        "no_frontier_remaining": 101,
+        "pending_pages": 0,
+        "profiles_with_pending": 0,
+        "review_gaps": 414,
+        "review_gap_reasons": {
+          "depth_frontier": 340,
+          "page_fetch_failed": 67,
+          "page_link_limit": 7
+        },
+        "external_referrals": 1957,
+        "blocked_frontiers": 0,
+        "pending_profiles": []
+      }
+    }
+  },
+  "count_boundary": "Recorded OH totals include the quarantined misassigned profile; counts and documents are not validated Ohio permitting findings.",
+  "remaining_work": [
+    "Reconcile the intended Ohio locality identity and jurisdiction type against independent official inventory.",
+    "Verify correct official Ohio permitting/authority sources before changing URLs or unblocking.",
+    "Inventory wrong-source documents and preserve manual/pinned/archive provenance; no deletion or reassignment without separately approved itemized remediation.",
+    "Address upstream source-identity validation before further automatic expansion; a comprehensive source-identity audit was not performed.",
+    "Review the 163 currently eligible no-frontier profiles, review gaps and external referrals; perform independent statewide completeness review."
+  ],
+  "not_done": {
+    "document_deletions": 0,
+    "url_changes": 0,
+    "authority_approvals": 0,
+    "llm_calls": 0,
+    "archive_uploads": 0,
+    "deploy_or_publish": false,
+    "milestone3_statewide_completeness": false
+  }
+}

@@ -280,7 +280,7 @@ export default function TimeClock() {
     setWorkDayBusyId(entry.id);
     setTimeEntryError("");
     try {
-      const res = await base44.functions.invoke("timeClockAction", {
+      const res = await base44.functions.invoke("timeClockActionV2", {
         action: mode === "ungroup" ? "ungroup_work_day" : "group_work_day",
         session_token: timeClockSessionToken,
         target_email: loggedInUser.email,
@@ -377,7 +377,7 @@ export default function TimeClock() {
           label: `Time off requests for ${loggedInUser.email}`,
         }),
         requestToken
-          ? base44.functions.invoke("timeClockAction", {
+          ? base44.functions.invoke("timeClockActionV2", {
               action: "list_correction_requests",
               session_token: requestToken,
               target_email: loggedInUser.email,
@@ -417,7 +417,7 @@ export default function TimeClock() {
     if (!window.confirm(`Cancel your ${request.request_type?.replace("_", " ")} request (${request.start_date}${request.end_date !== request.start_date ? ` – ${request.end_date}` : ""})?`)) return;
     setCancellingTimeOffId(request.id);
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "time_off_decision",
         session_token: timeClockSessionToken,
         target_email: loggedInUser.email,
@@ -487,7 +487,7 @@ export default function TimeClock() {
     }
 
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "status",
         session_token: token,
         target_email: email,
@@ -588,7 +588,7 @@ export default function TimeClock() {
     setTimeEntryError("");
     setSavingNotesId(entryId);
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         ...payload,
         session_token: timeClockSessionToken,
         request_id: requestId,

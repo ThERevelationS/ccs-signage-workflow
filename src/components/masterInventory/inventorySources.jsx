@@ -33,7 +33,6 @@ import {
   Lightbulb,
   Hammer,
   Briefcase,
-  Anchor,
   Building2,
 } from "lucide-react";
 

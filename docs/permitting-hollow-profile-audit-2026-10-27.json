@@ -1,0 +1,43 @@
+{
+  "work_unit": "hollow sources_found audit + stale-type row repair",
+  "date": "2026-10-27",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "trigger": "1,606 sources_found rows vs only 1,119 profiles with permitting_url - audited rows with no matching profile or empty profiles",
+  "audit_result": {
+    "sourced_rows": 1599,
+    "summary_only_legit": 264,
+    "no_profile": 48,
+    "truly_empty_profile": 1
+  },
+  "actions": {
+    "row_retypes_village_to_city": 23,
+    "row_retypes_city_to_unincorporated": ["Alvaton", "Bagdad", "Buckner"],
+    "profiles_created_and_researched": [
+      "Maineville OH village", "Mariemont OH village", "Addyston OH village", "Fairfax OH village",
+      "Highland Heights OH city", "Milford OH city", "Middletown OH city", "Manchester OH village",
+      "Russell Springs KY city", "Edgewood KY city", "Covington KY city", "Fort Thomas KY city", "Newport KY city"
+    ],
+    "manual_source_verified": {
+      "Indian Hill OH village": "https://indianhill.gov/ - identity-guard-blocked (not in candidate inventory); URL manually verified, needs_verification"
+    },
+    "dissolved_or_held": {
+      "Newtonsville OH": "village dissolved Nov 2019; profile held, row blocked; Wayne Township governs",
+      "Milford Butler Co row": "blocked - no Milford village/city in Butler County per inventory",
+      "Blaine OH row": "blocked - no incorporated Blaine in Ohio per inventory"
+    },
+    "type_label_fixes": [
+      "Withamsville township->unincorporated_community (CDP; Union Twp evidence retained)",
+      "Newtonsville township->unincorporated_community (dissolved village; Wayne Twp evidence retained)",
+      "Lake Lorelei township->unincorporated_community (private POA community; lakelorelei.com/permits retained)",
+      "Burlington KY county->unincorporated_community (CDP/county seat; Boone Co Planning Commission evidence retained)",
+      "Bremen KY village->city (inventory-confirmed city)"
+    ],
+    "maineville_consolidation": "canonical 'Maineville' village profile created+researched (mainevilleoh.com); 4 unique docs merged from 'Village of Maineville' records; both legacy records held superseded_duplicate",
+    "self_corrected_error": "placeholder row id accidentally held Senecaville village row (status sources_found->blocked with stub note); verified its profile had evidence and restored to sources_found"
+  },
+  "final_counts": {
+    "queue": { "sources_found": 1596, "blocked": 168, "duplicate": 13, "verified_current": 1, "total": 1778 },
+    "profiles": { "total": 1675, "with_permitting_url": 1181, "with_documents": 1371 }
+  },
+  "notes": "Newtonsville + Indian Hill 409s were the identity guard working as designed (dissolved entity / inventory gap), not failures."
+}
