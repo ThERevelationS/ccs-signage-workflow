@@ -84,11 +84,12 @@ const INVENTORY_READ_ACTIONS = new Set(['list_stock', 'list_movements']);
 const SALESFILTER_READ_ACTIONS = new Set(['preferences_get', 'default_sort_get', 'roster']);
 
 function isReadFunctionInvocation(fnName, payload) {
-  if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'queueFeed', 'appBootstrap', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
+  if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'queueFeed', 'appBootstrap', 'verifySession', 'permittingScanStatus', 'customerHistoryFeed'].includes(fnName)) return true;
   // V2 mirrors the managed-source name: production functions serve the
   // builder's managed source, so the frontend calls the V2 lane copy (same
   // actions, same read/write split).
   if (fnName === 'timeClockAction' || fnName === 'timeClockActionV2') return TIMECLOCK_READ_ACTIONS.has(payload?.action);
+  if (fnName === 'customerMergeV2') return payload?.action === 'preview_customer_merge';
   if (fnName === 'notificationAction') return NOTIFICATION_READ_ACTIONS.has(payload?.action);
   if (fnName === 'smartsheetSyncAction') return SMARTSHEET_READ_ACTIONS.has(payload?.action);
   if (fnName === 'workspacePrefsAction') return WORKSPACE_PREFS_READ_ACTIONS.has(payload?.action);

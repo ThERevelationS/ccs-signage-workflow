@@ -1,6 +1,8 @@
 #env
 .env
 .env.*
+.cb-creds.json
+.permit-creds.json
 
 # Logs
 logs

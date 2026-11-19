@@ -72,9 +72,13 @@ function statementHtml(data) {
 function CustomerDetail({ sessionToken, customerId, onClose }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [history, setHistory] = useState(null);
+  const [historyError, setHistoryError] = useState("");
 
   useEffect(() => {
     let live = true;
+    setHistory(null);
+    setHistoryError("");
     base44.functions.invoke("opportunityWorkspaceAction", {
       session_token: sessionToken, action: "get_customer_360", customer_id: customerId,
     }).then((r) => {
@@ -82,11 +86,19 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
       if (!live) return;
       if (d?.success) setData(d); else setError(d?.error || "Load failed.");
     }).catch((e) => { if (live) setError(e?.response?.data?.error || e?.message || "Load failed."); });
+    base44.functions.invoke("customerHistoryFeed", {
+      session_token: sessionToken, action: "get", customer_id: customerId,
+    }).then((r) => {
+      const d = r?.data || r;
+      if (!live) return;
+      if (d?.success) setHistory(d); else setHistoryError(d?.error || "History could not be loaded.");
+    }).catch((e) => { if (live) setHistoryError(e?.response?.data?.error || e?.message || "History could not be loaded."); });
     return () => { live = false; };
   }, [sessionToken, customerId]);
 
   const c = data?.customer;
   const s = data?.summary;
+  const overdueByInvoice = new Map((data?.invoices || []).map((invoice) => [invoice.id, invoice.days_overdue]));
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label="Customer statement" className="my-8 w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -142,26 +154,30 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
               </div>
             )}
 
-            {(Array.isArray(data.estimates) && data.estimates.length > 0) || Object.keys(data.estimate_funnel || {}).length > 0 ? (
-              <div className="mt-4 rounded-lg border border-gray-200 p-3">
-                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Estimates</h3>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {Object.entries(data.estimate_funnel || {}).map(([status, count]) => (
-                    <span key={status} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700 capitalize">
-                      {status} <b>×{count}</b>
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-2 space-y-1">
-                  {(data.estimates || []).slice(0, 6).map((e) => (
-                    <Link key={e.id} to={`/EstimateDetail?id=${e.id}`} className="flex items-center justify-between rounded border border-gray-100 px-2 py-1 text-[11px] hover:border-red-300 hover:bg-red-50/40">
-                      <span className="truncate text-gray-700">{e.project_name || e.estimate_number || e.id}</span>
-                      <span className="ml-2 shrink-0 text-gray-500 capitalize">{e.status} · ${Number(e.quote_total || 0).toLocaleString()}</span>
-                    </Link>
-                  ))}
-                </div>
+            {historyError && <div role="alert" className="mt-4 text-xs text-red-600">{historyError}</div>}
+            <div className="mt-4 rounded-lg border border-gray-200 p-3">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                Estimates ({history ? `${history.totals.estimates}${history.truncated.estimates ? "+" : ""}` : "…"})
+              </h3>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {Object.entries(data.estimate_funnel || {}).map(([status, count]) => (
+                  <span key={status} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700 capitalize">
+                    {status} <b>×{count}</b>
+                  </span>
+                ))}
               </div>
-            ) : null}
+              {!history && !historyError && <div className="mt-1 text-xs text-gray-400">Loading…</div>}
+              {history && !history.estimates.length && <div className="mt-1 text-xs text-gray-400">No estimates.</div>}
+              {history?.truncated.estimates && <div className="mt-1 text-xs text-gray-400">Showing the first 1,000 estimates.</div>}
+              <div className="mt-2 max-h-56 space-y-1 overflow-y-auto">
+                {(history?.estimates || []).map((e) => (
+                  <Link key={e.id} to={`/EstimateDetail?id=${encodeURIComponent(e.id)}`} className="flex items-center justify-between gap-2 rounded border border-gray-100 px-2 py-1 text-[11px] hover:border-red-300 hover:bg-red-50/40">
+                    <span className="min-w-0 truncate text-gray-700"><b>{e.estimate_number || "Estimate"}</b> · {e.project_name || "Untitled"}</span>
+                    <span className="shrink-0 text-gray-500"><span className="rounded-full bg-gray-100 px-1.5 py-0.5 capitalize">{e.status || "draft"}</span> · {usd(e.quote_total)} · {String(e.quote_issue_date || e.created_date || "—").slice(0, 10)}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border border-gray-200 p-3">
@@ -211,7 +227,9 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
               </div>
               <div className="rounded-lg border border-gray-200 p-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Invoices</h3>
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                    Invoices ({history ? `${history.totals.invoices}${history.truncated.invoices ? "+" : ""}` : "…"})
+                  </h3>
                   <button
                     type="button"
                     onClick={() => {
@@ -225,28 +243,39 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                     <Printer className="h-3 w-3" />Statement
                   </button>
                 </div>
-                {(data.invoices || []).length === 0 && <div className="mt-1 text-xs text-gray-400">None</div>}
-                {(data.invoices || []).map((i) => (
-                  <div key={i.id} className="mt-1.5 flex items-center justify-between text-sm">
-                    <span className="min-w-0 truncate text-gray-800"><FileText className="mr-1 inline h-3.5 w-3.5 text-gray-400" />{i.invoice_number || "Invoice"} <span className="text-xs text-gray-400">({i.status})</span></span>
-                    <span className="shrink-0 text-xs font-medium text-gray-600">
-                      {usd(i.balance_due)} due
-                      {i.days_overdue > 0 && Number(i.balance_due) > 0 && (
-                        <span className="ml-1 font-semibold text-red-600">{i.days_overdue}d overdue</span>
-                      )}
-                    </span>
-                  </div>
-                ))}
+                {!history && !historyError && <div className="mt-1 text-xs text-gray-400">Loading…</div>}
+                {history && !history.invoices.length && <div className="mt-1 text-xs text-gray-400">No invoices.</div>}
+                {history?.truncated.invoices && <div className="mt-1 text-xs text-gray-400">Showing the first 1,000 invoices.</div>}
+                <div className="max-h-56 overflow-y-auto">
+                  {(history?.invoices || []).map((i) => (
+                    <div key={i.id} className="mt-1.5 flex items-center justify-between gap-2 text-sm">
+                      <span className="min-w-0 truncate text-gray-800"><FileText className="mr-1 inline h-3.5 w-3.5 text-gray-400" />{i.invoice_number || "Invoice"} <span className="text-xs capitalize text-gray-400">({i.status})</span></span>
+                      <span className="shrink-0 text-right text-xs text-gray-600">
+                        {usd(i.total)} · {usd(i.balance_due)} due
+                        {Number(overdueByInvoice.get(i.id)) > 0 && Number(i.balance_due) > 0 && (
+                          <span className="ml-1 font-semibold text-red-600">{overdueByInvoice.get(i.id)}d overdue</span>
+                        )}
+                        {" · "}{String(i.issue_date || "—").slice(0, 10)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="rounded-lg border border-gray-200 p-3 sm:col-span-2">
-                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Jobs / Work orders</h3>
-                {(data.jobs || []).length === 0 && <div className="mt-1 text-xs text-gray-400">None</div>}
-                {(data.jobs || []).map((w) => (
-                  <div key={w.id} className="mt-1.5 flex items-center justify-between text-sm">
-                    <span className="min-w-0 truncate text-gray-800">{w.title || "Work order"} <span className="text-xs text-gray-400">({w.current_stage || w.sales_status || "—"})</span></span>
-                    <span className="shrink-0 text-xs font-medium text-gray-600">{w.estimate_amount ? usd(w.estimate_amount) : ""}</span>
-                  </div>
-                ))}
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Jobs / Work orders ({history ? `${history.totals.jobs}${history.truncated.jobs ? "+" : ""}` : "…"})
+                </h3>
+                {!history && !historyError && <div className="mt-1 text-xs text-gray-400">Loading…</div>}
+                {history && !history.jobs.length && <div className="mt-1 text-xs text-gray-400">No jobs.</div>}
+                {history?.truncated.jobs && <div className="mt-1 text-xs text-gray-400">Showing the first 1,000 jobs.</div>}
+                <div className="max-h-56 overflow-y-auto">
+                  {(history?.jobs || []).map((w) => (
+                    <Link key={w.id} to={`/JobWorkspace?wo=${encodeURIComponent(w.id)}`} className="mt-1.5 flex items-center justify-between gap-2 rounded px-1 py-1 text-sm hover:bg-gray-50">
+                      <span className="min-w-0 truncate text-gray-800">{w.title || "Work order"} <span className="text-xs text-gray-400">({w.current_stage || w.sales_status || "—"}) · {w.est_inv_at || "—"}</span></span>
+                      <span className="shrink-0 text-xs text-gray-600">{usd(w.estimate_amount)} · {String(w.created_date || "—").slice(0, 10)}</span>
+                    </Link>
+                  ))}
+                </div>
               </div>
               <PortalPanel sessionToken={sessionToken} customerId={customerId} />
             </div>

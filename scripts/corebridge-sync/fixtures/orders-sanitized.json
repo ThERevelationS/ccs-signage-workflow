@@ -1,0 +1,20 @@
+[
+  {
+    "order_id": 11286,
+    "header": {"Id":11286,"OrderStatus":"ESTIMATE","EstimateNumber":"EST-14767","InvoiceNumber":null,"AccountId":3835,"TotalPrice":945.57,"BalanceDue":945.57,"SubTotalPrice":877.15,"TaxableAmount":877.15,"NonTaxableAmount":0,"TaxesPrice":68.42,"SalesTaxRate":0.078,"ShippingAmount":0,"PostageAmount":0,"EstimateCreatedDate":{"DateTimeOffset":"2026-11-16T14:51:01.0031236-05:00"},"DueDate":{"DateTimeOffset":"2026-11-17T13:00:00-05:00"}},
+    "products": [{"Id":35697,"ProductCategoryId":43,"LineItemOrder":1,"Qty":1,"TotalPrice":877.15,"TotalPriceOverridden":null,"TaxableAmount":877.15,"NonTaxableAmount":0,"CalculatedPartsTotalRetail":877.15,"OrderProductStatusCbText":"ESTIMATE: Awaiting Customer Approval"}],
+    "expected": {"estimate_number":"EST-14767","status":"sent","tax_percent":7.8003,"quote_total":945.57,"total_cost":945.57,"shipping_fee":0,"discount_percent":0,"quote_issue_date":"2026-11-16","target_install_date":"2026-11-17","accepted_at":""}
+  },
+  {
+    "order_id": 2,
+    "header": {"Id":2,"OrderStatus":"CLOSED","EstimateNumber":"EST-1000","InvoiceNumber":"INV-1000","AccountId":5,"TotalPrice":259.38,"BalanceDue":null,"SubTotalPrice":242.41,"TaxableAmount":242.41,"NonTaxableAmount":0,"TaxesPrice":16.97,"SalesTaxRate":0.07,"ShippingAmount":0,"PostageAmount":0,"EstimateCreatedDate":{"DateTimeOffset":"2015-05-11T21:33:29.0059979-04:00"},"OrderCreatedDate":{"DateTimeOffset":"2015-05-19T19:08:35.8525489-04:00"},"DueDate":{"DateTimeOffset":"2015-05-22T16:00:00-04:00"}},
+    "products": [{"Id":2,"ProductCategoryId":8,"LineItemOrder":1,"Qty":2,"TotalPrice":73.21,"TotalPriceOverridden":null,"TaxableAmount":73.21,"NonTaxableAmount":0,"CalculatedPartsTotalRetail":73.21,"OrderProductStatusCbText":"CLOSED : Paid In Full"},{"Id":3,"ProductCategoryId":8,"LineItemOrder":2,"Qty":1,"TotalPrice":94.2,"TotalPriceOverridden":null,"TaxableAmount":94.2,"NonTaxableAmount":0,"CalculatedPartsTotalRetail":94.2,"OrderProductStatusCbText":"CLOSED : Paid In Full"},{"Id":4,"ProductCategoryId":8,"LineItemOrder":3,"Qty":1,"TotalPrice":75,"TotalPriceOverridden":null,"TaxableAmount":75,"NonTaxableAmount":0,"CalculatedPartsTotalRetail":75,"OrderProductStatusCbText":"CLOSED : Paid In Full"}],
+    "expected": {"estimate_number":"INV-1000","status":"approved","tax_percent":7.0005,"quote_total":259.38,"total_cost":259.38,"shipping_fee":0,"discount_percent":0,"quote_issue_date":"2015-05-11","target_install_date":"2015-05-22","accepted_at":"2015-05-19T23:08:35.852Z"}
+  },
+  {
+    "order_id": 6,
+    "header": {"Id":6,"OrderStatus":"CANCELLED","EstimateNumber":"EST-1002","InvoiceNumber":null,"AccountId":9,"TotalPrice":null,"BalanceDue":null,"SubTotalPrice":null,"TaxableAmount":0,"NonTaxableAmount":0,"TaxesPrice":null,"SalesTaxRate":0.07,"ShippingAmount":0,"PostageAmount":0,"EstimateCreatedDate":{"DateTimeOffset":"2015-06-25T18:18:16-04:00"},"EstimateCancelledDate":{"DateTimeOffset":"2015-06-25T18:18:16.0345513-04:00"},"DueDate":{"DateTimeOffset":"2015-10-06T00:00:00-04:00"}},
+    "products": [{"Id":12,"ProductCategoryId":4,"LineItemOrder":1,"Qty":1,"TotalPrice":0,"TotalPriceOverridden":null,"TaxableAmount":0,"NonTaxableAmount":0,"CalculatedPartsTotalRetail":0,"OrderProductStatusCbText":"ESTIMATE: Cancelled"}],
+    "expected": {"estimate_number":"EST-1002","status":"cancelled","tax_percent":0,"quote_total":0,"total_cost":0,"shipping_fee":0,"discount_percent":0,"quote_issue_date":"2015-06-25","target_install_date":"2015-10-06","accepted_at":""}
+  }
+]
