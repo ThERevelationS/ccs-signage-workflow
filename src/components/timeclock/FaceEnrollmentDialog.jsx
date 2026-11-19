@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { 

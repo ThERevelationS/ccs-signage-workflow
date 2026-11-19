@@ -529,7 +529,12 @@ export default function EstimatorCustomers() {
         if (existing?.id) { await staffEntities.MarkupTier.update(existing.id, data); updated += 1; }
         else { await staffEntities.MarkupTier.create(data); created += 1; }
       }
-      await load();
+      const [freshCustomers, freshTiers] = await Promise.all([
+        loadAllCustomers().catch(() => null),
+        loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "Customer markup tiers" }).catch(() => null),
+      ]);
+      if (freshCustomers) setCustomers(freshCustomers);
+      if (freshTiers) setTiers(freshTiers);
       window.alert(`Pricing tiers imported — ${created} created, ${updated} updated.`);
     } catch (e) {
       window.alert(e?.message || "The tier JSON could not be imported.");

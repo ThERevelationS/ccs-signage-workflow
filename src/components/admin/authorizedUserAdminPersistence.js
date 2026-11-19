@@ -142,6 +142,30 @@ export async function updateAuthorizedUserAdmin({ record, nextFields, sessionTok
   return result.record;
 }
 
+// Face descriptors never leave the backend, so enrollment merges the captured
+// batch against the stored templates server-side (enrollFaceAction) and
+// returns the merge counts.
+export async function enrollFaceDescriptorsAdmin({ record, descriptors, sessionToken } = {}) {
+  if (!record?.id || !record?.email) throw new Error("Authorized user is not loaded. Reload before saving face data.");
+  if (!Array.isArray(descriptors) || descriptors.length === 0) {
+    throw new Error("No face captures were supplied for enrollment.");
+  }
+  try {
+    const response = await base44.functions.invoke("enrollFaceAction", {
+      id: record.id,
+      email: record.email,
+      face_descriptors: descriptors,
+      session_token: requireSessionToken(sessionToken),
+    });
+    const data = response?.data || response;
+    if (data?.error) throw new Error(data.error);
+    if (!data?.success) throw new Error("Face enrollment could not be verified.");
+    return data;
+  } catch (error) {
+    throw new Error(error?.response?.data?.error || error?.data?.error || error?.message || "Face enrollment could not be completed safely.");
+  }
+}
+
 export async function updateAuthorizedUserHrAdmin({ record, hrData, sessionToken } = {}) {
   if (!record?.id || !record?.email) throw new Error("Authorized user is not loaded. Reload before saving HR data.");
   const result = await invokeAdminUsers({

@@ -972,7 +972,7 @@ export default function FoundationLayoutCanvas({
   // consistent. Mounted caps/cabinets carry no coords — they follow their
   // parents automatically. ONE undoable commit for the whole selection.
   const opMirror = () => {
-    const cx = PLAN_W;
+    const cx = FOUNDATION_LAYOUT_WIDTH_INCHES;
     const patches = [];
     selState.ids.forEach((id) => {
       const [kind, ref] = [id.split(":")[0], id.split(":").slice(1).join(":")];
