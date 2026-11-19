@@ -550,7 +550,8 @@ function quickBuilderOwnershipPatch(blueprint, estimateId, lineId) {
 
 async function ensureQuickInsertBuilder({ estimateId, lineId, blueprint }) {
   const readMatches = async () => {
-    const rows = await staffEntities.BuilderProduct.filter({ estimate_id: estimateId, estimate_line_id: lineId });
+    const entity = staffEntities.BuilderProduct;
+    const rows = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { estimate_id: estimateId, estimate_line_id: lineId });
     if (!Array.isArray(rows)) throw new Error("Builder Products could not be verified while recovering Quick Product insertion.");
     return rows;
   };
@@ -637,8 +638,9 @@ async function ensureQuickInsertSource({ builder, blueprint }) {
     const filter = {};
     if (blueprint.sourceTaggedData?.estimate_number) filter.estimate_number = blueprint.sourceTaggedData.estimate_number;
     if (blueprint.sourceTaggedData?.project_name) filter.project_name = blueprint.sourceTaggedData.project_name;
+    if (!Object.keys(filter).length) throw new Error("Quick Product source recovery requires an estimate number or project name.");
     const readTagged = async () => {
-      const candidates = await entity.filter(filter);
+      const candidates = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, filter);
       if (!Array.isArray(candidates)) throw new Error("Quick Product source projects could not be verified during recovery.");
       return candidates.filter((row) => String(row?.notes || "").includes(blueprint.sourceRecoveryToken));
     };

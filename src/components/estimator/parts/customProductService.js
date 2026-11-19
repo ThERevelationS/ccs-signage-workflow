@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { ensureBuilderProductForLine } from "@/components/estimator/builder/builderService";
 import { applyBuilderPartPriceAcceptancePlan, pricingSnapshot } from "@/components/estimator/builder/partSync";
 import { inventoryRowName, inventoryUnitCost, loadMasterPartCatalog } from "./partCatalog";
@@ -609,7 +608,9 @@ export async function removeManualProductPart(partId, { builderProductId = "", e
   }
 
   if (!part) {
-    const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builder.id }, sort: "revision_number", label: "Builder price revisions" });
+    const entity = staffEntities.BuilderPriceRevision;
+    const revisions = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { builder_product_id: builder.id, idempotency_key: operationKey });
+    if (!Array.isArray(revisions)) throw new Error("Builder price revisions could not be verified before removing this Part.");
     const completed = (revisions || []).find((revision) => String(revision.idempotency_key || "") === operationKey);
     if (completed) return { removed: true, alreadyCompleted: true };
     throw new Error("This Part is already missing. Reload the Product before continuing so its totals can be verified.");

@@ -35,6 +35,11 @@ function templateFamilyKey({ templateType, sourceId, meta }) {
 }
 
 async function resolveTemplateVersion({ familyKey, idempotencyKey }) {
+  const entity = staffEntities.PartTemplate;
+  const matches = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { template_family_key: familyKey, idempotency_key: idempotencyKey });
+  if (!Array.isArray(matches)) throw new Error("Part Template identity could not be verified. Retry the save before overwriting anything.");
+  const existing = matches.find((row) => String(row?.idempotency_key || "") === idempotencyKey);
+  if (existing) return Math.max(1, Number(existing.template_version) || 1);
   const rows = await loadAllEntityRows({
     entity: staffEntities.PartTemplate,
     query: { template_family_key: familyKey },
@@ -42,8 +47,6 @@ async function resolveTemplateVersion({ familyKey, idempotencyKey }) {
     label: "Part Template versions",
   });
   if (!Array.isArray(rows)) throw new Error("Part Template version history could not be verified. Retry the save before overwriting anything.");
-  const existing = rows.find((row) => String(row?.idempotency_key || "") === idempotencyKey);
-  if (existing) return Math.max(1, Number(existing.template_version) || 1);
   const versions = rows.map((row) => Number(row?.template_version)).filter((v) => Number.isInteger(v) && v >= 1);
   return versions.length ? Math.max(...versions) + 1 : 1;
 }

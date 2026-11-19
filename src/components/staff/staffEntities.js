@@ -17,11 +17,13 @@ import { noteRateLimit } from "@/api/rateLimitCooldown";
 // is a guaranteed 401 that burns budget and spams the console.
 const hasSession = () => !!getSessionToken();
 const NO_SESSION_ERR = () => new Error("Sign-in required");
-const PROJECT_WRITE_ENTITIES = new Set([
+const ESTIMATOR_WRITE_ENTITIES = new Set([
   "FoundationProject", "ChannelLetterInstallation", "VinylProject", "CNCProject", "LaserProject",
   "MetalProject", "BrickStoneProject", "MaintenanceProject", "Project", "CustomItemsProject",
+  "BuilderProduct", "BuilderPart", "BuilderPartGroup", "BuilderPriceRevision", "EstimateClipboardItem",
+  "PartTemplate", "QuickProduct", "ProjectTemplate",
 ]);
-const writeFunction = (entity) => PROJECT_WRITE_ENTITIES.has(entity) ? "estimatorProjectWrite" : "staffEntityWrite";
+const writeFunction = (entity) => ESTIMATOR_WRITE_ENTITIES.has(entity) ? "estimatorProjectWrite" : "staffEntityWrite";
 
 // Per-session negative cache of denied entities. Once the gateway refuses an
 // entity for this session (403), every repeat read is a guaranteed failure
@@ -190,6 +192,15 @@ const batchedRead = (entity, args) => {
 };
 
 const METHODS = {
+  filterFresh: (entity, query, sort, limit) => {
+    if (!hasSession()) return Promise.reject(NO_SESSION_ERR());
+    if (!ESTIMATOR_WRITE_ENTITIES.has(entity)) return METHODS.filter(entity, query, sort, limit);
+    return invokeFleet("estimatorProjectWrite", { entity, op: "filter", query, sort, limit }).then((r) => {
+      const items = bodyOf(r).items;
+      if (!Array.isArray(items)) throw new Error("Fresh entity filter did not return a record list.");
+      return items;
+    });
+  },
   filter: (entity, query, sortOrOptions, limit, skip) => {
     const args = readArgs(sortOrOptions, limit, skip);
     if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);

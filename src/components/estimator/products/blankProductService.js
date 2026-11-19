@@ -80,7 +80,7 @@ async function resolveSourceProject({ estimateId, lineId, pending }) {
     if (!source) throw new Error("The anchored Builder source record disappeared while Product creation was pending.");
   } else {
     const readMatches = async () => {
-      const rows = await entity.filter({ notes: pending.source_recovery_tag });
+      const rows = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { notes: pending.source_recovery_tag });
       if (!Array.isArray(rows)) throw new Error("The Builder source recovery token could not be verified.");
       return rows;
     };

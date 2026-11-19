@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
 import { instantiateProductSnapshot } from "@/components/estimator/products/quickProductService";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice, manualCustomerPriceState } from "@/components/estimator/customerPricing";
@@ -170,7 +169,8 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
   // exact browser request, so verify the requested line/Builder targets before
   // treating a stale retry as already completed.
   if (builder && patch.customer_price_snapshot !== undefined && operationKey) {
-    const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builder.id }, sort: "revision_number", label: "Product price revisions" });
+    const entity = staffEntities.BuilderPriceRevision;
+    const revisions = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { builder_product_id: builder.id, idempotency_key: operationKey });
     if (!Array.isArray(revisions)) throw new Error("Product price history could not be verified before changing Product settings.");
     const completedRevision = revisions.find((row) => String(row.idempotency_key || "") === operationKey);
     if (completedRevision) {

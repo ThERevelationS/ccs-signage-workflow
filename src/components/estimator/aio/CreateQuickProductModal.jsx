@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PackagePlus, Save } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
 import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricing";
@@ -26,7 +27,7 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
     setSaving(false);
     setError("");
     Promise.all([
-      loadAllEntityRows({ entity: base44.entities.QuickProductCategory, sort: "category_name", label: "Quick Product categories" }).catch(() => { setCatsFailed(true); return []; }),
+      loadAllEntityRows({ entity: staffEntities.QuickProductCategory, sort: "category_name", label: "Quick Product categories" }).catch(() => { setCatsFailed(true); return []; }),
       base44.auth.me().catch(() => null),
     ]).then(([rows, me]) => setAvailableCategories((rows || [])
       .filter((row) => row.product_group === "global" || !row.created_by_id || (!!me?.id && row.created_by_id === me.id))

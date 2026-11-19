@@ -7,6 +7,11 @@ const projectEntities = [
   'FoundationProject', 'ChannelLetterInstallation', 'VinylProject', 'CNCProject', 'LaserProject',
   'MetalProject', 'BrickStoneProject', 'MaintenanceProject', 'Project', 'CustomItemsProject',
 ];
+const builderEntities = [
+  'BuilderProduct', 'BuilderPart', 'BuilderPartGroup', 'EstimateClipboardItem',
+  'PartTemplate', 'QuickProduct', 'ProjectTemplate',
+];
+const estimatorEntities = [...projectEntities, ...builderEntities, 'BuilderPriceRevision'];
 const copy = (value) => structuredClone(value);
 const guardSource = buildSync({
   entryPoints: ['base44/shared/entityWriteTypeGuard.ts'], bundle: true, platform: 'node', format: 'cjs',
@@ -20,10 +25,10 @@ const source = transformSync(readFileSync('base44/functions/estimatorProjectWrit
 }).code;
 
 function fixture() {
-  const stores = Object.fromEntries(projectEntities.map((name) => [name, []]));
+  const stores = Object.fromEntries(estimatorEntities.map((name) => [name, []]));
   const calls = [];
   let serial = 0, handler;
-  const entities = Object.fromEntries(projectEntities.map((name) => [name, {
+  const entities = Object.fromEntries(estimatorEntities.map((name) => [name, {
     async get(id) {
       const found = stores[name].find((row) => row.id === id);
       if (!found) throw Object.assign(new Error('not found'), { status: 404 });
@@ -34,6 +39,10 @@ function fixture() {
       const row = { ...copy(data), id: `${name}-${++serial}`, updated_date: `v${serial}` };
       stores[name].push(row);
       return copy(row);
+    },
+    async filter(query, sort, limit) {
+      calls.push({ entity: name, op: 'filter', query: copy(query), sort, limit });
+      return stores[name].filter((item) => Object.entries(query).every(([key, value]) => item[key] === value)).slice(0, limit).map(copy);
     },
     async update(id, data) {
       calls.push({ entity: name, op: 'update', id, data: copy(data) });
@@ -73,7 +82,7 @@ function fixture() {
   };
   runInNewContext(source, {
     require: (name) => { if (!imports[name]) throw new Error(`Unexpected import ${name}`); return imports[name]; },
-    module: { exports: {} }, exports: {}, Deno: { serve: (fn) => { handler = fn; } }, Response, console,
+    module: { exports: {} }, exports: {}, Deno: { serve: (fn) => { handler = fn; } }, Response, TextEncoder, console,
   });
   return {
     stores, calls,
@@ -85,6 +94,58 @@ function fixture() {
       return { status: response.status, body: await response.json() };
     },
   };
+}
+
+{
+  const app = fixture();
+  for (const entity of builderEntities) {
+    const created = await app.invoke({ entity, op: 'create', data: { builder_product_id: 'parent' } });
+    assert.equal(created.status, 200, `${entity} create`);
+    const { id, updated_date } = created.body.record;
+    assert.equal((await app.invoke({ entity, op: 'update', id, data: {} })).status, 403, `${entity} update`);
+    assert.equal((await app.invoke({ entity, op: 'delete', id })).status, 403, `${entity} delete`);
+    assert.equal((await app.invoke({ entity, op: 'filter', query: { builder_product_id: 'parent' } })).body.items.length, 1);
+    const patched = await app.invoke({ entity, op: 'updateMany', id, query: { id, updated_date }, update: { $set: { notes: 'x' } } });
+    assert.equal(patched.status, 200, `${entity} updateMany`);
+    const version = app.stores[entity][0].updated_date;
+    const removed = await app.invoke({ entity, op: 'deleteMany', query: { id, updated_date: version, builder_product_id: 'parent' } });
+    assert.equal(removed.body.result.deleted, 1, `${entity} deleteMany`);
+  }
+  for (const op of ['create', 'update', 'updateMany', 'delete']) {
+    assert.equal((await app.invoke({ entity: 'BuilderPriceRevision', op })).status, 403, op);
+  }
+  app.stores.BuilderPriceRevision.push({ id: 'rev', updated_date: 'v1', builder_product_id: 'parent' });
+  assert.equal((await app.invoke({ entity: 'BuilderPriceRevision', op: 'filter', query: { builder_product_id: 'parent' } })).body.items.length, 1);
+  assert.equal((await app.invoke({ entity: 'BuilderPriceRevision', op: 'deleteMany', query: { id: 'rev', updated_date: 'v1', builder_product_id: 'parent' } })).body.result.deleted, 1);
+}
+
+{
+  const app = fixture();
+  const row = (await app.invoke({ entity: 'QuickProduct', op: 'create', data: { name: 'x', builder_product_id: 'p' } })).body.record;
+  const filter = (query, extra = {}) => app.invoke({ entity: 'QuickProduct', op: 'filter', query, ...extra });
+  assert.equal((await filter({ name: 'x' })).body.items[0].id, row.id);
+  assert.equal(app.calls.at(-1).limit, 100);
+  assert.equal((await filter({})).body.items[0].id, row.id);
+  assert.equal((await app.invoke({ entity: 'QuickProduct', op: 'filter' })).body.items[0].id, row.id);
+  assert.equal((await filter({ name: 'a'.repeat(3989) })).status, 200);
+  assert.equal((await filter({ name: 'a'.repeat(3990) })).status, 400);
+  assert.equal((await filter({ name: 'é'.repeat(2000) })).status, 400);
+  await filter({ name: 'x' }, { sort: '-created_date', limit: 9999 });
+  assert.equal(app.calls.at(-1).limit, 500);
+  assert.equal(app.calls.at(-1).sort, '-created_date');
+  await filter({ name: 'x' }, { limit: -1 });
+  assert.equal(app.calls.at(-1).limit, 1);
+  for (const [query, extra] of [
+    [null, {}], [[], {}], [{ $or: 'x' }, {}], [{ name: { $ne: 'x' } }, {}], [{ name: ['x'] }, {}],
+    [{ name: null }, {}], [{ name: 'x' }, { sort: 'bad sort' }], [{ name: 'x' }, { limit: 1.5 }],
+  ]) assert.equal((await filter(query, extra)).status, 400);
+  assert.equal((await app.invoke({ entity: 'GlobalSettings', op: 'filter', query: { x: 'y' } })).status, 403);
+  assert.equal((await app.invoke({ entity: 'QuickProduct', op: 'filter', query: { name: 'x' } }, '')).status, 401);
+  for (const query of [
+    { id: row.id }, { id: row.id, updated_date: row.updated_date, builder_product_id: {} },
+    { id: row.id, updated_date: row.updated_date, builder_product_id: [] },
+  ]) assert.equal((await app.invoke({ entity: 'QuickProduct', op: 'deleteMany', query })).status, 400);
+  assert.equal((await app.invoke({ entity: 'QuickProduct', op: 'deleteMany', query: { id: row.id, updated_date: row.updated_date, builder_product_id: 'p' } })).body.result.deleted, 1);
 }
 
 {
@@ -159,7 +220,7 @@ function fixture() {
 
 {
   const calls = [];
-  let token = 'staff', reads = 0;
+  let token = 'staff', reads = 0, badFreshResponse = false;
   const invokeFleet = async (name, payload) => {
     calls.push({ name, payload: copy(payload) });
     if (name === 'staffDataRead') {
@@ -167,7 +228,8 @@ function fixture() {
       if (payload.entities) return { status: 200, data: { entities: Object.fromEntries(payload.entities.map((item) => [item.entity, [{ id: 'read' }]])) } };
       return { status: 200, data: { item: { id: payload.id }, items: [{ id: 'read' }] } };
     }
-    return { status: 200, data: { record: { id: payload.id || 'created' }, result: { updated: 1 }, deleted: true } };
+    return { status: 200, data: { record: { id: payload.id || 'created' }, result: { updated: 1 }, deleted: true,
+      ...(payload.op === 'filter' ? { items: badFreshResponse ? null : [{ id: 'fresh' }] } : {}) } };
   };
   const imports = {
     '@/components/fleet/fleetInvoke': { invokeFleet, isFleetCoolingDown: () => false },
@@ -183,7 +245,7 @@ function fixture() {
   const { staffEntities } = proxyModule.exports;
   for (const entity of projectEntities) {
     const proxy = staffEntities[entity];
-    for (const method of ['get', 'filter', 'list', 'create', 'update', 'updateMany', 'delete', 'deleteMany']) {
+    for (const method of ['get', 'filter', 'filterFresh', 'list', 'create', 'update', 'updateMany', 'delete', 'deleteMany']) {
       assert.equal(typeof proxy[method], 'function', `${entity}.${method}`);
     }
     assert.equal((await proxy.create({ project_name: 'x' })).id, 'created');
@@ -200,6 +262,31 @@ function fixture() {
   assert.deepEqual(calls.at(-1).payload, { entity: 'CNCProject', op: 'deleteMany', query: { id: 'p', updated_date: 'v' } });
   await staffEntities.GeneralTask.deleteMany({ id: 'p', updated_date: 'v' });
   assert.equal(calls.at(-1).name, 'staffEntityWrite');
+  for (const entity of [...builderEntities, 'BuilderPriceRevision']) {
+    const proxy = staffEntities[entity];
+    await proxy.create({});
+    await proxy.update('p', {});
+    await proxy.updateMany({ id: 'p', updated_date: 'v' }, { $set: {} });
+    await proxy.delete('p');
+    await proxy.deleteMany({ id: 'p', updated_date: 'v' });
+    assert.ok(calls.slice(-5).every((call) => call.name === 'estimatorProjectWrite' && call.payload.entity === entity));
+    assert.equal((await staffEntities[entity].filterFresh({ key: 'x' }, '-created_date', 10))[0].id, 'fresh');
+    assert.equal(calls.at(-1).name, 'estimatorProjectWrite');
+    assert.equal(calls.at(-1).payload.op, 'filter');
+  }
+  badFreshResponse = true;
+  await assert.rejects(() => staffEntities.BuilderProduct.filterFresh({ key: 'x' }), /did not return a record list/);
+  badFreshResponse = false;
+  const beforeFresh = calls.length;
+  await staffEntities.FoundationProject.filterFresh({ key: 'x' });
+  await staffEntities.FoundationProject.filterFresh({ key: 'x' });
+  assert.equal(calls.length - beforeFresh, 2);
+  assert.ok(calls.slice(-2).every((call) => call.name === 'estimatorProjectWrite' && call.payload.op === 'filter'));
+  const beforeFallback = reads;
+  assert.equal((await staffEntities.AllInOneEstimate.filterFresh({ id: 'estimate' }))[0].id, 'read');
+  assert.equal(reads, beforeFallback + 1);
+  assert.equal(calls.at(-1).name, 'staffDataRead');
+  reads = 0;
   await staffEntities.FoundationProject.filter({ project_name: 'x' });
   await staffEntities.FoundationProject.filter({ project_name: 'x' });
   assert.equal(reads, 1);
@@ -208,6 +295,98 @@ function fixture() {
   assert.equal(reads, 2);
   token = '';
   await assert.rejects(() => staffEntities.FoundationProject.create({}), /Sign-in required/);
+  await assert.rejects(() => staffEntities.FoundationProject.filterFresh({ id: 'p' }), /Sign-in required/);
+  await assert.rejects(() => staffEntities.AllInOneEstimate.filterFresh({ id: 'p' }), /Sign-in required/);
+}
+
+{
+  const source = transformSync(readFileSync('src/components/estimator/idempotentEntityCreate.js', 'utf8'), { loader: 'js', format: 'cjs' }).code;
+  const module = { exports: {} };
+  runInNewContext(source, {
+    require: () => ({ deleteEntityIfUnchanged: async () => { throw new Error('unexpected delete'); } }),
+    module, exports: module.exports, console, setTimeout,
+  });
+  let freshReads = 0;
+  const rows = [];
+  const entity = {
+    async filter() { throw new Error('cached filter must not be used'); },
+    async filterFresh(query) { freshReads++; return rows.filter((row) => row.idempotency_key === query.idempotency_key); },
+    async create(data) { const row = { ...data, id: 'created' }; rows.push(row); return row; },
+  };
+  const record = await module.exports.ensureIdempotentEntityCreate({ entity, key: 'key', data: { name: 'test' } });
+  assert.equal(record.id, 'created');
+  assert.equal(freshReads, 2);
+  assert.equal((await module.exports.ensureIdempotentEntityCreate({ entity, key: 'key', data: { name: 'test' } })).id, 'created');
+  assert.equal(freshReads, 3);
+  const recoveredRows = [];
+  const recovered = {
+    async filter() { throw new Error('cached filter must not be used'); },
+    async filterFresh() { return recoveredRows; },
+    async create(data) { recoveredRows.push({ ...data, id: 'landed' }); throw new Error('response lost'); },
+  };
+  assert.equal((await module.exports.ensureIdempotentEntityCreate({ entity: recovered, key: 'lost', data: { name: 'test' } })).id, 'landed');
+  const fallbackRows = [];
+  const fallback = {
+    filterFresh: true,
+    async filter() { return fallbackRows; },
+    async create(data) { const row = { ...data, id: 'fallback' }; fallbackRows.push(row); return row; },
+  };
+  assert.equal((await module.exports.ensureIdempotentEntityCreate({ entity: fallback, key: 'fallback', data: {} })).id, 'fallback');
+}
+
+{
+  for (const [file, name, data] of [
+    ['builderPartGroupPersistence.js', 'createBuilderPartGroupWithRecovery', { builder_product_id: 'bp', group_key: 'group' }],
+    ['builderPartPersistence.js', 'createBuilderPartWithRecovery', { builder_product_id: 'bp', part_key: 'part' }],
+    ['builderProductPersistence.js', 'createBuilderProductWithRecovery', { estimate_id: 'e', estimate_line_id: 'line' }],
+  ]) {
+    const source = transformSync(readFileSync(`src/components/estimator/builder/${file}`, 'utf8'), { loader: 'js', format: 'cjs' }).code;
+    const module = { exports: {} };
+    runInNewContext(source, { module, exports: module.exports, console, setTimeout });
+    const rows = [];
+    let freshReads = 0;
+    const entity = {
+      async filter() { throw new Error('cached filter must not be used'); },
+      async filterFresh() { freshReads++; return rows; },
+      async create(payload) { const row = { ...payload, id: 'created' }; rows.push(row); return row; },
+    };
+    const result = await module.exports[name]({ entity, data, settleMs: 0 });
+    assert.equal(result.record.id, 'created');
+    assert.equal(freshReads, 2, file);
+  }
+}
+
+{
+  const source = transformSync(readFileSync('src/components/estimator/parts/partTemplateService.js', 'utf8'), { loader: 'js', format: 'cjs' }).code;
+  const module = { exports: {} };
+  let existing = true, familyReads = 0, freshReads = 0;
+  const part = { id: 'part', updated_date: 'v1', part_name: 'Synthetic' };
+  const templateEntity = {
+    async filter() { throw new Error('cached identity filter must not be used'); },
+    async filterFresh(query) {
+      freshReads++;
+      return existing ? [{ id: 'old', idempotency_key: query.idempotency_key, template_version: 3 }] : [];
+    },
+  };
+  const imports = {
+    '@/api/base44Client': { base44: {} },
+    '@/components/estimator/products/snapshotUtils': { cloneSnapshot: copy },
+    '@/components/estimator/parts/partPackageService': { addPartPackageToProduct: () => {} },
+    '@/components/estimator/builder/builderMutationRecovery': { builderMutationHash: () => 'hash' },
+    '@/components/estimator/products/reusableSaveIdempotency': { ensureReusableRecord: async (options) => options.data },
+    '@/components/estimator/loadAllEntityRows': { loadAllEntityRows: async () => { familyReads++; return [{ template_version: 3 }]; } },
+    '@/components/staff/staffEntities': { staffEntities: { BuilderPart: { get: async () => part }, PartTemplate: templateEntity } },
+  };
+  runInNewContext(source, {
+    require: (name) => { if (!imports[name]) throw new Error(`Unexpected import ${name}`); return imports[name]; },
+    module, exports: module.exports, console,
+  });
+  assert.equal((await module.exports.savePartTemplate({ part })).template_version, 3);
+  assert.equal(familyReads, 0);
+  existing = false;
+  assert.equal((await module.exports.savePartTemplate({ part })).template_version, 4);
+  assert.equal(freshReads, 2);
+  assert.equal(familyReads, 1);
 }
 
 {
@@ -283,8 +462,7 @@ function fixture() {
   assert.equal(result.sourceProject.notes, '');
   assert.equal(result.line.project_id, result.sourceProject.id);
   assert.equal(result.line.builder_product_id, 'builder-1');
-  assert.deepEqual(calls.filter((call) => call.name === 'estimatorProjectWrite').map((call) => call.payload.op), ['create', 'updateMany']);
-  assert.ok(calls.some((call) => call.name === 'staffDataRead' && call.payload.entities?.some((item) => item.entity === 'FoundationProject')));
+  assert.deepEqual(calls.filter((call) => call.name === 'estimatorProjectWrite').map((call) => call.payload.op), ['filter', 'create', 'filter', 'updateMany']);
 }
 
 {

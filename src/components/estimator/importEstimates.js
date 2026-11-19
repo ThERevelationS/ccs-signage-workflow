@@ -385,7 +385,7 @@ export async function importPartsLibraryRows({
       // A failed existence check is NOT "row absent": fail closed (record an
       // error, skip the row) rather than miscount a recovered row as created.
       const prior = typeof entity?.filter === "function"
-        ? await entity.filter({ idempotency_key: t.idempotencyKey }).catch((e) => {
+        ? await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { idempotency_key: t.idempotencyKey }).catch((e) => {
           result.errors.push({ row: t.row, name: t.data.template_name, message: `Existence check failed — row not imported: ${e?.message || "read error"}` });
           return null;
         })

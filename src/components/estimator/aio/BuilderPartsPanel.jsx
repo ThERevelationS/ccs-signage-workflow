@@ -22,7 +22,6 @@ import CreatePartGroupModal from "./CreatePartGroupModal";
 import BuilderPartEditWarningModal from "./BuilderPartEditWarningModal";
 import DetachedPartOverrideModal from "./DetachedPartOverrideModal";
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
-import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { detachBuilderPartOverride, updateDetachedPartOverride } from "@/components/estimator/builder/partSync";
 import { CopyBomButton } from "@/components/importer/ImportExportButtons";
@@ -306,7 +305,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
     if (!readOnly) {
       let current;
       try {
-        current = await base44.entities.BuilderPartGroup.get(group.id);
+        current = await staffEntities.BuilderPartGroup.get(group.id);
       } catch (error) {
         // Transient pre-read failure — the optimistic toggle would diverge
         // from persisted is_collapsed, so revert it and surface the error.
@@ -319,7 +318,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
       let updated;
       try {
         updated = await replaceBuilderEntityFieldsIfUnchanged({
-          entity: base44.entities.BuilderPartGroup,
+          entity: staffEntities.BuilderPartGroup,
           id: group.id,
           expectedUpdatedAt: current.updated_date || "",
           expectedFields: expectedBuilderEntityFields(current, collapsePatch),
@@ -605,8 +604,8 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
       setLoading(true);
       try {
         const [partRows, groupRows] = await Promise.all([
-          loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Parts" }),
-          loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Groups" }),
+          loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Parts" }),
+          loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Groups" }),
         ]);
         if (!active) return;
         const activeParts = (partRows || [])

@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { estimateAuditSnapshot } from "./estimateLifecycle";
 import { loadAllEntityRows } from "./loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "./estimatePersistence";
@@ -12,7 +13,7 @@ export async function getOpenEstimateRevision(estimateId) {
   // which compounds API calls during estimate page load and can trip the
   // platform rate limit after the preceding builder/part reconciliation.
   const rows = await loadAllEntityRows({
-    entity: base44.entities.EstimateRevision,
+    entity: staffEntities.EstimateRevision,
     query: { estimate_id: estimateId, revision_status: "open" },
     sort: "-revision_number",
     limit: 50,
@@ -24,7 +25,7 @@ export async function getOpenEstimateRevision(estimateId) {
 export async function listEstimateRevisions(estimateId, { strict = false } = {}) {
   if (!estimateId) return [];
   try {
-    const rows = await loadAllEntityRows({ entity: base44.entities.EstimateRevision, query: { estimate_id: estimateId }, sort: "-revision_number", label: "Estimate revisions" });
+    const rows = await loadAllEntityRows({ entity: staffEntities.EstimateRevision, query: { estimate_id: estimateId }, sort: "-revision_number", label: "Estimate revisions" });
     return (rows || []).slice().sort((a, b) => num(b.revision_number) - num(a.revision_number));
   } catch (error) {
     if (strict) throw error;
@@ -141,7 +142,7 @@ export async function revertEstimateToRevision({
   estimateId,
   revisionId,
   sessionToken = "",
-  entity = base44.entities.AllInOneEstimate,
+  entity = staffEntities.AllInOneEstimate,
 } = {}) {
   const id = String(estimateId || "").trim();
   if (!id) throw new Error("Estimate is required to revert.");
@@ -149,7 +150,7 @@ export async function revertEstimateToRevision({
   if (!revId) throw new Error("A target revision is required to revert.");
 
   const [revision, estimate] = await Promise.all([
-    base44.entities.EstimateRevision.get(revId),
+    staffEntities.EstimateRevision.get(revId),
     entity.get(id),
   ]);
   if (!revision?.id) throw new Error("The target revision could not be loaded — reload the revision history.");

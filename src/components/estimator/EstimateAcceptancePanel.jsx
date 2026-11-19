@@ -110,20 +110,20 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
     try {
       const [result, revisions, deliveries, sectionDecisions] = await Promise.all([
         loadAllEntityRows({
-          entity: base44.entities.EstimateAcceptance,
+          entity: staffEntities.EstimateAcceptance,
           query: { estimate_id: estimate.id },
           sort: "accepted_at",
           label: "Estimate acceptances",
         }),
         listEstimateRevisions(estimate.id, { strict: true }),
         loadAllEntityRows({
-          entity: base44.entities.EstimateQuoteDelivery,
+          entity: staffEntities.EstimateQuoteDelivery,
           query: { estimate_id: estimate.id },
           sort: "sent_at",
           label: "Estimate quote deliveries",
         }),
         loadAllEntityRows({
-          entity: base44.entities.EstimateSectionAcceptance,
+          entity: staffEntities.EstimateSectionAcceptance,
           query: { estimate_id: estimate.id },
           sort: "decided_at",
           label: "Estimate section responses",

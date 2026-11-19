@@ -40,7 +40,7 @@ export async function createBuilderPartWithRecovery({
   }
 
   const loadMatches = async () => {
-    const rows = await entity.filter({ builder_product_id: builderProductId, part_key: partKey });
+    const rows = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { builder_product_id: builderProductId, part_key: partKey });
     if (!Array.isArray(rows)) throw new Error(`${label} identity lookup did not return a record list.`);
     return rows.filter((row) =>
       String(row?.builder_product_id || "") === builderProductId &&

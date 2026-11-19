@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { getModule, getModuleLabel, MODULE_TOTAL_FIELD } from "@/components/estimator/moduleRegistry";
 import { acceptBuilderPartPrices, applyBuilderPartPriceAcceptancePlan, loadVerifiedBuilderPartSyncInputs, syncBuilderParts } from "./partSync";
 import { acceptedCustomerUnitPrice, hasNumericValue, liveCustomerUnitPrice, manualCustomerPriceState, sourceProjectEconomics } from "../customerPricing";
@@ -969,7 +968,7 @@ export async function deleteBuilderProductCascade(builderProductId) {
   const [parts, groups, revisions] = await Promise.all([
     loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
     loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Part Groups" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Builder price revisions" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Builder price revisions" }),
   ]);
   if (!Array.isArray(parts) || !Array.isArray(groups) || !Array.isArray(revisions)) {
     throw new Error("Builder Product cascade could not verify all owned records before deletion.");
@@ -998,7 +997,7 @@ export async function deleteBuilderProductCascade(builderProductId) {
   }
   for (const row of revisions) {
     await deleteBuilderEntityIfUnchanged({
-      entity: base44.entities.BuilderPriceRevision,
+      entity: staffEntities.BuilderPriceRevision,
       record: row,
       guardFields: { builder_product_id: builderProductId },
       label: "Builder price revision cascade delete",

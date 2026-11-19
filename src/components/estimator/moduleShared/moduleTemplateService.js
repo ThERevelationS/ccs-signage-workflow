@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -9,7 +9,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 // recovery logic per module (#79).
 export async function saveModuleTemplate({ moduleKey, idempotencyKey, data, label = "Module template" }) {
   return ensureReusableRecord({
-    entity: base44.entities.ProjectTemplate,
+    entity: staffEntities.ProjectTemplate,
     idempotencyKey,
     data: { ...data, module_key: moduleKey },
     label,
@@ -18,7 +18,7 @@ export async function saveModuleTemplate({ moduleKey, idempotencyKey, data, labe
 
 export async function listModuleTemplates({ moduleKey }) {
   return loadAllEntityRows({
-    entity: base44.entities.ProjectTemplate,
+    entity: staffEntities.ProjectTemplate,
     query: { module_key: moduleKey },
     sort: "created_date",
     label: "Module templates",
@@ -49,7 +49,7 @@ export async function deleteModuleTemplate(templateId, label = "Module template"
 
   let current;
   try {
-    current = await base44.entities.ProjectTemplate.get(id);
+    current = await staffEntities.ProjectTemplate.get(id);
   } catch (e) {
     // Only a definitive not-found is "already gone" — a transient read error
     // (500/429/timeout) must NOT mint a false delete-success; rethrow so the
@@ -61,7 +61,7 @@ export async function deleteModuleTemplate(templateId, label = "Module template"
     throw new Error(`${label} record could not be verified; delete aborted.`);
   }
   await deleteEntityIfUnchanged({
-    entity: base44.entities.ProjectTemplate,
+    entity: staffEntities.ProjectTemplate,
     record: current,
     label,
   });

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { FileText, Loader2, Mail, Printer, RefreshCw, Settings2, ShieldCheck } from "lucide-react";
 import { ExportQuoteHtmlButton } from "@/components/importer/ImportExportButtons";
 import { Button } from "@/components/ui/button";
-import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { buildCustomerQuoteRows } from "./customerQuote";
 import { computeEstimateProfitability, DEFAULT_MARGIN_FLOOR_PERCENT } from "./profitability";
@@ -141,7 +140,7 @@ export default function CustomerQuotePanel({
       return () => { active = false; };
     }
     loadAllEntityRows({
-      entity: base44.entities.EstimateQuoteDelivery,
+      entity: staffEntities.EstimateQuoteDelivery,
       query: { estimate_id: estimate.id },
       sort: "sent_at",
       label: "Estimate quote deliveries",
@@ -270,7 +269,7 @@ export default function CustomerQuotePanel({
     let recipient = estimate.contact_email || "";
     if (!recipient && estimate.customer_id) {
       try {
-        const customer = await base44.entities.Customer.get(estimate.customer_id).catch(() => null);
+        const customer = await staffEntities.Customer.get(estimate.customer_id).catch(() => null);
         recipient = customer?.email || customer?.contact_email || customer?.billing_email || customer?.billing_contact_email || "";
       } catch {}
     }
@@ -324,7 +323,7 @@ export default function CustomerQuotePanel({
         // Audit semantics must be version-specific. Fail before Gmail sends if
         // we cannot determine whether this exact quote version was delivered.
         const previousDeliveries = await loadAllEntityRows({
-          entity: base44.entities.EstimateQuoteDelivery,
+          entity: staffEntities.EstimateQuoteDelivery,
           query: { estimate_id: estimate.id },
           sort: "sent_at",
           label: "Estimate quote deliveries",

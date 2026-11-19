@@ -42,7 +42,7 @@ export async function createBuilderProductWithRecovery({
   }
 
   const readIdentity = async (phase) => {
-    const rows = await entity.filter({ estimate_id: estimateId, estimate_line_id: lineId });
+    const rows = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { estimate_id: estimateId, estimate_line_id: lineId });
     if (!Array.isArray(rows)) throw new Error(`${label} ${phase} did not return a Builder Product list.`);
     return rows;
   };

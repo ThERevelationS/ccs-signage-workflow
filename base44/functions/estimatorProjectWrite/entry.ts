@@ -4,17 +4,16 @@ import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { coerceToDeclaredScalars } from '../../shared/entityWriteTypeGuard.ts';
 
 const WRITE_OPS: Record<string, Set<string>> = Object.fromEntries([
-  'FoundationProject',
-  'ChannelLetterInstallation',
-  'VinylProject',
-  'CNCProject',
-  'LaserProject',
-  'MetalProject',
-  'BrickStoneProject',
-  'MaintenanceProject',
-  'Project',
-  'CustomItemsProject',
-].map((name) => [name, new Set(['create', 'update', 'updateMany', 'delete', 'deleteMany'])]));
+  ...[
+    'FoundationProject', 'ChannelLetterInstallation', 'VinylProject', 'CNCProject',
+    'LaserProject', 'MetalProject', 'BrickStoneProject', 'MaintenanceProject', 'Project', 'CustomItemsProject',
+  ].map((name) => [name, new Set(['create', 'update', 'updateMany', 'delete', 'deleteMany', 'filter'])]),
+  ...[
+    'BuilderProduct', 'BuilderPart', 'BuilderPartGroup', 'EstimateClipboardItem',
+    'PartTemplate', 'QuickProduct', 'ProjectTemplate',
+  ].map((name) => [name, new Set(['create', 'updateMany', 'deleteMany', 'filter'])]),
+  ['BuilderPriceRevision', new Set(['deleteMany', 'filter'])],
+]);
 
 function rejectOperatorKeys(value: unknown, path = 'data'): void {
   if (!value || typeof value !== 'object') return;
@@ -28,6 +27,16 @@ function rejectOperatorKeys(value: unknown, path = 'data'): void {
 
 const bad = (message: string, status = 400) =>
   Object.assign(new Error(message), { status });
+
+function validateScalarQuery(query: unknown): asserts query is Record<string, string | number | boolean> {
+  if (!query || Object.prototype.toString.call(query) !== '[object Object]') {
+    throw bad('A scalar query object is required.');
+  }
+  rejectOperatorKeys(query, 'query');
+  if (Object.values(query).some((value) => !['string', 'number', 'boolean'].includes(typeof value))) {
+    throw bad('Query values must be strings, numbers, or booleans.');
+  }
+}
 
 Deno.serve(async (req) => {
   try {
@@ -53,6 +62,21 @@ Deno.serve(async (req) => {
     const coercedFields = coerceToDeclaredScalars(entityName, data);
     if (coercedFields.length) console.log(`estimatorProjectWrite coerced scalar fields on ${entityName}: ${coercedFields.join(', ')}`);
 
+    if (op === 'filter') {
+      const query = body?.query === undefined ? {} : body.query;
+      validateScalarQuery(query);
+      if (new TextEncoder().encode(JSON.stringify(query)).byteLength > 4000) throw bad('Query is too large.');
+      const sort = body?.sort;
+      if (sort !== undefined && (typeof sort !== 'string' || !/^-?[A-Za-z_][\w.]*$/.test(sort))) {
+        throw bad('Invalid sort field.');
+      }
+      const requestedLimit = body?.limit;
+      if (requestedLimit !== undefined && !Number.isInteger(requestedLimit)) throw bad('Limit must be an integer.');
+      const limit = requestedLimit === undefined ? 100 : Math.max(1, Math.min(500, requestedLimit));
+      const items = await entity.filter(query, sort, limit);
+      return Response.json({ success: true, items });
+    }
+
     if (op === 'create') {
       const created = await entity.create(data);
       return Response.json({ success: true, record: created });
@@ -69,7 +93,7 @@ Deno.serve(async (req) => {
       ) {
         throw bad('deleteMany requires an id and updated_date anchored query.');
       }
-      rejectOperatorKeys(delQuery, 'query');
+      validateScalarQuery(delQuery);
       const result = await entity.deleteMany(delQuery);
       return Response.json({ success: true, result });
     }

@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { getModule } from "@/components/estimator/moduleRegistry";
 import { builderMutationHash, pendingBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
@@ -64,7 +63,7 @@ async function loadRemovalPlan(line) {
       staffEntities.BuilderProduct.get(builderProductId),
       loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Builder Parts" }),
       loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Part Groups" }),
-      loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Product removal price revisions" }),
+      loadAllEntityRows({ entity: staffEntities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Product removal price revisions" }),
     ]);
     if (![parts, groups, revisions].every(Array.isArray)) {
       throw new Error("Product removal could not verify all Builder child records before starting.");
@@ -108,7 +107,7 @@ async function preflightChildren(plan, builderProductId) {
   const [parts, groups, revisions] = await Promise.all([
     loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Builder Parts" }),
     loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Part Groups" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Product removal price revisions" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Product removal price revisions" }),
   ]);
   if (![parts, groups, revisions].every(Array.isArray)) throw new Error("Builder child records could not be verified while Product removal was pending.");
 
@@ -165,7 +164,7 @@ async function applyRemovalPlan(plan) {
   const builderProductId = plan.builder?.id || "";
   for (const step of plan.parts || []) await deleteVerified(staffEntities.BuilderPart, step, "Builder Part", builderProductId);
   for (const step of plan.groups || []) await deleteVerified(staffEntities.BuilderPartGroup, step, "Part Group", builderProductId);
-  for (const step of plan.revisions || []) await deleteVerified(base44.entities.BuilderPriceRevision, step, "pricing revision", builderProductId);
+  for (const step of plan.revisions || []) await deleteVerified(staffEntities.BuilderPriceRevision, step, "pricing revision", builderProductId);
 
   if (builderProductId) {
     // Catch a child record created after the initial full preflight before the

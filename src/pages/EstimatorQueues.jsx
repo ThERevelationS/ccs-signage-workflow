@@ -508,7 +508,7 @@ export default function EstimatorQueues() {
       // rethrows, so the catch below reports "not moved" instead of silently
       // skipping the guard.
       const openRevision = (await loadAllEntityRows({
-        entity: base44.entities.EstimateRevision,
+        entity: staffEntities.EstimateRevision,
         query: { estimate_id: e.id, revision_status: "open" },
         sort: "-revision_number",
         limit: 50,

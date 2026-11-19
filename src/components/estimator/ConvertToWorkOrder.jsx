@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Briefcase, CheckCircle2 } from "lucide-react";
@@ -24,7 +24,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       setWorkOrderId("");
       return () => { active = false; };
     }
-    base44.entities.WorkOrder.get(linkedId)
+    staffEntities.WorkOrder.get(linkedId)
       .then((row) => {
         if (!active) return;
         setWorkOrderId(row?.id && row.deleted !== true ? row.id : "");
@@ -84,7 +84,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       // The Work Order may already be committed (a later step failed after
       // the link). Re-read so the alert reflects real state instead of
       // claiming nothing was created.
-      const post = await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => null);
+      const post = await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => null);
       const suffix = post?.work_order_id ? "\n\nA Work Order may already be linked to this estimate — reload before retrying." : "";
       window.alert(`${error?.message || "The Work Order could not be created."}${suffix}`);
     } finally {

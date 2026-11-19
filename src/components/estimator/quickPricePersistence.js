@@ -28,7 +28,7 @@ export async function createQuickPriceProjectWithRecovery({ entity, data, label 
   }
 
   const readMatches = async () => {
-    const rows = await entity.filter({ project_name: projectName, client_name: clientName, status: data.status || "draft" });
+    const rows = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { project_name: projectName, client_name: clientName, status: data.status || "draft" });
     if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
     return rows.filter((row) => matchesPayload(row, data));
   };

@@ -11,7 +11,7 @@ import { copyProductToClipboard } from "@/components/estimator/products/clipboar
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
 import { addCatalogPartToProduct } from "@/components/estimator/parts/customProductService";
 import { pendingBuilderMutationIsStale } from "@/components/estimator/builder/builderMutationRecovery";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const Field = ({ label, className = "", ...props }) => (
@@ -151,7 +151,7 @@ export default function ProductRow({
   const loadCostTrend = async () => {
     if (costTrend !== null || !line.builder_product_id) return;
     try {
-      const rows = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: line.builder_product_id }, sort: "revision_number", label: "Product cost trend" });
+      const rows = await loadAllEntityRows({ entity: staffEntities.BuilderPriceRevision, query: { builder_product_id: line.builder_product_id }, sort: "revision_number", label: "Product cost trend" });
       setCostTrend((rows || []).map((row) => Number(row.new_total_cost ?? row.total_cost ?? row.new_customer_price ?? 0)).filter((v) => Number.isFinite(v)));
     } catch {
       setCostTrend([]);

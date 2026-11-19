@@ -61,7 +61,7 @@ export async function ensureIdempotentEntityCreate({
 
   const payload = { ...data, [cleanField]: cleanKey };
   const load = async () => {
-    const rows = await entity.filter({ [cleanField]: cleanKey });
+    const rows = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { [cleanField]: cleanKey });
     if (!Array.isArray(rows)) throw new Error(`${label} retry state could not be verified.`);
     return rows.filter((row) => String(row?.[cleanField] || "").trim() === cleanKey);
   };
