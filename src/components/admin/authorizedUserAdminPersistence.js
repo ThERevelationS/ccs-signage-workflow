@@ -194,28 +194,3 @@ export async function deleteAuthorizedUserAdmin({ record, sessionToken } = {}) {
   if (!result?.success || result?.deleted !== true) throw new Error("Authorized user deletion could not be verified.");
   return result;
 }
-// Face enrollment goes through enrollFaceAction (server-side descriptor merge —
-// biometric templates never leave the backend, so they can't be merged in the
-// browser). Admins may enroll anyone; staff can self-enroll via the same call.
-export async function enrollFaceDescriptorsAdmin({ record, descriptors, sessionToken } = {}) {
-  if (!record?.id || !record?.email) {
-    throw new Error("User identity is required before face enrollment can be saved.");
-  }
-  if (!Array.isArray(descriptors) || !descriptors.length) {
-    throw new Error("At least one face capture is required before enrollment can be saved.");
-  }
-  try {
-    const response = await base44.functions.invoke("enrollFaceAction", {
-      id: record.id,
-      email: record.email,
-      face_descriptors: descriptors,
-      session_token: requireSessionToken(sessionToken),
-    });
-    const data = response?.data || response;
-    if (data?.error) throw new Error(data.error);
-    if (data?.success !== true) throw new Error("Face enrollment could not be verified.");
-    return data;
-  } catch (error) {
-    throw new Error(error?.response?.data?.error || error?.data?.error || error?.message || "Face enrollment could not be completed safely.");
-  }
-}

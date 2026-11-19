@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Ban, CalendarOff, CheckCircle2, Loader2, XCircle } from "lucide-react";
@@ -46,7 +46,7 @@ export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, on
     setLoading(true);
     setError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const response = await base44.functions.invoke("timeClockActionV2", {
         action: "list_time_off_requests",
         session_token: sessionToken,
         scope: "admin",
@@ -114,7 +114,7 @@ export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, on
     setBusy(true);
     setError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", payload);
+      const response = await base44.functions.invoke("timeClockActionV2", payload);
       const data = response?.data || response;
       if (!data?.success) {
         const serverError = new Error(data?.error || "The time-off decision was not confirmed by the server.");
@@ -211,7 +211,7 @@ export default function TimeOffApprovalPanel({ sessionToken, reviewRequestId, on
 
       <Dialog open={!!selected} onOpenChange={(open) => { if (!open && !busy && !retryingSelected) { setSelected(null); setRetryDecision(null); } }}>
         <DialogContent className="clay-card border-none max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Review Time-Off Request</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Review Time-Off Request</DialogTitle><DialogDescription className="sr-only">Review an employee time-off request and approve or reject it.</DialogDescription></DialogHeader>
           {selected && (
             <div className="space-y-4">
               <div>
