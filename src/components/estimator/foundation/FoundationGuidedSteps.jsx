@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CheckCircle2, Circle } from "lucide-react";
 // O-092 (CMP-H01) -- guided-step progress strip. Reads authored project
 // state and marks each workflow step done / active / pending:
-//   Brief       -> project linked + customer name present
+//   (Brief step removed -- customer + project basics come from the estimate)
 //   Structure   -> at least one foundation item authored
 //   Walls/Caps  -> walls or wall caps authored
 //   Signs/Site  -> poles, cabinets, or painted landscape cells authored
@@ -13,7 +13,6 @@ import { CheckCircle2, Circle } from "lucide-react";
 function stepState(project, calc, savedSourceProject) {
   const cells = Object.keys(project?.landscape?.cells || {}).length;
   const steps = [
-    { label: "Brief", tab: "foundations", done: !!(project?.id && project?.customer_name), hint: "customer + project basics" },
     { label: "Structure", tab: "foundations", done: (calc?.items || []).length > 0, hint: "foundation items" },
     { label: "Walls/Caps", tab: "caps", done: ((calc?.walls || []).length > 0 || (calc?.wallCaps || []).length > 0), hint: "walls + caps" },
     { label: "Signs/Site", tab: "signage", done: ((calc?.poles || []).length > 0 || (project?.signage_cabinets || []).length > 0 || cells > 0), hint: "poles, signs, landscape" },
