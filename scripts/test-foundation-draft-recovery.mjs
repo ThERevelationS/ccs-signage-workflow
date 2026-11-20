@@ -36,6 +36,12 @@ const args = (over = {}) => ({ project: over.project || proj(), baseUpdatedAt: '
 // per-store memory: one fresh backend per STORE creation
 const store = (over = {}) => { const mem = newMem(); return { s: createFoundationDraftStore({ getStorage: () => mem, ...CTX, ...over }), mem }; };
 
+ok('null assembly version round-trips as an unversioned legacy draft', () => {
+  const { s } = store();
+  assert.equal(s.write(args({ project: proj({ assembly_schema_version: null }) })).status, 'stored');
+  assert.equal(s.read().draft.assembly_schema_version, null);
+});
+
 ok('roundtrip: allowlist + whole-assembly IDs/refs preserved; frozen input unchanged', () => {
   const p = freeze(proj());
   const { s } = store();

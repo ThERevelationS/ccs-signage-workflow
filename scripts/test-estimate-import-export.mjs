@@ -30,6 +30,9 @@ export const base44 = {
 };
 export const isRetryableFunction = () => false;
 export const requestGovernor = {};
+export const getSessionToken = () => "";
+export const getSessionUser = () => null;
+export const useAuth = () => ({});
 `);
 const staffStub = resolve(here, '.tmp-staff-eie.mjs');
 writeFileSync(staffStub, `
@@ -54,6 +57,7 @@ buildSync({
     '@/api/entities': stub,
     '@/api/gatedEntities': stub,
     '@/api/base44Client': sdkStub,
+    '@/components/auth/EmailGate': sdkStub,
     '@/components/staff/staffEntities': staffStub,
   },
   define: { 'import.meta.env': '{}' },

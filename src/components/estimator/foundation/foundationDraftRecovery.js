@@ -68,7 +68,7 @@ const checkAssembly = (data) => {
   }
   if (data.customer_pricing !== undefined && !isPlain(data.customer_pricing))
     return "customer_pricing must be a record.";
-  if (data.assembly_schema_version !== undefined && data.assembly_schema_version !== 1)
+  if (data.assembly_schema_version != null && data.assembly_schema_version !== 1)
     return `Unsupported assembly_schema_version: ${data.assembly_schema_version}`;
   return null;
 };

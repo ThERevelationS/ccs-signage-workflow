@@ -85,7 +85,7 @@ const deepClone = (v) => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
 
 const checkTemplateRecord = (data, noun) => {
   if (!isRecord(data)) throw new Error(`Foundation template ${noun} must be a record.`);
-  if (data.assembly_schema_version !== undefined && data.assembly_schema_version !== 1) {
+  if (data.assembly_schema_version != null && data.assembly_schema_version !== 1) {
     throw new Error("Template uses an unsupported assembly version and was not applied.");
   }
 };

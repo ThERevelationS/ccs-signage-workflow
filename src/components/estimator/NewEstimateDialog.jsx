@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { generateDocNumber } from "@/functions/generateDocNumber";
 import { useAuth } from "@/components/auth/EmailGate";
 import { ensureNewEstimate, newEstimateCreationKey } from "./estimateCreationService";
+import { numberForEstimateAttempt } from "./estimateNumberAssignment";
 import { loadAllCustomers, upsertCustomerFromEstimate } from "./customerSync";
 
 export default function NewEstimateDialog({ open, onClose, onCreated }) {
@@ -16,6 +17,7 @@ export default function NewEstimateDialog({ open, onClose, onCreated }) {
   const [projectName, setProjectName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const savingRef = useRef(false);
   const createAttemptRef = useRef({ signature: "", key: "", estimateNumber: "" });
 
   useEffect(() => {
@@ -26,6 +28,7 @@ export default function NewEstimateDialog({ open, onClose, onCreated }) {
   }, [open]);
 
   const handleCreate = async () => {
+    if (savingRef.current) return;
     setError("");
     const selected = customers.find((c) => c.id === customerId);
     const clientName = selected ? selected.company_name : newClientName.trim();
@@ -33,6 +36,7 @@ export default function NewEstimateDialog({ open, onClose, onCreated }) {
       setError("Enter an estimate description and pick or type a client.");
       return;
     }
+    savingRef.current = true;
     setSaving(true);
     try {
       const signature = JSON.stringify([projectName.trim(), selected?.id || "", clientName]);
@@ -50,10 +54,9 @@ export default function NewEstimateDialog({ open, onClose, onCreated }) {
         { sessionToken }
       );
 
-      if (!createAttemptRef.current.estimateNumber) {
-        const res = await generateDocNumber({ doc_type: "estimate", session_token: sessionToken });
-        createAttemptRef.current.estimateNumber = String(res?.data?.number || "").trim();
-      }
+      await numberForEstimateAttempt(createAttemptRef.current, () =>
+        generateDocNumber({ doc_type: "estimate", session_token: sessionToken })
+      );
 
       const estimate = await ensureNewEstimate({
         creationKey: createAttemptRef.current.key,
@@ -74,6 +77,7 @@ export default function NewEstimateDialog({ open, onClose, onCreated }) {
     } catch (e) {
       setError(e.message || "Could not create the estimate.");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Search, Plus, Sparkles } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
 import CustomerSearchDialog from "./CustomerSearchDialog";
@@ -55,8 +55,6 @@ export default function Step1EstimateDetails({
   users,
   termsOptions,
   salesCenters,
-  onGenerateNumber,
-  generating,
   enteredBy,
   onCustomerCreated,
 }) {
@@ -355,17 +353,11 @@ export default function Step1EstimateDetails({
 
         <Row label="Estimate #">
           <input
-            value={form.estimate_number}
-            onChange={(e) => patch({ estimate_number: e.target.value })}
+            value={form.estimate_number || ""}
+            readOnly
+            placeholder="Assigned automatically"
             className={inputCls}
           />
-          <button type="button"
-            onClick={onGenerateNumber}
-            disabled={generating}
-            className="h-[26px] px-2 border border-gray-300 rounded-sm text-[12px] flex items-center gap-1 whitespace-nowrap hover:bg-gray-50 disabled:opacity-60"
-          >
-            <Sparkles className="w-3 h-3" aria-hidden="true" /> Generate
-          </button>
         </Row>
       </div>
 

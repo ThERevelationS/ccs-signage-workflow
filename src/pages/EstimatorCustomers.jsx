@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { getSessionUser, useAuth } from "@/components/auth/EmailGate";
+import { getSessionToken, getSessionUser, useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
 import { Users, Search, Phone, Mail, RefreshCw, X, MapPin, FileText, Briefcase, Loader2, MessageSquare, Printer } from "lucide-react";
 import { backfillCustomersFromWorkOrders, loadAllCustomers } from "@/components/estimator/customerSync";
@@ -331,7 +331,7 @@ export default function EstimatorCustomers() {
     if (reMarkBusy) return;
     setReMarkBusy(true);
     try {
-      const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+      const sessionToken = getSessionToken();
       const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "bulk_remarkup", tier_number: tier });
       const d = res?.data || res;
       window.alert(d?.success ? `${d.flagged} estimate(s) flagged for re-markup.` : (d?.error || "Re-markup failed."));

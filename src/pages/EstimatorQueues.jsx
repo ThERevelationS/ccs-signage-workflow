@@ -11,7 +11,7 @@ import { isEstimateStatusTransitionAllowed, statusTransitionMap, allEstimateStat
 import { staffEntities } from "@/components/staff/staffEntities";
 import { fetchEstimateQueueBundle, loadFullEstimateRow } from "@/components/queues/queueFeedClient";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
-import { getSessionUser, useAuth } from "@/components/auth/EmailGate";
+import { getSessionToken, getSessionUser, useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
 import { ExportEstimatesButton } from "@/components/importer/ImportExportButtons";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
@@ -151,7 +151,7 @@ export default function EstimatorQueues() {
     try {
       const bundle = JSON.parse(await file.text());
       if (!bundle?.estimate?.project_name) throw new Error("Not an estimate export — expected { estimate, products, parts }.");
-      const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+      const sessionToken = getSessionToken();
       const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "import_estimate", bundle });
       const d = res?.data || res;
       if (!d?.success || !d?.estimate_id) throw new Error(d?.error || "Import failed.");
@@ -410,7 +410,7 @@ export default function EstimatorQueues() {
     }
   };
 
-  const queueSessionToken = () => localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+  const queueSessionToken = () => getSessionToken();
 
   // Inline quick actions: duplicate / archive / trash straight from the queue
   // row. All reuse the same CAS-safe helpers as EstimateDetail — nothing here
@@ -648,7 +648,7 @@ export default function EstimatorQueues() {
     if (backupBusy || me?.role !== "admin") return;
     setBackupBusy(true);
     try {
-      const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+      const sessionToken = getSessionToken();
       const res = await base44.functions.invoke("opportunityWorkspaceAction", { action: "full_backup", session_token: sessionToken });
       const d = res?.data || res;
       if (!d?.success) throw new Error(d?.error || "Backup export failed.");
@@ -705,7 +705,7 @@ export default function EstimatorQueues() {
             const projectId = window.prompt("Module project id?", "");
             if (!projectId) return;
             try {
-              const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+              const sessionToken = getSessionToken();
               const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "estimate_from_module", module_key: moduleKey.trim(), project_id: projectId.trim() });
               const d = res?.data || res;
               if (!d?.success || !d?.estimate_id) throw new Error(d?.error || "Wrap failed.");

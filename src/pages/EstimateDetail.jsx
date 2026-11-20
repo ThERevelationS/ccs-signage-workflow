@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ClipboardPaste, Clock, Eye, FileMinus, LockKeyhole, PencilLine, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useAuth } from "@/components/auth/EmailGate";
+import { getSessionToken, useAuth } from "@/components/auth/EmailGate";
+import { generateDocNumber } from "@/functions/generateDocNumber";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
 import AddProductGrid from "@/components/estimator/aio/AddProductGrid";
@@ -35,7 +36,7 @@ import { estimateCustomerChangedKeys, syncEstimateEverywhere } from "@/component
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
-import { ExportEstimateJsonButton, ImportLineItemsButton, ImportTemplateSectionsButton, ExportJobCostingCsvButton } from "@/components/importer/ImportExportButtons";
+import { ImportLineItemsButton, ImportTemplateSectionsButton, ExportJobCostingCsvButton } from "@/components/importer/ImportExportButtons";
 import EstimateActivityPanel from "@/components/estimator/EstimateActivityPanel";
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
@@ -47,6 +48,8 @@ import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged, softDeleteEstimateFromLoadedSnapshot, restoreEstimateFromLoadedTrashSnapshot } from "@/components/estimator/estimatePersistence";
 import { duplicateEstimate, splitEstimate, newEstimateCreationKey, estimateLineSelectionKey } from "@/components/estimator/estimateCreationService";
+import { assignMissingEstimateNumber, needsEstimateNumber } from "@/components/estimator/estimateNumberAssignment";
+import { approvalWatchError, approvalWatchIndex, changeApprovalWatch, listApprovalWatches } from "@/components/estimator/estimateApprovalWatch";
 import MergeEstimateDialog from "@/components/estimator/aio/MergeEstimateDialog";
 import EstimateNotesTimeline from "@/components/estimator/aio/EstimateNotesTimeline";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -123,6 +126,9 @@ export default function EstimateDetail() {
   const [saving, setSaving] = useState(false);
   const [watchBusy, setWatchBusy] = useState(false);
   const [watchNote, setWatchNote] = useState("");
+  const [watching, setWatching] = useState(null);
+  const [numberError, setNumberError] = useState("");
+  const numberAttemptsRef = useRef(new Map());
   const [statusMap, setStatusMap] = useState(null);
   // Custom statuses (#493): QuoteDefaults custom_statuses + status_transitions
   // merge over the baked transition enum.
@@ -414,6 +420,68 @@ export default function EstimateDetail() {
       setLoading(false);
     });
   }, [id]);
+
+  useEffect(() => {
+    if (!sessionToken || !needsEstimateNumber(persistedEstimate)) return;
+    const estimateId = persistedEstimate.id;
+    const baselineVersion = serverUpdatedAtRef.current;
+    let attempt = numberAttemptsRef.current.get(estimateId);
+    if (!attempt) {
+      attempt = assignMissingEstimateNumber({
+        entity: staffEntities.AllInOneEstimate,
+        estimateId,
+        issueNumber: async () => {
+          const result = await generateDocNumber({ doc_type: "estimate", session_token: sessionToken });
+          return result?.data?.number || result?.number;
+        },
+        saveNumber: (current, number) => {
+          const nextFields = { estimate_number: number };
+          return replaceEstimateFieldsIfUnchanged({
+            entity: staffEntities.AllInOneEstimate, estimateId,
+            expectedFields: expectedEstimateFields(current, nextFields),
+            guardFields: { status: current.status, deleted: current.deleted },
+            nextFields, maxAttempts: 1, label: "Estimate number",
+          });
+        },
+      });
+      numberAttemptsRef.current.set(estimateId, attempt);
+    }
+    let active = true;
+    const applyRecord = (record) => {
+      if (!active || !record?.id) return;
+      const update = (previous) => previous?.id === estimateId && !String(previous.estimate_number || "").trim()
+        ? {
+            ...previous,
+            estimate_number: record.estimate_number,
+            ...(previous.updated_date === baselineVersion ? { updated_date: record.updated_date } : {}),
+            ...(record.deleted === true ? { deleted: true } : {}),
+            ...(record.status === "archived" ? { status: "archived" } : {}),
+          }
+        : previous;
+      setEstimate(update);
+      setPersistedEstimate(update);
+      if (serverUpdatedAtRef.current === baselineVersion && record.updated_date) serverUpdatedAtRef.current = record.updated_date;
+    };
+    attempt.then((record) => {
+      applyRecord(record);
+      if (active) setNumberError("");
+    }).catch((error) => {
+      applyRecord(error?.latestEstimate);
+      if (active) setNumberError("The estimate number could not be assigned. Reload and try again.");
+    });
+    return () => { active = false; };
+  }, [persistedEstimate?.id, persistedEstimate?.estimate_number, persistedEstimate?.status, persistedEstimate?.deleted, sessionToken]);
+
+  useEffect(() => {
+    if (!estimate?.id || estimate.deleted === true || persistedEstimate?.status === "approved") return;
+    let active = true;
+    setWatching(null);
+    setWatchNote("");
+    listApprovalWatches({ invoke: base44.functions.invoke, sessionToken: getSessionToken() })
+      .then((watches) => { if (active) setWatching(approvalWatchIndex(watches, estimate.id) >= 0); })
+      .catch((error) => { if (active) setWatchNote(approvalWatchError(error)); });
+    return () => { active = false; };
+  }, [estimate?.id, estimate?.deleted, persistedEstimate?.status, sessionToken]);
 
   // Fire the approval celebration whenever the persisted status transitions
   // to "approved" — covers the staff approve button, the conversion path, and
@@ -825,7 +893,7 @@ export default function EstimateDetail() {
         window.alert(`An estimate cannot go from ${before.status || "draft"} to ${estimate.status || "draft"} directly. Send it first — approval is only allowed after the quote has been sent.`);
         return;
       }
-      const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...data } = estimate;
+      const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, estimate_number: _estimate_number, ...data } = estimate;
       // A save recomputes pricing — clear the tier-change stale flag (#145).
       data.pricing_stale = false;
       data.pricing_stale_reason = "";
@@ -1106,7 +1174,7 @@ export default function EstimateDetail() {
       throw new Error("The estimate changed while the quote was being sent. The email was delivered, but the estimate was not auto-finalized to avoid recording the wrong quote version.");
     }
 
-    const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...data } = estimate;
+    const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, estimate_number: _estimate_number, ...data } = estimate;
     const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
     const persistedData = {
       ...data,
@@ -1699,6 +1767,7 @@ export default function EstimateDetail() {
         duplicating={duplicating}
         onMerge={() => setMergeOpen(true)}
       />
+      {numberError && <div role="alert" className="px-3 pb-2 text-[11px] text-red-700">{numberError}</div>}
 
       {estimate.opportunity_id && (
         <div className="px-3 pb-2">
@@ -1732,39 +1801,27 @@ export default function EstimateDetail() {
           <button type="button" disabled={watchBusy} onClick={async () => {
             if (watchBusy) return;
             setWatchBusy(true);
+            setWatchNote("");
             try {
-              const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
-              const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "set_watch", entity: "AllInOneEstimate", record_id: estimate.id, field: "status", value: "approved", label: estimate.project_name || estimate.estimate_number || "this estimate" });
-              if ((res?.data || res)?.success) setWatchNote("Watching — you'll see a notice when it's approved.");
-            } catch (e) { setWatchNote(e?.message || "Couldn't set the watch."); } finally { setWatchBusy(false); }
+              if (watching === null) {
+                const watches = await listApprovalWatches({ invoke: base44.functions.invoke, sessionToken: getSessionToken() });
+                setWatching(approvalWatchIndex(watches, estimate.id) >= 0);
+              } else {
+                setWatching(await changeApprovalWatch({ invoke: base44.functions.invoke, getToken: getSessionToken, estimate, watching }));
+              }
+            } catch (error) { setWatchNote(approvalWatchError(error)); } finally { setWatchBusy(false); }
           }}
             className="inline-flex items-center gap-1.5 rounded border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50">
-            <Eye className="w-3.5 h-3.5" aria-hidden="true" /> Watch for approval
+            <Eye className="w-3.5 h-3.5" aria-hidden="true" /> {watching === null ? "Check approval watch" : watching ? "Stop watching" : "Watch for approval"}
           </button>
-          {watchNote ? <span className="ml-2 text-[10px] text-violet-600">{watchNote}</span> : null}
-          <button type="button" onClick={async () => {
-            try {
-              const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
-              const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "export_estimate", estimate_id: estimate.id });
-              const d = res?.data || res;
-              if (!d?.success || !d?.bundle) throw new Error(d?.error || "Export failed.");
-              const blob = new Blob([JSON.stringify(d.bundle, null, 2)], { type: "application/json" });
-              const a = document.createElement("a");
-              a.href = URL.createObjectURL(blob);
-              a.download = `estimate-${estimate.estimate_number || estimate.id}.json`;
-              a.click();
-              setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-            } catch (e) { window.alert(e?.message || "Export failed."); }
-          }}
-            className="ml-2 inline-flex items-center gap-1 rounded border border-gray-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 hover:bg-gray-50" title="Export this estimate + parts + audit as re-importable JSON (#451)">
-            Export JSON
-          </button>
+          {watching && <span className="ml-2 text-[10px] text-violet-600">Watching for approval</span>}
+          {watchNote ? <span role="alert" className="ml-2 text-[10px] text-red-600">{watchNote}</span> : null}
           <button type="button" onClick={async () => {
             const raw = window.prompt("Copy BOM (parts + products) from which estimate id or number?", "");
             const q = String(raw || "").trim();
             if (!q) return;
             try {
-              const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+              const sessionToken = getSessionToken();
               // Resolve an estimate_number or raw id to a source estimate.
               let src = await staffEntities.AllInOneEstimate.filter({ estimate_number: q }, undefined, 1).catch(() => []);
               if (!Array.isArray(src) || !src.length) src = await staffEntities.AllInOneEstimate.get(q).catch(() => null);
@@ -1784,7 +1841,7 @@ export default function EstimateDetail() {
             const q = String(raw || "").trim();
             if (!q) return;
             try {
-              const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+              const sessionToken = getSessionToken();
               let src = await staffEntities.AllInOneEstimate.filter({ estimate_number: q }, undefined, 1).catch(() => []);
               if (!Array.isArray(src) || !src.length) src = await staffEntities.AllInOneEstimate.get(q).catch(() => null);
               const srcRow = Array.isArray(src) ? src[0] : src;
@@ -1982,7 +2039,6 @@ export default function EstimateDetail() {
               <EstimateQuoteDeliveryPanel estimate={estimate} refreshKey={deliveryRefreshKey + revisionRefreshKey} />
               <div className="flex flex-wrap items-center gap-1.5 rounded border border-gray-200 bg-gray-50 px-2 py-1.5">
                 <span className="text-[9px] font-bold tracking-wide text-gray-500">IMPORT / EXPORT</span>
-                <ExportEstimateJsonButton estimate={estimate} />
                 <ImportLineItemsButton estimate={estimate} onApplied={refreshProducts} />
                 <ImportTemplateSectionsButton estimate={estimate} onApplied={refreshProducts} />
                 <ExportJobCostingCsvButton estimate={estimate} />
