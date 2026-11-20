@@ -13,6 +13,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { getSessionUser } from "@/components/auth/EmailGate";
+import { canEditLibraryItem, canSeeLibraryItem, isLibraryOwner, ownerOf } from "@/components/estimator/products/libraryOwnership";
 import { ESTIMATOR_MODULES } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
 import { loadProductionProductTypes } from "@/components/estimator/productionProductTypes";
@@ -56,7 +57,7 @@ function QuickProductEditDialog({ product, user, open, onClose, onSaved, product
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const saveRef = useRef(false);
-  const canEdit = !!product && (user?.role === "admin" || !product.created_by_id || String(product.created_by_id).startsWith("service_") || product.created_by_id === user?.id);
+  const canEdit = !!product && canEditLibraryItem(product, user);
 
   const draftFromProduct = (row) => ({
     product_name: row?.product_name || "",
@@ -88,6 +89,7 @@ function QuickProductEditDialog({ product, user, open, onClose, onSaved, product
     try {
       const live = await staffEntities.QuickProduct.get(product.id);
       if (!live) throw new Error("This Quick Product no longer exists. Reload the library before editing it again.");
+      if (!canEditLibraryItem(live, user)) throw new Error("You no longer have permission to edit this Quick Product.");
       if (product.updated_date && live.updated_date && product.updated_date !== live.updated_date) {
         onSaved?.(live);
         setDraft(draftFromProduct(live));
@@ -130,11 +132,11 @@ function QuickProductEditDialog({ product, user, open, onClose, onSaved, product
           <p className="text-[10px] text-gray-300 mt-1">Metadata only. Builder configuration, Parts, Part Groups, frozen inventory snapshots and frozen pricing are not rewritten.</p>
         </DialogHeader>
         <form onSubmit={save} className="p-5 bg-white space-y-4">
-          {!canEdit && <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800">This Global Quick Product was created by another user. You can use it, but only its creator or an admin can edit it.</div>}
+          {!canEdit && <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800">Saved by {ownerOf(product)}. Only the owner or an admin can edit it.</div>}
           <fieldset disabled={!canEdit} className="contents">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="text-[10px] font-bold tracking-wide text-gray-500 sm:col-span-2">PRODUCT NAME<input autoFocus value={draft.product_name} onChange={(event) => patch({ product_name: event.target.value })} className="mt-1 w-full h-[34px] px-3 border border-gray-300 rounded text-[12px]" /></label>
-            <label className="text-[10px] font-bold tracking-wide text-gray-500">LIBRARY<select value={draft.product_group} onChange={(event) => patch({ product_group: event.target.value })} className="mt-1 w-full h-[34px] px-2 border border-gray-300 rounded bg-white text-[12px]"><option value="my">My Quick Products</option><option value="global">Global Quick Products</option></select></label>
+            <label className="text-[10px] font-bold tracking-wide text-gray-500">LIBRARY<select value={draft.product_group} onChange={(event) => patch({ product_group: event.target.value })} className="mt-1 w-full h-[34px] px-2 border border-gray-300 rounded bg-white text-[12px]"><option value="my">Only visible to me</option><option value="global">Visible to everyone</option></select></label>
             <label className="text-[10px] font-bold tracking-wide text-gray-500">PRODUCT CATEGORY<input value={draft.product_category} onChange={(event) => patch({ product_category: event.target.value })} className="mt-1 w-full h-[34px] px-3 border border-gray-300 rounded text-[12px]" placeholder="e.g. Wall Signs" /></label>
             <label className="text-[10px] font-bold tracking-wide text-gray-500 sm:col-span-2">PRODUCTION PRODUCT TYPE<select value={draft.production_product_type} onChange={(event) => patch({ production_product_type: event.target.value })} className="mt-1 w-full h-[34px] px-2 border border-gray-300 rounded bg-white text-[12px]"><option value="">Unclassified</option>{draft.production_product_type && !productionProductTypes.includes(draft.production_product_type) && <option value={draft.production_product_type}>{draft.production_product_type} (not in current SIP list)</option>}{productionProductTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select><span className="block mt-1 text-[9px] font-normal text-gray-400">Used when this Quick Product is converted into a Work Order/SIP product.</span></label>
             <label className="text-[10px] font-bold tracking-wide text-gray-500 sm:col-span-2">SEARCH CATEGORIES<input value={draft.categories_text} onChange={(event) => patch({ categories_text: event.target.value })} className="mt-1 w-full h-[34px] px-3 border border-gray-300 rounded text-[12px]" placeholder="Interior, Acrylic, Routed, ADA" /><span className="block mt-1 text-[9px] font-normal text-gray-400">Comma separated. These organize/search the reusable template and do not alter its Parts.</span></label>
@@ -203,9 +205,7 @@ export default function EstimatorProducts() {
     const q = query.trim().toLowerCase();
     return quickProducts.filter((product) => {
       const group = product.product_group === "global" ? "global" : "my";
-      // "My" templates are personal by definition. Built-in created_by_id is the
-      // ownership boundary; unowned rows remain visible for imported legacy compatibility.
-      if (group === "my" && product.created_by_id && !String(product.created_by_id).startsWith("service_") && product.created_by_id !== user?.id && user?.role !== "admin") return false;
+      if (user?.role !== "admin" && !canSeeLibraryItem(product, user)) return false;
       if (scope !== "all" && group !== scope) return false;
       if (status === "active" && product.is_active === false) return false;
       if (status === "inactive" && product.is_active !== false) return false;
@@ -215,9 +215,9 @@ export default function EstimatorProducts() {
       const haystack = [product.product_name, product.source_builder_name, product.source_module_key, product.product_category, product.production_product_type, product.client_description, product.product_notes, ...(product.categories || [])].filter(Boolean).join(" ").toLowerCase();
       return q.split(/\s+/).every((term) => haystack.includes(term));
     }).sort((a, b) => String(a.product_name || "").localeCompare(String(b.product_name || "")));
-  }, [quickProducts, query, scope, categoryFilter, status, moduleFilter, user?.id, user?.role]);
+  }, [quickProducts, query, scope, categoryFilter, status, moduleFilter, user?.email, user?.role]);
 
-  const accessibleQuickProducts = quickProducts.filter((product) => user?.role === "admin" || product.product_group === "global" || !product.created_by_id || String(product.created_by_id).startsWith("service_") || product.created_by_id === user?.id);
+  const accessibleQuickProducts = quickProducts.filter((product) => user?.role === "admin" || canSeeLibraryItem(product, user));
   const activeCount = accessibleQuickProducts.filter((product) => product.is_active !== false).length;
   const globalCount = accessibleQuickProducts.filter((product) => product.is_active !== false && product.product_group === "global").length;
   const myCount = accessibleQuickProducts.filter((product) => product.is_active !== false && product.product_group !== "global").length;
@@ -247,14 +247,14 @@ export default function EstimatorProducts() {
           price.quantity,
           price.frozenUnit.toFixed(2),
           price.extended.toFixed(2),
-          product.product_group === "global" ? "Global" : "My",
+          product.product_group === "global" ? "Everyone" : "Only me",
           product.is_active === false ? "Inactive" : "Active",
         ];
       }));
   };
 
   const toggleActive = async (product) => {
-    const canEdit = user?.role === "admin" || !product?.created_by_id || String(product?.created_by_id).startsWith("service_") || product.created_by_id === user?.id;
+    const canEdit = canEditLibraryItem(product, user);
     if (!canEdit) return setEditing(product);
     if (!product?.id || libraryError || toggleRef.current.has(product.id)) return;
     toggleRef.current.add(product.id);
@@ -262,6 +262,7 @@ export default function EstimatorProducts() {
     try {
       const live = await staffEntities.QuickProduct.get(product.id);
       if (!live) throw new Error("This Quick Product no longer exists. Reload the library.");
+      if (!canEditLibraryItem(live, user)) { updateLocal(live); throw new Error("You no longer have permission to change this Quick Product."); }
       if ((live.is_active !== false) !== (product.is_active !== false)) {
         updateLocal(live);
         throw new Error("This Quick Product status changed in another session. The latest status has been restored; review it before changing again.");
@@ -326,7 +327,7 @@ export default function EstimatorProducts() {
               <div className="min-w-0 lg:flex-1"><h2 className="text-[13px] font-bold text-gray-900">Quick Product Library</h2><p className="text-[10px] text-gray-500">Reusable Product snapshots saved from an estimate Product. Metadata can change here without rewriting the frozen Builder/Part package.</p></div>
               <div className="flex flex-wrap items-center gap-1.5">
                 <div className="relative w-[230px]"><Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" aria-hidden="true" /><input value={query} onChange={(event) => { const v = event.target.value; setQuery(v); const next = new URLSearchParams(searchParams); if (v) next.set("q", v); else next.delete("q"); setSearchParams(next, { replace: true }); }} aria-label="Search quick products" placeholder="Search Quick Products..." className="w-full h-[30px] pl-8 pr-2 border border-gray-300 rounded text-[11px]" /></div>
-                <select value={scope} onChange={(event) => setScope(event.target.value)} aria-label="Library scope filter" className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">My + Global</option><option value="my">My</option><option value="global">Global</option></select>
+                <select value={scope} onChange={(event) => setScope(event.target.value)} aria-label="Library scope filter" className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">All visible</option><option value="my">Only me</option><option value="global">Everyone</option></select>
                 <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Category filter" className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">All Categories</option>{productCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select>
                 <select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Active status filter" className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="active">Active</option><option value="inactive">Inactive</option><option value="all">All Statuses</option></select>
                 <button type="button" onClick={exportCsv} disabled={visibleQuickProducts.length === 0} className="h-[30px] px-2.5 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" /> CSV</button>
@@ -353,13 +354,13 @@ export default function EstimatorProducts() {
                       const price = productPrice(product);
                       const partCount = product.parts_snapshot?.length ?? product.parts?.length ?? 0;
                       const global = product.product_group === "global";
-                      const canEditProduct = user?.role === "admin" || !product.created_by_id || String(product.created_by_id).startsWith("service_") || product.created_by_id === user?.id;
+                      const canEditProduct = canEditLibraryItem(product, user);
                       return <tr key={product.id} className="hover:bg-gray-50/70">
                         <td className="px-4 py-2.5 min-w-[230px]"><div className="text-[11px] font-bold text-gray-900">{product.product_name || "Quick Product"}</div><div className="mt-0.5 text-[9px] text-gray-400 truncate max-w-[320px]">{product.product_category || (product.categories || []).join(" · ") || "Uncategorized"}</div>{product.production_product_type && <div className="mt-0.5 text-[8px] text-cyan-700 truncate max-w-[320px]">Production: {product.production_product_type}</div>}</td>
                         <td className="px-3 py-2.5 text-[10px] text-gray-600 whitespace-nowrap">{moduleLabel(product.source_module_key || (product.source_product_class === "custom" ? "custom" : ""))}<div className="text-[8px] text-gray-400">Template v{num(product.template_version, 1)}</div></td>
                         <td className="px-3 py-2.5 text-[10px] text-gray-700">{partCount}<div className="text-[8px] text-gray-400">{product.part_groups_snapshot?.length || 0} groups</div></td>
                         <td className="px-3 py-2.5 text-right whitespace-nowrap"><div className="text-[11px] font-bold text-gray-900">{money(price.extended)}</div>{price.quantity !== 1 && <div className="text-[8px] text-gray-400">{price.quantity} × {money(price.frozenUnit)}</div>}</td>
-                        <td className="px-3 py-2.5"><span className={`inline-flex items-center gap-1 h-[22px] px-2 rounded border text-[9px] font-bold ${global ? "border-blue-200 bg-blue-50 text-blue-700" : "border-violet-200 bg-violet-50 text-violet-700"}`}>{global ? <ShieldCheck className="w-3 h-3" /> : <UserRound className="w-3 h-3" />}{global ? "GLOBAL" : "MY"}</span></td>
+                        <td className="px-3 py-2.5"><span className={`inline-flex items-center gap-1 h-[22px] px-2 rounded border text-[9px] font-bold ${global ? "border-blue-200 bg-blue-50 text-blue-700" : "border-violet-200 bg-violet-50 text-violet-700"}`}>{global ? <ShieldCheck className="w-3 h-3" /> : <UserRound className="w-3 h-3" />}{global ? "Everyone" : "Only me"}</span>{global && ownerOf(product) && !isLibraryOwner(product, user) && <div className="mt-1 text-[9px] text-gray-400">{ownerOf(product)}</div>}</td>
                         <td className="px-3 py-2.5"><span className={`inline-flex items-center gap-1 text-[9px] font-semibold ${product.is_active === false ? "text-gray-400" : "text-emerald-700"}`}>{product.is_active === false ? "Inactive" : <><CheckCircle2 className="w-3 h-3" /> Active</>}</span></td>
                         <td className="px-4 py-2.5"><div className="flex justify-end gap-1"><button type="button" disabled={!!libraryError} onClick={() => setEditing(product)} className="h-[27px] px-2.5 rounded border border-gray-300 bg-white text-[9px] font-bold text-gray-700 hover:bg-gray-50">{canEditProduct ? "Edit" : "View"}</button>{canEditProduct && <button type="button" disabled={!!libraryError} onClick={() => toggleActive(product)} className="h-[27px] px-2.5 rounded border border-gray-300 bg-white text-[9px] font-bold text-gray-600 hover:bg-gray-50">{product.is_active === false ? "Activate" : "Deactivate"}</button>}</div></td>
                       </tr>;

@@ -1,4 +1,5 @@
 import { getSessionUser } from "@/components/auth/EmailGate";
+import { canSeeLibraryItem } from "@/components/estimator/products/libraryOwnership";
 import { snapshotHash } from "@/components/estimator/builder/builderService";
 import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
@@ -47,6 +48,7 @@ export async function saveProductAsQuickProduct({
   const normalizedGroup = productGroup === "global" ? "global" : "my";
   const normalizedCategories = (categories || []).map((item) => String(item).trim()).filter(Boolean);
   const idempotencyKey = `quick_product_save:${builderMutationHash({
+    user_email: String(getSessionUser()?.email || "").trim().toLowerCase(),
     estimate_id: estimateId,
     builder_product_id: builder.id,
     builder_updated_date: builder.updated_date || "",
@@ -1022,7 +1024,7 @@ export async function instantiateQuickProduct({ estimateId, quickProduct, expect
   ]);
   if (!liveQuickProduct) throw new Error("This Quick Product no longer exists. Reopen Add Product to refresh the library.");
   if (liveQuickProduct.is_active === false) throw new Error("This Quick Product is now inactive and cannot be added. Reopen Add Product to refresh the library.");
-  const accessible = liveQuickProduct.product_group === "global" || !liveQuickProduct.created_by_id || String(liveQuickProduct.created_by_id).startsWith("service_") || (!!me?.id && liveQuickProduct.created_by_id === me.id);
+  const accessible = canSeeLibraryItem(liveQuickProduct, me);
   if (!accessible) throw new Error("This Quick Product is no longer available to your account.");
   if (quickProduct.updated_date && liveQuickProduct.updated_date && quickProduct.updated_date !== liveQuickProduct.updated_date) {
     throw new Error("This Quick Product changed after the Add Product window loaded. Reopen Add Product and review the latest reusable Product before adding it.");
@@ -1081,10 +1083,7 @@ export async function listQuickProducts() {
   return (rows || [])
     .filter((row) => {
       if (row.is_active === false) return false;
-      if (row.product_group === "global") return true;
-      // Built-in created_by_id is the ownership boundary for "My Quick Products".
-      // Keep unowned rows visible for compatibility with any future imported legacy data.
-      return !row.created_by_id || String(row.created_by_id).startsWith("service_") || (!!me?.id && row.created_by_id === me.id);
+      return canSeeLibraryItem(row, me);
     })
     .sort((a, b) => String(a.product_name || "").localeCompare(String(b.product_name || "")));
 }

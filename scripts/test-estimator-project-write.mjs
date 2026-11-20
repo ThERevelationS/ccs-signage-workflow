@@ -25,7 +25,7 @@ const adminEntityOps = {
 const equipmentOps = ['create', 'update', 'updateMany', 'delete', 'deleteMany', 'filter'];
 const estimatorEntities = [
   ...projectEntities, ...builderEntities, 'BuilderPriceRevision', ...Object.keys(adminEntityOps),
-  'ChannelLetterInstallEquipment',
+  'ChannelLetterInstallEquipment', 'QuickProductCategory',
 ];
 const copy = (value) => structuredClone(value);
 const guardSource = buildSync({
@@ -34,6 +34,11 @@ const guardSource = buildSync({
 }).outputFiles[0].text;
 const guardModule = { exports: {} };
 runInNewContext(guardSource, { module: guardModule, exports: guardModule.exports, console });
+const librarySource = transformSync(readFileSync('base44/shared/libraryFilteredRead.ts', 'utf8'), {
+  loader: 'ts', format: 'cjs',
+}).code;
+const libraryModule = { exports: {} };
+runInNewContext(librarySource, { module: libraryModule, exports: libraryModule.exports });
 
 const source = transformSync(readFileSync('base44/functions/estimatorProjectWrite/entry.ts', 'utf8'), {
   loader: 'ts', format: 'cjs',
@@ -55,9 +60,9 @@ function fixture() {
       stores[name].push(row);
       return copy(row);
     },
-    async filter(query, sort, limit) {
-      calls.push({ entity: name, op: 'filter', query: copy(query), sort, limit });
-      return stores[name].filter((item) => Object.entries(query).every(([key, value]) => item[key] === value)).slice(0, limit).map(copy);
+    async filter(query, sort, limit, skip = 0) {
+      calls.push({ entity: name, op: 'filter', query: copy(query), sort, limit, skip });
+      return stores[name].filter((item) => Object.entries(query).every(([key, value]) => item[key] === value)).slice(skip, skip + limit).map(copy);
     },
     async update(id, data) {
       calls.push({ entity: name, op: 'update', id, data: copy(data) });
@@ -91,9 +96,10 @@ function fixture() {
     '../../shared/entityRateLimitRetry.ts': { withEntityRateLimitRetry: (value) => value },
     '../../shared/signShopSession.ts': { authenticateSignShopSession: async (_sdk, token) => {
       if (!token) throw Object.assign(new Error('Authentication required'), { status: 401 });
-      return { email: 'staff@example.test', role: token === 'admin' ? 'admin' : 'staff' };
+      return { email: token === 'other' ? 'Other@Example.test' : ' Staff@Example.test ', role: token === 'admin' ? 'admin' : 'staff' };
     } },
     '../../shared/entityWriteTypeGuard.ts': guardModule.exports,
+    '../../shared/libraryFilteredRead.ts': libraryModule.exports,
   };
   runInNewContext(source, {
     require: (name) => { if (!imports[name]) throw new Error(`Unexpected import ${name}`); return imports[name]; },
@@ -109,6 +115,97 @@ function fixture() {
       return { status: response.status, body: await response.json() };
     },
   };
+}
+
+{
+  for (const entity of ['PartTemplate', 'QuickProduct']) {
+    const app = fixture();
+    const created = await app.invoke({ entity, op: 'create', data: { owner_email: 'forged@example.test', product_group: 'my' } });
+    assert.equal(created.status, 200);
+    assert.equal(created.body.record.owner_email, 'staff@example.test');
+    const { id } = created.body.record;
+    let version = created.body.record.updated_date;
+    const update = (patch) => ({ entity, op: 'updateMany', id, query: { id, updated_date: version }, update: { $set: patch } });
+    const remove = () => ({ entity, op: 'deleteMany', query: { id, updated_date: version } });
+    const refused = await app.invoke(update({ notes: 'bad' }), 'other');
+    assert.equal(refused.status, 403);
+    assert.equal(refused.body.error, 'Only the owner or an admin can change this item.');
+    assert.equal((await app.invoke(remove(), 'other')).status, 403);
+    assert.equal((await app.invoke(update({ notes: 'owner', owner_email: 'forged@example.test' }))).status, 200);
+    assert.equal(app.stores[entity][0].owner_email, 'staff@example.test');
+    version = app.stores[entity][0].updated_date;
+    assert.equal((await app.invoke(update({ product_group: 'global' }))).status, 200);
+    assert.equal((await app.invoke({ entity, op: 'filter', query: { id } }, 'other')).body.items.length, 1);
+    version = app.stores[entity][0].updated_date;
+    assert.equal((await app.invoke(update({ notes: 'still not owner' }), 'other')).status, 403);
+    assert.equal((await app.invoke(update({ product_group: 'my' }))).status, 200);
+    assert.equal((await app.invoke({ entity, op: 'filter', query: { id } }, 'other')).body.items.length, 0);
+    version = app.stores[entity][0].updated_date;
+    assert.equal((await app.invoke(update({ notes: 'admin', owner_email: 'other@example.test' }), 'admin')).status, 200);
+    assert.equal(app.stores[entity][0].owner_email, 'staff@example.test');
+    version = app.stores[entity][0].updated_date;
+    assert.equal((await app.invoke(remove(), 'admin')).status, 200);
+    assert.equal((await app.invoke(remove())).status, 404);
+    app.stores[entity].push({ id: 'legacy', updated_date: 'legacy-v1', created_by_id: 'old-platform-user' });
+    const claim = await app.invoke({ entity, op: 'updateMany', id: 'legacy',
+      query: { id: 'legacy', updated_date: 'legacy-v1' },
+      update: { $set: { notes: 'claimed', owner_email: 'forged@example.test' } } }, 'other');
+    assert.equal(claim.status, 200);
+    assert.equal(app.stores[entity][0].owner_email, 'other@example.test');
+    assert.equal((await app.invoke({ entity, op: 'deleteMany',
+      query: { id: 'legacy', updated_date: app.stores[entity][0].updated_date } }, 'other')).status, 200);
+  }
+  for (const entity of ['PartTemplate', 'QuickProduct', 'QuickProductCategory']) {
+    const app = fixture();
+    app.stores[entity].push(
+      { id: 'mine', product_group: 'my', owner_email: 'STAFF@example.test' },
+      { id: 'other', product_group: 'my', owner_email: 'other@example.test' },
+      { id: 'shared', product_group: 'global', owner_email: 'other@example.test' },
+      { id: 'legacy', product_group: 'my', created_by_id: 'old-platform-user' },
+    );
+    const staff = await app.invoke({ entity, op: 'filter', query: {} });
+    assert.deepEqual(staff.body.items.map((row) => row.id), ['mine', 'shared', 'legacy']);
+    const admin = await app.invoke({ entity, op: 'filter', query: {} }, 'admin');
+    assert.equal(admin.body.items.length, 4);
+  }
+  const category = fixture();
+  for (const op of ['create', 'update', 'updateMany', 'delete', 'deleteMany']) {
+    assert.equal((await category.invoke({ entity: 'QuickProductCategory', op })).status, 403);
+  }
+}
+
+{
+  for (const entity of ['PartTemplate', 'QuickProduct', 'QuickProductCategory']) {
+    const app = fixture();
+    app.stores[entity].push(...Array.from({ length: 1001 }, (_, i) => ({
+      id: `hidden-${i}`, owner_email: 'other@example.test', product_group: 'my', kind: 'match',
+    })), ...Array.from({ length: 3 }, (_, i) => ({
+      id: `visible-${i}`, owner_email: 'staff@example.test', product_group: 'my', kind: 'match',
+    })));
+    const filter = (extra = {}, token = 'staff') => app.invoke({ entity, op: 'filter', query: { kind: 'match' }, ...extra }, token);
+    const first = await filter({ limit: 2, sort: 'id' });
+    assert.deepEqual(first.body.items.map((row) => row.id), ['visible-0', 'visible-1']);
+    assert.equal(first.body.has_more, true);
+    assert.equal(first.body.truncated, true);
+    assert.equal(first.body.next_cursor, null);
+    assert.deepEqual(app.calls.map((call) => [call.limit, call.skip, call.sort]), [[1000, 0, 'id'], [1000, 1000, 'id']]);
+    const second = await filter({ limit: 2, skip: 2 });
+    assert.deepEqual(second.body.items.map((row) => row.id), ['visible-2']);
+    assert.equal(second.body.has_more, false);
+    assert.equal(second.body.truncated, false);
+    assert.equal((await filter({ cursor: 'opaque' })).status, 400);
+    const admin = await filter({ limit: 2 }, 'admin');
+    assert.deepEqual(admin.body.items.map((row) => row.id), ['hidden-0', 'hidden-1']);
+    assert.equal(app.calls.at(-1).limit, 2);
+    app.stores[entity].push(...Array.from({ length: 5000 - app.stores[entity].length }, (_, i) => ({
+      id: `more-${i}`, kind: 'match',
+    })));
+    const tooLarge = await filter();
+    assert.equal(tooLarge.status, 413);
+    assert.equal(tooLarge.body.error, 'This library is too large to filter; ask an admin.');
+    app.stores[entity].pop();
+    assert.equal((await filter()).status, 200);
+  }
 }
 
 {
@@ -220,17 +317,17 @@ function fixture() {
   const row = (await app.invoke({ entity: 'QuickProduct', op: 'create', data: { name: 'x', builder_product_id: 'p' } })).body.record;
   const filter = (query, extra = {}) => app.invoke({ entity: 'QuickProduct', op: 'filter', query, ...extra });
   assert.equal((await filter({ name: 'x' })).body.items[0].id, row.id);
-  assert.equal(app.calls.at(-1).limit, 100);
+  assert.equal(app.calls.at(-1).limit, 1000);
   assert.equal((await filter({})).body.items[0].id, row.id);
   assert.equal((await app.invoke({ entity: 'QuickProduct', op: 'filter' })).body.items[0].id, row.id);
   assert.equal((await filter({ name: 'a'.repeat(3989) })).status, 200);
   assert.equal((await filter({ name: 'a'.repeat(3990) })).status, 400);
   assert.equal((await filter({ name: 'é'.repeat(2000) })).status, 400);
   await filter({ name: 'x' }, { sort: '-created_date', limit: 9999 });
-  assert.equal(app.calls.at(-1).limit, 500);
+  assert.equal(app.calls.at(-1).limit, 1000);
   assert.equal(app.calls.at(-1).sort, '-created_date');
   await filter({ name: 'x' }, { limit: -1 });
-  assert.equal(app.calls.at(-1).limit, 1);
+  assert.equal(app.calls.at(-1).limit, 1000);
   for (const [query, extra] of [
     [null, {}], [[], {}], [{ $or: 'x' }, {}], [{ name: { $ne: 'x' } }, {}], [{ name: ['x'] }, {}],
     [{ name: null }, {}], [{ name: 'x' }, { sort: 'bad sort' }], [{ name: 'x' }, { limit: 1.5 }],
@@ -360,6 +457,28 @@ function fixture() {
   assert.equal(calls.at(-1).name, 'staffEntityWrite');
   await staffEntities.FoundationInventory.create({});
   assert.equal(calls.at(-1).name, 'staffEntityWrite');
+  assert.equal((await staffEntities.QuickProductCategory.filterFresh({ category_name: 'test' }))[0].id, 'fresh');
+  assert.equal(calls.at(-1).name, 'estimatorProjectWrite');
+  const libraryReads = [];
+  for (const entity of ['PartTemplate', 'QuickProduct', 'QuickProductCategory']) {
+    token = 'alice';
+    const aliceRead = staffEntities[entity].list('name', 10);
+    token = 'bob';
+    const bobRead = staffEntities[entity].list('name', 10);
+    await Promise.all([aliceRead, bobRead]);
+    libraryReads.push(...calls.slice(-2));
+  }
+  assert.deepEqual(libraryReads.map((call) => call.payload.session_token), ['alice', 'bob', 'alice', 'bob', 'alice', 'bob']);
+  assert.ok(libraryReads.every((call) => call.name === 'staffDataRead'));
+  token = 'staff';
+  for (const entity of ['PartTemplate', 'QuickProduct', 'QuickProductCategory']) {
+    const beforeLibraryReads = reads;
+    await staffEntities[entity].list('name', 10);
+    await staffEntities[entity].list('name', 10);
+    await staffEntities[entity].filter({ key: 'x' });
+    await staffEntities[entity].filter({ key: 'x' });
+    assert.equal(reads - beforeLibraryReads, 4, `${entity} reads bypass client cache`);
+  }
   for (const entity of [...Object.keys(adminEntityOps), 'ChannelLetterInstallEquipment']) {
     await staffEntities[entity].create({});
     assert.equal(calls.at(-1).name, 'estimatorProjectWrite', `${entity} create routing`);
@@ -482,6 +601,7 @@ function fixture() {
   };
   const imports = {
     '@/components/auth/EmailGate': { getSessionUser: () => null },
+    '@/components/estimator/products/libraryOwnership': { canSeeLibraryItem: () => true },
     '@/components/estimator/products/snapshotUtils': { cloneSnapshot: copy },
     '@/components/estimator/parts/partPackageService': { addPartPackageToProduct: () => {} },
     '@/components/estimator/builder/builderMutationRecovery': { builderMutationHash: () => 'hash' },

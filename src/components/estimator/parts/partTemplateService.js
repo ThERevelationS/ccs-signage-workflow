@@ -1,4 +1,5 @@
 import { getSessionUser } from "@/components/auth/EmailGate";
+import { canSeeLibraryItem } from "@/components/estimator/products/libraryOwnership";
 import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
 import { addPartPackageToProduct } from "@/components/estimator/parts/partPackageService";
 import { builderMutationHash } from "@/components/estimator/builder/builderMutationRecovery";
@@ -60,6 +61,7 @@ export async function savePartTemplate({ estimateId = "", builderProductId = "",
   }
   const meta = normalizeOptions({ template_name: livePart.client_label || livePart.part_name || "Saved Part", ...options });
   const idempotencyKey = `part_template_save:${builderMutationHash({
+    user_email: String(getSessionUser()?.email || "").trim().toLowerCase(),
     template_type: "part",
     part_id: livePart.id,
     part_updated_date: livePart.updated_date || "",
@@ -125,6 +127,7 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
   const meta = normalizeOptions({ template_name: liveGroup.client_label || liveGroup.group_name || "Saved Part Group", ...options });
   const first = activeParts[0] || {};
   const idempotencyKey = `part_group_template_save:${builderMutationHash({
+    user_email: String(getSessionUser()?.email || "").trim().toLowerCase(),
     template_type: "part_group",
     group_id: liveGroup.id,
     group_updated_date: liveGroup.updated_date || "",
@@ -172,8 +175,7 @@ export async function listPartTemplates({ includeInactive = false } = {}) {
   return (rows || [])
     .filter((row) => {
       if (!includeInactive && row.is_active === false) return false;
-      if (row.product_group === "global") return true;
-      return !row.created_by_id || String(row.created_by_id).startsWith("service_") || (!!me?.id && row.created_by_id === me.id);
+      return canSeeLibraryItem(row, me);
     })
     .sort((a, b) => String(a.template_name || "").localeCompare(String(b.template_name || "")));
 }
@@ -186,7 +188,7 @@ export async function instantiatePartTemplate({ estimateId, targetBuilderProduct
   ]);
   if (!liveTemplate) throw new Error("This Saved Part no longer exists. Reopen the Part Library to refresh it.");
   if (liveTemplate.is_active === false) throw new Error("This Saved Part is now inactive and cannot be added. Reopen the Part Library to refresh it.");
-  const accessible = liveTemplate.product_group === "global" || !liveTemplate.created_by_id || String(liveTemplate.created_by_id).startsWith("service_") || (!!me?.id && liveTemplate.created_by_id === me.id);
+  const accessible = canSeeLibraryItem(liveTemplate, me);
   if (!accessible) throw new Error("This Saved Part is no longer available to your account.");
   if (template.updated_date && liveTemplate.updated_date && template.updated_date !== liveTemplate.updated_date) {
     throw new Error("This Saved Part changed after the Part Library opened. Reopen the library and review the latest reusable snapshot before adding it.");

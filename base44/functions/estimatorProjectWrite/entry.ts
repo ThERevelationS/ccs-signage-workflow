@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { coerceToDeclaredScalars } from '../../shared/entityWriteTypeGuard.ts';
+import { loadVisibleLibraryRows } from '../../shared/libraryFilteredRead.ts';
 
 const WRITE_OPS: Record<string, Set<string>> = Object.fromEntries([
   ...[
@@ -12,6 +13,7 @@ const WRITE_OPS: Record<string, Set<string>> = Object.fromEntries([
     'BuilderProduct', 'BuilderPart', 'BuilderPartGroup', 'EstimateClipboardItem',
     'PartTemplate', 'QuickProduct', 'ProjectTemplate',
   ].map((name) => [name, new Set(['create', 'updateMany', 'deleteMany', 'filter'])]),
+  ['QuickProductCategory', new Set(['filter'])],
   ['BuilderPriceRevision', new Set(['deleteMany', 'filter'])],
   ...[
     'Settings', 'MaintenanceActionRate', 'DimensionalLetterMaterial', 'VinylInventory', 'LaborServiceInventory',
@@ -27,6 +29,15 @@ const ADMIN_ONLY_ENTITIES = new Set([
   'Settings', 'MaintenanceActionRate', 'ChannelLetterInstallInventory', 'DimensionalLetterMaterial',
   'MaintenanceInventory', 'VinylInventory', 'VinylMachine', 'BrickStoneInventory', 'LaborServiceInventory',
 ]);
+
+const LIBRARY_ENTITIES = new Set(['PartTemplate', 'QuickProduct', 'QuickProductCategory']);
+const normalizedEmail = (email: unknown) => String(email || '').trim().toLowerCase();
+const canSeeLibraryRow = (row: any, user: any) =>
+  user.role === 'admin' || row?.product_group === 'global'
+  || !normalizedEmail(row?.owner_email) || normalizedEmail(row.owner_email) === normalizedEmail(user.email);
+const canEditLibraryRow = (row: any, user: any) =>
+  user.role === 'admin' || !normalizedEmail(row?.owner_email)
+  || normalizedEmail(row.owner_email) === normalizedEmail(user.email);
 
 const hasBuilderProduct = (row: any) =>
   typeof row?.builder_product_id === 'string' && !!row.builder_product_id.trim();
@@ -95,11 +106,27 @@ Deno.serve(async (req) => {
       const requestedLimit = body?.limit;
       if (requestedLimit !== undefined && !Number.isInteger(requestedLimit)) throw bad('Limit must be an integer.');
       const limit = requestedLimit === undefined ? 100 : Math.max(1, Math.min(500, requestedLimit));
+      if (LIBRARY_ENTITIES.has(entityName) && user.role !== 'admin') {
+        if (body?.cursor != null) throw bad('Cursor pagination is not available for this library.');
+        const skip = body?.skip == null ? 0 : body.skip;
+        if (!Number.isInteger(skip) || skip < 0 || skip > 100000) throw bad('Invalid library offset.');
+        const visible = await loadVisibleLibraryRows({
+          entity, query, sort, canSee: (row: any) => canSeeLibraryRow(row, user),
+        });
+        const hasMore = skip + limit < visible.length;
+        return Response.json({
+          success: true, items: visible.slice(skip, skip + limit), has_more: hasMore, truncated: hasMore, next_cursor: null,
+        });
+      }
       const items = await entity.filter(query, sort, limit);
-      return Response.json({ success: true, items });
+      return Response.json({
+        success: true,
+        items: LIBRARY_ENTITIES.has(entityName) ? items.filter((row: any) => canSeeLibraryRow(row, user)) : items,
+      });
     }
 
     if (op === 'create') {
+      if (LIBRARY_ENTITIES.has(entityName)) data.owner_email = normalizedEmail(user.email);
       const created = await entity.create(data);
       return Response.json({ success: true, record: created });
     }
@@ -116,14 +143,17 @@ Deno.serve(async (req) => {
         throw bad('deleteMany requires an id and updated_date anchored query.');
       }
       validateScalarQuery(delQuery);
-      if (entityName === 'BuilderPartGroup' && user.role !== 'admin') {
+      if ((entityName === 'BuilderPartGroup' || LIBRARY_ENTITIES.has(entityName)) && user.role !== 'admin') {
         const current = await entity.get(String(delQuery.id).trim()).catch((error: any) => {
           if (Number(error?.status ?? error?.response?.status) === 404) return null;
           throw error;
         });
         if (!current?.id) return Response.json({ error: 'Record not found.' }, { status: 404 });
-        if (!hasBuilderProduct(current)) {
+        if (entityName === 'BuilderPartGroup' && !hasBuilderProduct(current)) {
           return Response.json({ error: 'This record type requires a CCS admin.' }, { status: 403 });
+        }
+        if (LIBRARY_ENTITIES.has(entityName) && !canEditLibraryRow(current, user)) {
+          return Response.json({ error: 'Only the owner or an admin can change this item.' }, { status: 403 });
         }
       }
       const result = await entity.deleteMany(delQuery);
@@ -165,6 +195,15 @@ Deno.serve(async (req) => {
       if (JSON.stringify(patch).length > 200000) throw bad('Record payload is too large.');
       rejectOperatorKeys(patch);
       for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (patch as any)[f];
+      if (LIBRARY_ENTITIES.has(entityName)) {
+        delete patch.owner_email;
+        if (!canEditLibraryRow(current, user)) {
+          return Response.json({ error: 'Only the owner or an admin can change this item.' }, { status: 403 });
+        }
+        if (user.role !== 'admin' && !normalizedEmail(current.owner_email)) {
+          patch.owner_email = normalizedEmail(user.email);
+        }
+      }
       if (entityName === 'BuilderPartGroup' && user.role !== 'admin') {
         if (!hasBuilderProduct(current)) {
           return Response.json({ error: 'This record type requires a CCS admin.' }, { status: 403 });
@@ -186,7 +225,7 @@ Deno.serve(async (req) => {
     throw bad('Unsupported operation.');
   } catch (error: any) {
     const status = Number(error?.status || 500);
-    if ([400, 401, 403, 404, 409, 429].includes(status)) {
+    if ([400, 401, 403, 404, 409, 413, 429].includes(status)) {
       return Response.json({ error: error?.message || 'Write failed.' }, { status });
     }
     console.error('estimatorProjectWrite error:', error);

@@ -21,11 +21,12 @@ const ESTIMATOR_WRITE_ENTITIES = new Set([
   "FoundationProject", "ChannelLetterInstallation", "VinylProject", "CNCProject", "LaserProject",
   "MetalProject", "BrickStoneProject", "MaintenanceProject", "Project", "CustomItemsProject",
   "BuilderProduct", "BuilderPart", "BuilderPartGroup", "BuilderPriceRevision", "EstimateClipboardItem",
-  "PartTemplate", "QuickProduct", "ProjectTemplate",
+  "PartTemplate", "QuickProduct", "QuickProductCategory", "ProjectTemplate",
   "Settings", "MaintenanceActionRate", "ChannelLetterInstallInventory", "DimensionalLetterMaterial",
   "MaintenanceInventory", "VinylInventory", "VinylMachine", "BrickStoneInventory", "LaborServiceInventory",
   "ChannelLetterInstallEquipment",
 ]);
+const PRIVATE_LIBRARY_ENTITIES = new Set(["PartTemplate", "QuickProduct", "QuickProductCategory"]);
 const writeFunction = (entity) => ESTIMATOR_WRITE_ENTITIES.has(entity) ? "estimatorProjectWrite" : "staffEntityWrite";
 
 // Per-session negative cache of denied entities. Once the gateway refuses an
@@ -184,6 +185,9 @@ async function flushBatch() {
 
 const batchedRead = (entity, args) => {
   if (!hasSession()) return Promise.resolve([]);
+  if (PRIVATE_LIBRARY_ENTITIES.has(entity)) {
+    return singleRead(entity, { ...args, session_token: getSessionToken() });
+  }
   const key = entity + "|" + JSON.stringify(args);
   const existing = pendingBatch.get(key);
   if (existing) return existing.promise;
@@ -208,11 +212,11 @@ const METHODS = {
     const args = readArgs(sortOrOptions, limit, skip);
     if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
     const key = readCacheKey(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip });
-    const cached = cachedRead(key);
+    const cached = PRIVATE_LIBRARY_ENTITIES.has(entity) ? undefined : cachedRead(key);
     if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
     return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => {
-        cacheRead(key, rows);
+        if (!PRIVATE_LIBRARY_ENTITIES.has(entity)) cacheRead(key, rows);
         return args.paged ? page(rows) : rows;
       });
   },
@@ -220,11 +224,11 @@ const METHODS = {
     const args = readArgs(sortOrOptions, limit, skip);
     if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
     const key = readCacheKey(entity, { sort: args.sort, limit: args.limit, skip: args.skip });
-    const cached = cachedRead(key);
+    const cached = PRIVATE_LIBRARY_ENTITIES.has(entity) ? undefined : cachedRead(key);
     if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
     return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => {
-        cacheRead(key, rows);
+        if (!PRIVATE_LIBRARY_ENTITIES.has(entity)) cacheRead(key, rows);
         return args.paged ? page(rows) : rows;
       });
   },
