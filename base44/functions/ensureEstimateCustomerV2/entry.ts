@@ -86,7 +86,7 @@ async function updateCustomerFieldsIfUnchanged(CustomerUser: any, loaded: any, f
 
     let result;
     try {
-      result = await CustomerService.updateMany(
+      result = await CustomerUser.updateMany(
         { id: loaded.id, updated_date: version },
         { $set: fields },
       );
