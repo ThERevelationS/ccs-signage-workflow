@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { withStandaloneBuilderRedirect } from "@/components/estimator/aio/StandaloneBuilderRedirect";
 import { Project, Settings } from "@/api/gatedEntities";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Palette, Plus, Save, Trash2 } from "lucide-react";
@@ -46,7 +47,8 @@ const emptyItem = () => normalizePaintingItem({
   paint_colors: [""],
 });
 
-export default function PaintingEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
+export default withStandaloneBuilderRedirect(PaintingEstimator, "painting", "Project");
+function PaintingEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = embeddedProjectId || searchParams.get("edit") || searchParams.get("id");
@@ -201,7 +203,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
         : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
       return;
     }
-    if (!project?.project_name?.trim() || !project?.client_name?.trim()) {
+    if (!embedded && (!project?.project_name?.trim() || !project?.client_name?.trim())) {
       setError("Project name and client name are required.");
       return;
     }
@@ -362,13 +364,13 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
             </Link>
           )}
           {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
-          <Button onClick={saveProject} disabled={saving || !project.project_name?.trim() || !project.client_name?.trim()} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold">
+          <Button onClick={saveProject} disabled={saving || (!embedded && (!project.project_name?.trim() || !project.client_name?.trim()))} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold">
             <Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : "Save Painting"}
           </Button>
           <ModuleActionBar
             onTemplates={() => setTemplateMode("load")}
             onSaveAsTemplate={() => setTemplateMode("save")}
-            onSaveAsCopy={handleSaveAsCopy}
+            onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
             estimateId={estimateId}
             saving={saving}
           />
@@ -408,17 +410,8 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_310px] gap-4">
           <div className="space-y-4 min-w-0">
             <section className="bg-white border border-gray-200 rounded-md p-4">
-              <div className="text-[12px] font-bold text-gray-800 mb-3">Project</div>
+              <div className="text-[12px] font-bold text-gray-800 mb-3">Job conditions</div>
               <div className="grid sm:grid-cols-2 gap-3">
-                <label className="text-[11px] text-gray-600">Project name
-                  <Input value={project.project_name || ""} onChange={(e) => patchProject({ project_name: e.target.value })} className="mt-1 h-[32px] text-[12px]" />
-                </label>
-                <label className="text-[11px] text-gray-600">Client
-                  <Input value={project.client_name || ""} onChange={(e) => patchProject({ client_name: e.target.value })} disabled={!!estimateId} className="mt-1 h-[32px] text-[12px]" />
-                </label>
-                <label className="text-[11px] text-gray-600">Estimate number
-                  <Input value={project.estimate_number || ""} onChange={(e) => patchProject({ estimate_number: e.target.value })} disabled={!!estimateId} className="mt-1 h-[32px] text-[12px]" />
-                </label>
                 <label className="text-[11px] text-gray-600">Paint application supplies / sq ft / color
                   <Input type="number" step="0.01" min="0" value={project.paint_supplies_per_sqft ?? ""} onChange={(e) => patchProject({ paint_supplies_per_sqft: paintDraftValue(e.target.value) })}
                     aria-invalid={hasIssueFor(allIssues, "paint_supplies_per_sqft") || undefined}
@@ -426,9 +419,6 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
                     className="mt-1 h-[32px] text-[12px]" />
                 </label>
               </div>
-              <label className="block text-[11px] text-gray-600 mt-3">Notes
-                <Textarea value={project.notes || ""} onChange={(e) => patchProject({ notes: e.target.value })} className="mt-1 min-h-[70px] text-[12px]" />
-              </label>
             </section>
 
             <section className="bg-white border border-gray-200 rounded-md">
@@ -603,6 +593,9 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
               <div className="px-4 py-3 border-t border-gray-100 text-[10px] text-gray-500">
                 Mixed paint rate: <span className="font-semibold text-gray-700">{Number.isFinite(calculated.liquidPaintRate) ? `${money(calculated.liquidPaintRate)}/sf` : "—"}</span>
               </div>
+              <label className="block px-4 py-3 border-t border-gray-100 text-[11px] text-gray-600">Notes
+                <Textarea value={project.notes || ""} onChange={(e) => patchProject({ notes: e.target.value })} className="mt-1 min-h-[70px] text-[12px]" />
+              </label>
             </section>
           </aside>
         </div>

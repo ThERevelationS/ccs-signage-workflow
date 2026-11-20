@@ -55,6 +55,11 @@ const EXTRA_PAGE_NAMES = [
 const pageLabel = (name) =>
   PAGE_LABEL_OVERRIDES[name] || String(name).replace(/([a-z])([A-Z])/g, "$1 $2").replace(/_/g, " ");
 
+const BUILDER_PAGES = new Set([
+  "FoundationEstimator", "ChannelLetterEstimator", "VinylEstimator", "CNCEstimator", "LaserEstimator",
+  "MetalEstimator", "BrickStoneEstimator", "MaintenanceEstimator", "PaintingEstimator", "CustomItemsEstimator",
+]);
+
 export default function CommandPalette() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -68,7 +73,7 @@ export default function CommandPalette() {
   const pages = useMemo(() => {
     const names = new Set([...Object.keys(pagesConfig?.Pages || {}), ...EXTRA_PAGE_NAMES]);
     names.delete("Home");
-    return [...names].map((n) => ({ name: n, label: pageLabel(n), path: `/${n}` }));
+    return [...names].map((n) => ({ name: n, label: pageLabel(n), path: BUILDER_PAGES.has(n) ? "/EstimatorProducts" : `/${n}` }));
   }, []);
 
   useEffect(() => {

@@ -14,6 +14,7 @@ const deferred = () => { let r; const p = new Promise(res => { r = res; }); retu
 const DUMMY = n => `export default function ${n}(p){ if (globalThis.__cap) globalThis.__cap[${JSON.stringify(n)}]=p; return null; }`;
 const KIDS = n => `export const ${n}=(p)=>p?.children??null;`;
 const STUBS = {
+  '@/components/estimator/aio/StandaloneBuilderRedirect': `export const withStandaloneBuilderRedirect=(Builder)=>Builder;`,
   'react-router-dom': `export const Link=()=>null;export const useNavigate=()=>(...a)=>{globalThis.__nav.push(a[0]);};`,
   'lucide-react': ['Plus','Anchor','Wrench','LayoutGrid','Layers','ClipboardList','TrendingUp','Trees','Tag','ArrowLeft','HelpCircle','Eye','EyeOff','Settings','Copy','Download','Share2','Printer','Sparkles','FileText','X','Save','Undo2','Redo2','ExternalLink','AlertTriangle','CheckCircle2','Circle','Cpu','GitCompareArrows','Loader2','RefreshCw'].map(n=>`export const ${n}=()=>null;`).join(''),
   '@/components/auth/EmailGate': "export const useAuth=()=>({currentUser:{id:'synthetic-staff'}});",
@@ -85,7 +86,7 @@ const mount = async (Page, { embedded = false, project, estimate, search = '?id=
   await act(async () => { c = TestRenderer.create(React.createElement(Page, props)); });
   await flush();
   const tb = () => globalThis.__cap.FoundationToolbar;
-  const edit = async () => { const inp = globalThis.__inputs.find(i => i.value === 'Fix'); assert.ok(inp, 'name input'); await act(async () => { inp.onChange({ target: { value: 'Edited' } }); }); };
+  const edit = async () => { const inp = c.root.findByProps({ placeholder: 'Notes for the estimate -- the preliminary notice stays attached.' }); await act(async () => { inp.props.onChange({ target: { value: 'Edited' } }); }); };
   const reroute = async (s, proj) => { window.location.search = s; if (proj) globalThis.__project = proj; globalThis.__cap = {}; await act(async () => { c.update(React.createElement(Page, props)); }); await flush(); };
   const cleanup = async () => { await act(async () => { c.unmount(); }); };
   return { tb, edit, reroute, cleanup, closed, savedCalls, nav: () => globalThis.__nav, calls: () => globalThis.__calls, alerts: () => c.root.findAll(el => el?.props?.role === 'alert').length, root: () => c.root };
@@ -937,14 +938,14 @@ await ok('late save on loaded newer gen: refresh marker, blocked saves, reload c
     await waitCall(m, 'saveSource');
     await m.reroute('?id=pB&estimateId=e1', { id: 'pB', updated_date: 'w1', project_name: 'Fix', items: [], signage_cabinets: [], customer_pricing: { applied: false } });
     await m.reroute('?id=p1&estimateId=e1', { ...projA });
-    const inp = [...globalThis.__inputs].reverse().find(i => i.value === 'Fix');
-    await act(async () => { inp.onChange({ target: { value: 'NewerDraft' } }); });
+    const inp = m.root().findByProps({ placeholder: 'Notes for the estimate -- the preliminary notice stays attached.' });
+    await act(async () => { inp.props.onChange({ target: { value: 'NewerDraft' } }); });
     globalThis.__deferSave.resolve();
     await act(async () => { await sp; });
     const reloadBtn = () => m.root().findAll(el => el?.props?.children === 'Reload saved project').map(el => el.props);
     assert.equal(reloadBtn().length, 1, 'refresh-required marker visible');
     assert.equal(globalThis.__cap.FoundationTemplateDialog.project.items[0].description, 'F0', 'loaded design not overwritten');
-    assert.equal(globalThis.__cap.FoundationTemplateDialog.project.project_name, 'NewerDraft', 'current draft preserved after old save');
+    assert.equal(globalThis.__cap.FoundationTemplateDialog.project.notes, 'NewerDraft', 'current draft preserved after old save');
     assert.equal(m.tb().dirty, true, 'marker keeps dirty');
     const savesBefore = m.calls().filter(c => c[0] === 'saveSource').length;
     const builderBefore = m.calls().filter(c => c[0] === 'recordBuilderSave').length;
@@ -961,7 +962,7 @@ await ok('late save on loaded newer gen: refresh marker, blocked saves, reload c
     await act(async () => { reloadBtn()[0].onClick(); });
     window.confirm = origConfirm;
     assert.equal(reloadBtn().length, 1, 'cancel keeps marker');
-    assert.equal(globalThis.__cap.FoundationTemplateDialog.project.project_name, 'NewerDraft', 'cancel keeps current draft');
+    assert.equal(globalThis.__cap.FoundationTemplateDialog.project.notes, 'NewerDraft', 'cancel keeps current draft');
     // confirm reload -> fresh read of saved row -> pending receipt -> explicit retry
     const savedRow = { ...projA, ...m.calls().filter(c => c[0] === 'saveSource')[0][1].data, updated_date: 'v2' };
     globalThis.__project = savedRow;

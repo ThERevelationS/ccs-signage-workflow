@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { withStandaloneBuilderRedirect } from "@/components/estimator/aio/StandaloneBuilderRedirect";
 import { CNCProject, Settings } from "@/api/gatedEntities";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, ArrowLeft, Plus, Trash2, Save, Router, FileText, ListChecks, Calculator, TrendingUp } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Plus, Trash2, Save, Router, ListChecks, Calculator, TrendingUp } from "lucide-react";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import { Link, useNavigate } from "react-router-dom";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
@@ -57,7 +58,8 @@ const moneyCell = (v) => hasCncCostSnapshot(v)
 const heldMoney = (v) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 const heldNum = (v, digits = 1, suffix = "") => (Number.isFinite(v) ? `${v.toFixed(digits)}${suffix}` : "—");
 
-export default function CNCEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
+export default withStandaloneBuilderRedirect(CNCEstimator, "cnc", "CNCProject");
+function CNCEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Embedded All-In-One context wins over standalone query parameters.
@@ -80,7 +82,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [activeTab, setActiveTab] = useState("project");
+  const [activeTab, setActiveTab] = useState("items");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
   const copyAttemptRef = useRef({ signature: "", key: "" });
@@ -302,7 +304,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
         : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
       return;
     }
-    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
+    if (!embedded && (!project.project_name || !(estimateContext?.client_name || project.client_name))) {
       alert('Please fill in project name and client name');
       return;
     }
@@ -1345,30 +1347,17 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="sticky top-[64px] z-30 -mx-2 px-2 py-2 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/60">
-                <TabsList className="grid grid-cols-4 w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1">
-                  <TabBadgeTrigger value="project" icon={FileText} label="Project" color="green" />
+                <TabsList className="grid grid-cols-3 w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1">
                   <TabBadgeTrigger value="items" icon={ListChecks} label="Items" amount={totalCost} count={project.items.length} color="green" />
                   <TabBadgeTrigger value="summary" icon={Calculator} label="Summary" amount={totalCost} color="green" />
                   <TabBadgeTrigger value="pricing" icon={TrendingUp} label="Customer Pricing" accent color="green" />
                 </TabsList>
               </div>
 
-              <TabsContent value="project" className="mt-4 space-y-6">
+              <TabsContent value="items" className="mt-4 space-y-6">
             <Card className="bg-white border-0 shadow-sm">
-              <CardHeader><CardTitle>Project Information</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Job conditions</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div><Label>Project Name *</Label><Input value={project.project_name} onChange={(e) => setProject(p => ({ ...p, project_name: e.target.value }))} /></div>
-                  <div>
-                    <Label>Client Name *</Label>
-                    <Input
-                      value={estimateContext?.client_name || project.client_name || ""}
-                      readOnly={embedded}
-                      onChange={(e) => !embedded && setProject(p => ({ ...p, client_name: e.target.value }))}
-                    />
-                    {embedded && <p className="text-[10px] text-slate-400 mt-1">Inherited from the All-In-One estimate.</p>}
-                  </div>
-                </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <Label>Fixed Setup Time (hours)</Label>
@@ -1384,12 +1373,8 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                     <p className="text-xs text-slate-500 mt-1">Percentage of machine time added as labor setup time per item.</p>
                   </div>
                 </div>
-                <div><Label>Notes</Label><Textarea value={project.notes} onChange={(e) => setProject(p => ({ ...p, notes: e.target.value }))} /></div>
               </CardContent>
             </Card>
-              </TabsContent>
-
-              <TabsContent value="items" className="mt-4 space-y-6">
             <Card className="bg-white border-0 shadow-sm">
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -1469,6 +1454,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
               </TabsContent>
 
               <TabsContent value="summary" className="mt-4 space-y-6">
+                <Card className="bg-white border-0 shadow-sm"><CardHeader><CardTitle>Notes</CardTitle></CardHeader><CardContent><Textarea value={project.notes} onChange={(e) => setProject(p => ({ ...p, notes: e.target.value }))} /></CardContent></Card>
                 <Card className="bg-white border-0 shadow-sm">
                   <CardHeader><CardTitle>Estimate Breakdown</CardTitle></CardHeader>
                   <CardContent className="p-0">
@@ -1552,18 +1538,18 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
             </Card>
             {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
             {saveError && <div role="alert" className="px-3 py-2 text-[12px] text-red-700 bg-red-50 border border-red-200 rounded">{saveError}</div>}
-            <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name)} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />Save Estimate</>}</Button>
+            <Button onClick={saveProject} disabled={isSaving || (!embedded && (!project.project_name || !(estimateContext?.client_name || project.client_name)))} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />Save Estimate</>}</Button>
             <div className="flex flex-wrap gap-2">
               <ModuleActionBar
                 onTemplates={() => setTemplateMode("load")}
                 onSaveAsTemplate={() => setTemplateMode("save")}
-                onSaveAsCopy={handleSaveAsCopy}
+                onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
                 estimateId={estimateId}
                 saving={isSaving}
               />
             </div>
             <Button onClick={downloadEstimate} variant="outline" className="w-full">Download Estimate (HTML)</Button>
-            <Button onClick={printEstimate} variant="outline" className="w-full">Print Estimate</Button>
+            {!embedded && <Button onClick={printEstimate} variant="outline" className="w-full">Print Estimate</Button>}
           </div>
         </div>
       </div>

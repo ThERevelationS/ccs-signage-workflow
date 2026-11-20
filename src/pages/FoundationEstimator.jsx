@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { withStandaloneBuilderRedirect } from "@/components/estimator/aio/StandaloneBuilderRedirect";
 import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -107,7 +108,8 @@ const blankItem = (type) => ({
 const TAB_CLASS =
   "gap-1.5 text-[12px] data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-sm";
 
-export default function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
+export default withStandaloneBuilderRedirect(FoundationEstimator, "foundation", "FoundationProject");
+function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const params = new URLSearchParams(window.location.search);
   const id = embeddedProjectId || params.get("id") || params.get("edit");
   const estimateId = embeddedEstimateId || params.get("estimateId");
@@ -1586,11 +1588,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           onRedo={handleRedo}
           onSave={handleSave}
           onSaveAndExit={handleSaveAndExit}
-          onSaveAsCopy={handleSaveAsCopy}
+          onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
           onSaveAsTemplate={() => { if (!draftSessionRef.current.pending) setTemplateMode("save"); }}
           onTemplates={() => { if (!draftSessionRef.current.pending) setTemplateMode("load"); }}
           onSwapToBrickStone={handleSwapToBrickStone}
-          onShareLink={estimateId ? handleShareLink : undefined}
+          onShareLink={!embedded && estimateId ? handleShareLink : undefined}
           onHelp={() => setShowHelp((v) => !v)}
           onBack={embedded
             ? () => {
@@ -1818,13 +1820,6 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
               </TabsContent>
 
               <TabsContent value="summary" className="space-y-3">
-                <label className="block bg-white rounded-sm border border-gray-200 p-3 text-[11px] text-gray-500">
-                  Section name
-                  <Input
-                    value={project.project_name || ""}
-                    onChange={(e) => patch({ project_name: e.target.value })}
-                  />
-                </label>
                 {/* O-119 (CMP-I18) -- page notes UI: the authored `project.notes`
                     surface on the summary tab; the preliminary notice stamp
                     keeps "Preliminary estimating only - final engineering

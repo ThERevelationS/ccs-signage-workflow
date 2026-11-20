@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { withStandaloneBuilderRedirect } from "@/components/estimator/aio/StandaloneBuilderRedirect";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { base44 } from "@/api/base44Client";
 import { ChannelLetterInstallation, Settings, ChannelLetterInstallInventory, ChannelLetterInstallEquipment, DimensionalLetterMaterial } from "@/api/gatedEntities";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
-import { Plus, ArrowLeft, Wrench, Package, FileText, ListChecks, Boxes, Calculator, MapPin, Copy, DollarSign, Check, HardHat, ClipboardList, Type, Camera, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
+import { Plus, ArrowLeft, Wrench, Package, ListChecks, Boxes, Calculator, MapPin, Copy, DollarSign, Check, HardHat, ClipboardList, Type, Camera, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
 import ChannelLetterHelpAssistant from "@/components/channelLetterInstall/ChannelLetterHelpAssistant";
 import { useUnsavedChanges } from "@/components/UnsavedChangesContext";
 import { useAuth, getSessionToken } from "@/components/auth/EmailGate";
-import ClientSearchInput from "@/components/ClientSearchInput";
 import InstallSummaryCard from "@/components/channelLetterInstall/InstallSummaryCard";
 import ItemsList from "@/components/channelLetterInstall/ItemsList";
 import CrewEquipmentHint from "@/components/channelLetterInstall/CrewEquipmentHint";
@@ -84,7 +84,8 @@ const blankProject = () => ({
   notes: "",
 });
 
-export default function ChannelLetterEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
+export default withStandaloneBuilderRedirect(ChannelLetterEstimator, "channel_letters", "ChannelLetterInstallation");
+function ChannelLetterEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const navigate = useNavigate();
   const { sessionToken, currentUser } = useAuth();
   const [searchParams] = useSearchParams();
@@ -103,7 +104,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState("project");
+  const [activeTab, setActiveTab] = useState("letters");
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [intakeOpen, setIntakeOpen] = useState(false);
   const [aiInstallOpen, setAiInstallOpen] = useState(false);
@@ -129,7 +130,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     setIsLoading(true);
     setLoadError("");
     try {
-      const [settingsList, inv, equipInv, dimMats] = await Promise.all([
+      const [settingsList, inv, equipInv, dimMats, estimate] = await Promise.all([
         loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
         loadAllEntityRows({ entity: ChannelLetterInstallInventory, sort: "sort_order", label: "Channel Letter installation inventory" }),
         loadAllEntityRows({ entity: ChannelLetterInstallEquipment, sort: "sort_order", label: "Channel Letter equipment" }),
@@ -139,6 +140,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
         // pattern as vinyl's optional catalog lanes.
         loadAllEntityRows({ entity: DimensionalLetterMaterial, label: "Dimensional Letter materials" })
           .catch(() => null),
+        estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
       ]);
       const settingsObj = {};
       settingsList.forEach(s => { settingsObj[s.setting_name] = s.setting_value; });
@@ -165,7 +167,12 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
               materials: [],
             }];
           }
-          setProject({ ...blankProject(), ...existing, items: existing.items || [] });
+          setProject({ ...blankProject(), ...existing,
+            client_name: estimate?.client_name || existing.client_name,
+            customer_id: estimate?.customer_id || existing.customer_id,
+            estimate_number: estimate?.estimate_number || existing.estimate_number,
+            site_address: existing.site_address?.trim() ? existing.site_address : (estimate?.site_address || ""),
+            items: existing.items || [] });
           setIsEditing(true);
         } else {
           navigate(createPageUrl("Estimator"));
@@ -173,6 +180,10 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
       } else {
         setProject(prev => ({
           ...prev,
+          client_name: estimate?.client_name || prev.client_name,
+          customer_id: estimate?.customer_id || prev.customer_id,
+          estimate_number: estimate?.estimate_number || prev.estimate_number,
+          site_address: estimate?.site_address || prev.site_address,
           base_supplies_cost: parseFloat(settingsObj.install_base_supplies) || 0,
           // Pre-fill project-level fees from settings defaults
           letters_delivery_fee: parseFloat(settingsObj.letters_default_delivery_fee) || 0,
@@ -185,7 +196,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
       setLoadError(e?.message || "Channel / Dimensional Letter Builder prerequisites could not be verified.");
     }
     setIsLoading(false);
-  }, [editId, navigate]);
+  }, [editId, estimateId, navigate]);
 
   useEffect(() => { loadEverything(); }, [loadEverything]);
 
@@ -237,11 +248,11 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   const showInstallTab = scope !== "letters_only";
   const showCrewTab = scope !== "letters_only";
 
-  // If the active tab gets hidden by a scope change, fall back to Project
+  // If the active tab gets hidden by a scope change, fall back to the first working tab
   useEffect(() => {
-    if (activeTab === "letters" && !showLettersTab) setActiveTab("project");
-    if ((activeTab === "items" || activeTab === "crew") && scope === "letters_only") setActiveTab("project");
-  }, [scope]);
+    if (activeTab === "letters" && !showLettersTab) setActiveTab("items");
+    if ((activeTab === "items" || activeTab === "crew") && scope === "letters_only") setActiveTab("letters");
+  }, [activeTab, scope, showLettersTab]);
 
   // Aggregate materials across items for the Materials tab
   const aggregatedMaterials = useMemo(() => {
@@ -534,7 +545,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     // estimate and shown read-only, so don't block the save on them.
     if (!embedded && (!project.project_name || !project.client_name)) {
       alert("Please fill in Project Name and Client Name.");
-      setActiveTab("project");
+      setActiveTab(showLettersTab ? "letters" : "items");
       return;
     }
     if (scope !== "letters_only" && (!project.selected_equipment || project.selected_equipment.length === 0)) {
@@ -772,6 +783,78 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     );
   }
 
+  const jobConditions = (
+    <Card className="bg-white border-0 shadow-sm">
+      <CardHeader className="pb-3"><CardTitle className="text-lg">Job conditions</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        <div id="clp-install-env">
+          <Label className="text-sm font-semibold text-slate-900">Installation Environment</Label>
+          <p className="text-xs text-slate-500 mt-1 mb-2">
+            Default for every line item — interior installs typically have different drill/prep times than exterior. You can override this on any line item.
+          </p>
+          <div className="grid grid-cols-2 gap-2 max-w-md">
+            {[
+              { value: "exterior", label: "Exterior", desc: "Outdoor wall, parapet, storefront", color: "blue" },
+              { value: "interior", label: "Interior", desc: "Lobby, indoor wall, office signage", color: "amber" },
+            ].map((opt) => {
+              const active = (project.install_environment || "exterior") === opt.value;
+              const ringClass = opt.color === "blue"
+                ? (active ? "border-blue-500 bg-blue-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300")
+                : (active ? "border-amber-500 bg-amber-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300");
+              const titleClass = opt.color === "blue"
+                ? (active ? "text-blue-900" : "text-slate-800")
+                : (active ? "text-amber-900" : "text-slate-800");
+              return (
+                <button key={opt.value} type="button" onClick={() => updateProject({ install_environment: opt.value })}
+                  className={`text-left p-3 rounded-lg border-2 transition-all ${ringClass}`}>
+                  <div className={`text-sm font-semibold ${titleClass}`}>{opt.label}</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">{opt.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div id="clp-project-scope">
+          <Label className="text-sm font-semibold text-slate-900">Project Scope</Label>
+          <p className="text-xs text-slate-500 mt-1 mb-2">Choose what this estimate covers. Hidden tabs are excluded from totals.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {[
+              { value: "full", label: "Letters + Install", desc: "Both letter purchases and installation labor" },
+              { value: "install_only", label: "Installation Only", desc: "Install labor only — no letter purchases" },
+              { value: "letters_only", label: "Lettering / Logo Only", desc: "Letter purchases only — no install or crew" },
+            ].map((opt) => {
+              const active = (project.project_scope || "full") === opt.value;
+              return (
+                <button key={opt.value} type="button" onClick={() => updateProject({ project_scope: opt.value })}
+                  className={`text-left p-3 rounded-lg border-2 transition-all ${
+                    active ? "border-purple-500 bg-purple-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"
+                  }`}>
+                  <div className={`text-sm font-semibold ${active ? "text-purple-900" : "text-slate-800"}`}>{opt.label}</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">{opt.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div id="clp-site-address">
+          <Label htmlFor="site_address" className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-purple-600" />
+            Site Address
+            <span className="text-xs font-normal text-slate-500">(used for travel mileage)</span>
+          </Label>
+          <AddressAutocomplete id="site_address" value={project.site_address || ""}
+            onChange={(val) => updateProject({ site_address: val })}
+            placeholder="e.g., 123 Main St, Cincinnati, OH 45202" className="mt-1" />
+          <p className="mt-1 text-xs text-slate-500">
+            Travel cost will be calculated from your shop (
+            <Link to={createPageUrl("InstallationSettings")} className="underline hover:text-purple-700">Travel settings</Link>
+            ) to this address.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
@@ -823,10 +906,9 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
               <div className="sticky top-[64px] z-30 -mx-2 px-2 py-2 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/60">
                 {(() => {
-                  const visibleTabsCount = 3 + (showLettersTab ? 1 : 0) + (showInstallTab ? 1 : 0) + (showCrewTab ? 1 : 0);
+                  const visibleTabsCount = 2 + (showLettersTab ? 1 : 0) + (showInstallTab ? 1 : 0) + (showCrewTab ? 1 : 0);
                   return (
                 <TabsList className={`grid w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1`} style={{ gridTemplateColumns: `repeat(${visibleTabsCount}, minmax(0, 1fr))` }}>
-                  <TabBadgeTrigger value="project" icon={FileText} label="Project" />
                   {showLettersTab && (
                     <TabBadgeTrigger value="letters" icon={Type} label="Letters" amount={recalculated.total_letters_cost} warn={hasIncompleteDimensional || lettersIssues} />
                   )}
@@ -860,207 +942,9 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                 })()}
               </div>
 
-              {/* PROJECT TAB */}
-              <TabsContent value="project" className="mt-4 space-y-4">
-                <Card className="bg-white border-0 shadow-sm">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Project Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {embedded ? (
-                      /* Inside All-In-One: client / estimate # / link come from the
-                         parent estimate. Show them read-only so they aren't re-entered. */
-                      <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 px-4 py-3">
-                        <p className="text-xs font-medium text-indigo-700 mb-2">
-                          Inherited from the All-In-One estimate
-                        </p>
-                        <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
-                          <div className="flex justify-between sm:block">
-                            <span className="text-slate-500">Client</span>
-                            <span className="sm:block font-medium text-slate-900">{project.client_name || "—"}</span>
-                          </div>
-                          <div className="flex justify-between sm:block">
-                            <span className="text-slate-500">Section Name</span>
-                            <span className="sm:block font-medium text-slate-900">{project.project_name || "—"}</span>
-                          </div>
-                          <div className="flex justify-between sm:block">
-                            <span className="text-slate-500">Estimate #</span>
-                            <span className="sm:block font-medium text-slate-900">{project.estimate_number || "—"}</span>
-                          </div>
-                          <div className="flex justify-between sm:block">
-                            <span className="text-slate-500">Project Link</span>
-                            <span className="sm:block font-medium text-slate-900 truncate">{project.hyperlink || "—"}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div id="clp-client-name">
-                            <Label htmlFor="client_name">Client Name *</Label>
-                            <ClientSearchInput
-                              value={project.client_name}
-                              onChange={(val) => updateProject({ client_name: val })}
-                              onSelectProject={(data) => updateProject({
-                                client_name: data.client_name || project.client_name,
-                                project_name: data.project_name || project.project_name,
-                                estimate_number: data.estimate_number || project.estimate_number,
-                                hyperlink: data.hyperlink || project.hyperlink,
-                              })}
-                              className="mt-1"
-                              placeholder="Enter client name"
-                            />
-                          </div>
-                          <div id="clp-project-name">
-                            <Label htmlFor="project_name">Project Name *</Label>
-                            <Input
-                              id="project_name"
-                              value={project.project_name}
-                              onChange={(e) => updateProject({ project_name: e.target.value })}
-                              placeholder="Enter project name"
-                              className="mt-1"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div id="clp-estimate-number">
-                            <Label htmlFor="estimate_number">Estimate Number <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
-                            <Input
-                              id="estimate_number"
-                              value={project.estimate_number}
-                              onChange={(e) => updateProject({ estimate_number: e.target.value })}
-                              placeholder="e.g., INST-2024-001"
-                              className="mt-1"
-                            />
-                          </div>
-                          <div id="clp-hyperlink">
-                            <Label htmlFor="hyperlink">Project Link <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
-                            <Input
-                              id="hyperlink"
-                              value={project.hyperlink}
-                              onChange={(e) => updateProject({ hyperlink: e.target.value })}
-                              placeholder="https://..."
-                              className="mt-1"
-                            />
-                          </div>
-                        </div>
-                      </>
-                    )}
-                    {/* Interior / Exterior — project-level default (each line item can override) */}
-                    <div id="clp-install-env">
-                      <Label className="text-sm font-semibold text-slate-900">Installation Environment</Label>
-                      <p className="text-xs text-slate-500 mt-1 mb-2">
-                        Default for every line item — interior installs typically have different drill/prep times than exterior. You can override this on any line item.
-                      </p>
-                      <div className="grid grid-cols-2 gap-2 max-w-md">
-                        {[
-                          { value: "exterior", label: "Exterior", desc: "Outdoor wall, parapet, storefront", color: "blue" },
-                          { value: "interior", label: "Interior", desc: "Lobby, indoor wall, office signage", color: "amber" },
-                        ].map((opt) => {
-                          const active = (project.install_environment || "exterior") === opt.value;
-                          const ringClass = opt.color === "blue"
-                            ? (active ? "border-blue-500 bg-blue-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300")
-                            : (active ? "border-amber-500 bg-amber-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300");
-                          const titleClass = opt.color === "blue"
-                            ? (active ? "text-blue-900" : "text-slate-800")
-                            : (active ? "text-amber-900" : "text-slate-800");
-                          return (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => updateProject({ install_environment: opt.value })}
-                              className={`text-left p-3 rounded-lg border-2 transition-all ${ringClass}`}
-                            >
-                              <div className={`text-sm font-semibold ${titleClass}`}>{opt.label}</div>
-                              <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">{opt.desc}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div id="clp-project-scope">
-                      <Label className="text-sm font-semibold text-slate-900">Project Scope</Label>
-                      <p className="text-xs text-slate-500 mt-1 mb-2">
-                        Choose what this estimate covers. Hidden tabs are excluded from totals.
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        {[
-                          { value: "full", label: "Letters + Install", desc: "Both letter purchases and installation labor" },
-                          { value: "install_only", label: "Installation Only", desc: "Install labor only — no letter purchases" },
-                          { value: "letters_only", label: "Lettering / Logo Only", desc: "Letter purchases only — no install or crew" },
-                        ].map((opt) => {
-                          const active = (project.project_scope || "full") === opt.value;
-                          return (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => updateProject({ project_scope: opt.value })}
-                              className={`text-left p-3 rounded-lg border-2 transition-all ${
-                                active
-                                  ? "border-purple-500 bg-purple-50 shadow-sm"
-                                  : "border-slate-200 bg-white hover:border-slate-300"
-                              }`}
-                            >
-                              <div className={`text-sm font-semibold ${active ? "text-purple-900" : "text-slate-800"}`}>
-                                {opt.label}
-                              </div>
-                              <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">{opt.desc}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div id="clp-site-address">
-                      <Label htmlFor="site_address" className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-purple-600" />
-                        Site Address
-                        <span className="text-xs font-normal text-slate-500">(used for travel mileage)</span>
-                      </Label>
-                      <AddressAutocomplete
-                        id="site_address"
-                        value={project.site_address || ""}
-                        onChange={(val) => updateProject({ site_address: val })}
-                        placeholder="e.g., 123 Main St, Cincinnati, OH 45202"
-                        className="mt-1"
-                      />
-                      <p className="mt-1 text-xs text-slate-500">
-                        Travel cost will be calculated from your shop (
-                        <Link to={createPageUrl("InstallationSettings")} className="underline hover:text-purple-700">
-                          Travel settings
-                        </Link>
-                        ) to this address.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card id="clp-notes" className="bg-white border-0 shadow-sm">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Notes</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Textarea
-                      value={project.notes}
-                      onChange={(e) => updateProject({ notes: e.target.value })}
-                      placeholder="Add any additional notes or special considerations..."
-                      className="h-32"
-                    />
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end">
-                  <Button
-                    onClick={() => setActiveTab(showLettersTab ? "letters" : (showInstallTab ? "items" : "summary"))}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
-                  >
-                    Continue to {showLettersTab ? "Letters" : (showInstallTab ? "Install" : "Summary")} →
-                  </Button>
-                </div>
-              </TabsContent>
-
               {/* LETTERS TAB */}
               <TabsContent value="letters" className="mt-4 space-y-3">
+                {jobConditions}
                 <LettersPurchaseTab
                   project={recalculated}
                   settings={settings}
@@ -1072,6 +956,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
 
               {/* INSTALLATION TAB (formerly Items) */}
               <TabsContent value="items" className="mt-4 space-y-3">
+                {!showLettersTab && jobConditions}
                 <div id="clp-install-ai" className="flex items-center justify-end gap-2 bg-white rounded-lg border border-slate-200 px-3 py-2 shadow-sm">
                   <Button
                     onClick={() => setAiInstallOpen(true)}
@@ -1183,6 +1068,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
 
               {/* SUMMARY TAB */}
               <TabsContent value="summary" className="mt-4 space-y-3">
+                <Card id="clp-notes" className="bg-white border-0 shadow-sm"><CardHeader className="pb-3"><CardTitle className="text-lg">Notes</CardTitle></CardHeader><CardContent><Textarea value={project.notes} onChange={(e) => updateProject({ notes: e.target.value })} placeholder="Add any additional notes or special considerations..." className="h-32" /></CardContent></Card>
                 <div id="clp-summary-breakdown">
                   <SummaryDetailsCard project={recalculated} />
                 </div>
@@ -1290,7 +1176,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
               <ModuleActionBar
                 onTemplates={() => setTemplateMode("load")}
                 onSaveAsTemplate={() => setTemplateMode("save")}
-                onSaveAsCopy={handleSaveAsCopy}
+                onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
                 estimateId={estimateId}
                 saving={isSaving}
               />

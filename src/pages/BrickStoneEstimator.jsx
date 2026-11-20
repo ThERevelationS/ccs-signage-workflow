@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { withStandaloneBuilderRedirect } from "@/components/estimator/aio/StandaloneBuilderRedirect";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { AlertTriangle, ArrowLeft, Save } from "lucide-react";
 import BrickGeometryPanel from "@/components/estimator/brick/BrickGeometryPanel";
 import BrickTotals from "@/components/estimator/brick/BrickTotals";
@@ -17,7 +17,8 @@ import { categorizeBrickStoneProject } from "@/components/markup/projectCategori
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-export default function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
+export default withStandaloneBuilderRedirect(BrickStoneEstimator, "brick_stone", "BrickStoneProject");
+function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const params = new URLSearchParams(window.location.search);
   const id = embeddedProjectId || params.get("id") || params.get("edit");
   const estimateId = embeddedEstimateId || params.get("estimateId");
@@ -328,7 +329,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
           <ModuleActionBar
             onTemplates={() => setTemplateMode("load")}
             onSaveAsTemplate={() => setTemplateMode("save")}
-            onSaveAsCopy={handleSaveAsCopy}
+            onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
             estimateId={estimateId}
             saving={saving}
           />
@@ -362,16 +363,6 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <label className="text-xs text-gray-500">
-                Section name
-                <Input
-                  value={project.project_name || ""}
-                  onChange={(e) => patch({ project_name: e.target.value })}
-                />
-              </label>
-            </div>
-
             <BrickGeometryPanel
               project={project}
               materials={materials}

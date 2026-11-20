@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { withStandaloneBuilderRedirect } from "@/components/estimator/aio/StandaloneBuilderRedirect";
 import { useSearchParams, Link } from "react-router-dom";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,8 @@ const newItem = () => ({ description: "", quantity: 1, item_total_cost: 0, item_
 const ITEM_TYPES = ["fabrication", "material", "labor", "equipment", "shipping", "other"];
 const sumTotal = (items) => (items || []).reduce((s, i) => s + num(i.item_total_cost), 0);
 
-export default function CustomItemsEstimator({ embeddedProjectId, embeddedEstimateId, onSaved } = {}) {
+export default withStandaloneBuilderRedirect(CustomItemsEstimator, "custom_items", "CustomItemsProject");
+function CustomItemsEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved } = {}) {
   const [searchParams] = useSearchParams();
   const editId = embeddedProjectId || searchParams.get("edit") || searchParams.get("id");
   const estimateId = embeddedEstimateId || searchParams.get("estimateId");
@@ -91,7 +93,7 @@ export default function CustomItemsEstimator({ embeddedProjectId, embeddedEstima
   return (
     <div className="mx-auto max-w-4xl px-4 py-5">
       <div className="flex items-center gap-3 mb-4">
-        <Link to="/Estimator"><Button variant="outline" className="h-[30px] text-[11px]"><ArrowLeft className="w-3.5 h-3.5 mr-1" /> Estimator</Button></Link>
+        {embedded ? <Button variant="outline" onClick={onClose} className="h-[30px] text-[11px]"><ArrowLeft className="w-3.5 h-3.5 mr-1" /> Back to Products</Button> : <Link to="/Estimator"><Button variant="outline" className="h-[30px] text-[11px]"><ArrowLeft className="w-3.5 h-3.5 mr-1" /> Estimator</Button></Link>}
         <div className="w-9 h-9 rounded bg-violet-50 text-violet-700 flex items-center justify-center"><ListChecks className="w-5 h-5" /></div>
         <div className="min-w-0 flex-1">
           <h1 className="text-[18px] font-bold text-gray-900">Custom line items</h1>
@@ -102,10 +104,6 @@ export default function CustomItemsEstimator({ embeddedProjectId, embeddedEstima
         <Button onClick={saveProject} disabled={saving} className="h-[30px] text-[11px]">{saving ? "Saving…" : "Save section"}</Button>
       </div>
       <div className="bg-white border border-gray-200 rounded-md">
-        <div className="px-4 py-2 border-b border-gray-200 grid grid-cols-2 gap-3">
-          <div><Label className="text-[9px]">Section name</Label><Input value={project.project_name || ""} onChange={(e) => setProject((p) => ({ ...p, project_name: e.target.value }))} className="h-[30px] text-[11px] mt-0.5" /></div>
-          <div><Label className="text-[9px]">Client</Label><Input value={project.client_name || ""} onChange={(e) => setProject((p) => ({ ...p, client_name: e.target.value }))} className="h-[30px] text-[11px] mt-0.5" /></div>
-        </div>
         <div className="divide-y divide-gray-100">
           {(project.items || []).map((item, i) => (
             <div key={i} className="px-4 py-2.5 grid grid-cols-12 items-end gap-2">
