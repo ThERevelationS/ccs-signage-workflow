@@ -1544,7 +1544,7 @@ function CNCEstimator({ embedded = false, embeddedProjectId = null, embeddedEsti
                 onTemplates={() => setTemplateMode("load")}
                 onSaveAsTemplate={() => setTemplateMode("save")}
                 onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
-                estimateId={estimateId}
+                estimateId={embedded ? undefined : estimateId}
                 saving={isSaving}
               />
             </div>

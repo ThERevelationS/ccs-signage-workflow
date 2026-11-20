@@ -371,7 +371,7 @@ function PaintingEstimator({ embedded = false, embeddedProjectId = null, embedde
             onTemplates={() => setTemplateMode("load")}
             onSaveAsTemplate={() => setTemplateMode("save")}
             onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
-            estimateId={estimateId}
+            estimateId={embedded ? undefined : estimateId}
             saving={saving}
           />
         </div>

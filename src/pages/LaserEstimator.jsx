@@ -1992,7 +1992,7 @@ Best regards`;
                     onTemplates={() => setTemplateMode("load")}
                     onSaveAsTemplate={() => setTemplateMode("save")}
                     onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
-                    estimateId={estimateId}
+                    estimateId={embedded ? undefined : estimateId}
                     saving={isSaving}
                   />
                 </div>

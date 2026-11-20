@@ -330,7 +330,7 @@ function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEsti
             onTemplates={() => setTemplateMode("load")}
             onSaveAsTemplate={() => setTemplateMode("save")}
             onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
-            estimateId={estimateId}
+            estimateId={embedded ? undefined : estimateId}
             saving={saving}
           />
         </div>

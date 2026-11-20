@@ -28,6 +28,7 @@ for (const [name, [key, entity]] of Object.entries(entries)) {
     assert.match(page, /<TabsContent value="summary"[\s\S]*?<Textarea[^>]*value=\{project\.notes/, `${name} retains notes in Summary`);
   }
   if (name !== "CustomItems") assert.match(page, /onSaveAsCopy=\{embedded \? undefined : handleSaveAsCopy\}/, `${name} hides Save As Copy`);
+  if (!["Foundation", "CustomItems"].includes(name)) assert.match(page, /estimateId=\{embedded \? undefined : estimateId\}/, `${name} hides Share Link`);
 }
 for (const name of ["ChannelLetter", "Vinyl", "Maintenance"]) {
   const page = fs.readFileSync(`src/pages/${name}Estimator.jsx`, "utf8");
