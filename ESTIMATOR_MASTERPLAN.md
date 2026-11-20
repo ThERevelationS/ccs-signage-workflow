@@ -794,8 +794,8 @@ The ten product builders (`src/pages/{Foundation,ChannelLetter,Vinyl,CNC,Laser,M
 - [x] `Q-14` **[DONE]** (`eb370ecd4`, live-verified 2026-11-20) Standalone entry points (`/VinylEstimator` etc. without an estimate) redirect to the Products page / estimate instead of offering a standalone intake.
 - [ ] `Q-15` **[PARTIAL]** (`eb370ecd4`: Save As Copy / Share Link / standalone Print hidden when embedded; per-module Customer Pricing tab kept pending Brett) Audit standalone-only actions shown in embedded mode per builder: Save As Copy, Share Link (Foundation), Print Estimate (CNC/Laser/Metal), own "Save Estimate" wording, per-module Customer Pricing tab (Vinyl/CNC/Laser/Metal/ChannelLetter) vs the estimate's own pricing step.
 
-- [ ] `Q-16` **[OPEN]** Foundation guided setup still starts with "Brief — customer + project basics"; retarget that step to the job brief only.
-- [ ] `Q-17` **[OPEN]** Live-browser pass of the other 8 builders (only Vinyl + Foundation opened live; others covered by tests).
+- [x] `Q-16` **[DONE]** (`fc421397e`, live 2026-11-20: guide shows 4 steps from Structure) Foundation guided setup still starts with "Brief — customer + project basics"; retarget that step to the job brief only.
+- [x] `Q-17` **[DONE]** (live 2026-11-20 on EST-00009: all 8 open embedded, no intake fields, no console/HTTP errors; per-builder Share Link hidden when embedded in `4930a2bf3`) Live-browser pass of the other 8 builders (only Vinyl + Foundation opened live; others covered by tests).
 
 ### Phase 3 — Needs Brett
 - [ ] `Q-30` **[OPEN]** Test residue: ~50 draft estimates from earlier test runs (`O012 SplitSrc…`, `O012 Source…`, `Dup Src…`, `[LIVE-O013 …] Portal Estimate`) — delete only with Brett's OK.
