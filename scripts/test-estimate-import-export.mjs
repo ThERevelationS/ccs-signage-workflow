@@ -36,8 +36,8 @@ export const useAuth = () => ({});
 `);
 const staffStub = resolve(here, '.tmp-staff-eie.mjs');
 writeFileSync(staffStub, `
-const emptyEntity = () => ({ filter: async () => [], list: async () => [], get: async () => null, create: async () => ({}), update: async () => ({}) });
-export const staffEntities = new Proxy({}, { get: (t, k) => (k === 'updateMany' ? async () => ({}) : emptyEntity()) });
+const emptyEntity = (name) => ({ filter: async () => globalThis.__eieRows?.[name] || [], list: async () => [], get: async () => globalThis.__eieEstimate || null, create: async () => ({}), update: async () => ({}) });
+export const staffEntities = new Proxy({}, { get: (t, k) => (k === 'updateMany' ? async () => ({}) : emptyEntity(k)) });
 export const staffEntityWrite = {};
 export const staffDataRead = {};
 export const updateMany = async () => ({});
@@ -308,6 +308,27 @@ await assert.rejects(
   () => copyProductBomToProduct({ estimateId: 'e1', sourceBuilderProductId: 's1' }),
   /Source and target/
 );
+{
+  globalThis.__eieRows = {
+    BuilderPartGroup: [{ id: 'g1', group_name: 'Group' }, { id: 'empty', group_name: 'Empty' }],
+    BuilderPart: [{ id: 'p1', part_name: 'Grouped', part_group_id: 'g1' }, { id: 'p2', part_name: 'Loose' }],
+  };
+  const versions = [];
+  const result = await copyProductBomToProduct({
+    estimateId: 'e1', sourceBuilderProductId: 's1', targetBuilderProductId: 't1', expectedEstimateUpdatedAt: 'v1',
+    addPackageFn: async (args) => { versions.push(args.expectedEstimateUpdatedAt); return { line: {} }; },
+    estimateEntity: { get: async () => ({ id: 'e1', updated_date: 'v2' }) },
+  });
+  assert.equal(result.packages, 2, 'empty groups are not copied as invalid packages');
+  assert.deepEqual(versions, ['v1', 'v2'], 'each package uses the current target version');
+  let calls = 0;
+  await assert.rejects(copyProductBomToProduct({
+    estimateId: 'e1', sourceBuilderProductId: 's1', targetBuilderProductId: 't1', expectedEstimateUpdatedAt: 'v1',
+    addPackageFn: async () => { if (++calls === 2) throw new Error('second failed'); return {}; },
+    estimateEntity: { get: async () => ({ id: 'e1', updated_date: 'v2' }) },
+  }), (error) => error.message === 'second failed' && error.bomCopyProgress.packages === 1 && error.bomCopyProgress.failedItem === 'Loose');
+  delete globalThis.__eieRows;
+}
 
 // ---------------------------------------------------------------------------
 // #452 — bulk estimates CSV rows

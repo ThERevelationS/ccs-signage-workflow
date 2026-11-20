@@ -221,7 +221,7 @@ export async function prepareEstimateConversion({
                                   : pendingPrice.pending?.kind === "builder_product_remove"
                                     ? "Resume Product Remove"
                                     : pendingPrice.pending?.kind === "builder_quick_product_insert"
-                                      ? pendingPrice.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
+                        ? ["product_clone", "estimate_section_copy"].includes(pendingPrice.pending?.source_type) ? "Resume Product Clone" : "Resume Quick Product"
                                       : "Resume Price Update";
     throw new Error(`"${name}" has a Builder mutation recovery pending. Use ${resumeLabel} before converting this estimate to a Work Order.`);
   }

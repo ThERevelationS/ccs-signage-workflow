@@ -51,6 +51,8 @@ import { duplicateEstimate, splitEstimate, newEstimateCreationKey, estimateLineS
 import { assignMissingEstimateNumber, needsEstimateNumber } from "@/components/estimator/estimateNumberAssignment";
 import { approvalWatchError, approvalWatchIndex, changeApprovalWatch, listApprovalWatches } from "@/components/estimator/estimateApprovalWatch";
 import MergeEstimateDialog from "@/components/estimator/aio/MergeEstimateDialog";
+import CopyFromEstimateDialog from "@/components/estimator/aio/CopyFromEstimateDialog";
+import { copyComparableEstimate } from "@/components/estimator/aio/copyFromEstimateService";
 import EstimateNotesTimeline from "@/components/estimator/aio/EstimateNotesTimeline";
 import { staffEntities } from "@/components/staff/staffEntities";
 import MatrixSuggestPanel from "@/components/pricing/MatrixSuggestPanel";
@@ -104,7 +106,7 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
                                 : entry.pending?.kind === "builder_product_remove"
                                   ? "Resume Product Remove"
                                   : entry.pending?.kind === "builder_quick_product_insert"
-                        ? entry.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
+                        ? ["product_clone", "estimate_section_copy"].includes(entry.pending?.source_type) ? "Resume Product Clone" : "Resume Quick Product"
                         : "Resume Price Update";
   throw new Error(`"${name}" has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
 }
@@ -162,6 +164,9 @@ export default function EstimateDetail() {
   const [duplicating, setDuplicating] = useState(false);
   const [duplicateChoiceOpen, setDuplicateChoiceOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
+  const [copyFromMode, setCopyFromMode] = useState("");
+  const [copyFromError, setCopyFromError] = useState("");
+  const [copyFromChecking, setCopyFromChecking] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const copyingRef = useRef(false);
   const copyAttemptRef = useRef(null);
@@ -705,6 +710,25 @@ export default function EstimateDetail() {
     }
   };
 
+  const openCopyFrom = async (mode) => {
+    if (readOnly || saving || trashing || duplicating || refreshing || copyFromChecking) return;
+    setCopyFromChecking(true);
+    setCopyFromError("");
+    try {
+      const current = await loadCurrentProductMutationEstimate();
+      assertNoPendingLinesForCopy(current.line_items, "copying Products or Parts");
+      const line_items = await refreshSectionSnapshots(current.line_items);
+      if (!estimateServerMatchesIntendedSave(copyComparableEstimate({ ...current, line_items }), copyComparableEstimate(estimate))) {
+        throw new Error("Save your changes before copying Products or Parts.");
+      }
+      setCopyFromMode(mode);
+    } catch (error) {
+      setCopyFromError(error?.message || "The estimate could not be checked before copying.");
+    } finally {
+      setCopyFromChecking(false);
+    }
+  };
+
   const updateProductNotes = async (line, notes) => {
     if (readOnly) return;
     await saveProductNotes({ estimateId: estimate.id, line, notes, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
@@ -815,7 +839,7 @@ export default function EstimateDetail() {
                   : line?.price_acceptance_pending?.kind === "builder_product_remove"
                     ? "Resume Product Remove"
                     : line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
-          ? line?.price_acceptance_pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
+          ? ["product_clone", "estimate_section_copy"].includes(line?.price_acceptance_pending?.source_type) ? "Resume Product Clone" : "Resume Quick Product"
           : "Resume Price Update";
       window.alert(`${error?.message || "Product pricing/recovery could not be completed."}\n\nThe estimate was refreshed. If this operation had already started, use ${recoveryLabel} to safely continue it.`);
     }
@@ -1796,8 +1820,9 @@ export default function EstimateDetail() {
           {estimate.pricing_stale_reason || "The pricing tier changed — recompute and re-save this estimate before sending."}
         </div>
       )}
-      {estimate.id && persistedStatus !== "approved" && (
+      {estimate.id && (
         <div className="px-3 pb-2">
+          {persistedStatus !== "approved" && <>
           <button type="button" disabled={watchBusy} onClick={async () => {
             if (watchBusy) return;
             setWatchBusy(true);
@@ -1816,45 +1841,16 @@ export default function EstimateDetail() {
           </button>
           {watching && <span className="ml-2 text-[10px] text-violet-600">Watching for approval</span>}
           {watchNote ? <span role="alert" className="ml-2 text-[10px] text-red-600">{watchNote}</span> : null}
-          <button type="button" onClick={async () => {
-            const raw = window.prompt("Copy BOM (parts + products) from which estimate id or number?", "");
-            const q = String(raw || "").trim();
-            if (!q) return;
-            try {
-              const sessionToken = getSessionToken();
-              // Resolve an estimate_number or raw id to a source estimate.
-              let src = await staffEntities.AllInOneEstimate.filter({ estimate_number: q }, undefined, 1).catch(() => []);
-              if (!Array.isArray(src) || !src.length) src = await staffEntities.AllInOneEstimate.get(q).catch(() => null);
-              const srcRow = Array.isArray(src) ? src[0] : src;
-              if (!srcRow?.id) throw new Error("No estimate found with that id or number.");
-              if (!window.confirm(`Copy ${srcRow.project_name || srcRow.id}'s BOM (products + parts) into this estimate?`)) return;
-              const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "copy_bom", from_estimate_id: srcRow.id, to_estimate_id: estimate.id });
-              const d = res?.data || res;
-              window.alert(d?.success ? `Copied ${d.copied_products || 0} products + ${d.copied_parts || 0} parts.` : (d?.error || "Copy failed."));
-            } catch (e) { window.alert(e?.message || "Copy failed."); }
-          }}
-            className="ml-2 inline-flex items-center gap-1 rounded border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 hover:bg-indigo-100" title="Copy this estimate's BOM (products + parts) from another estimate (#464)">
+          </>}
+          <button type="button" onClick={() => openCopyFrom("bom")} disabled={readOnly || saving || trashing || duplicating || refreshing || copyFromChecking}
+            className="ml-2 inline-flex items-center gap-1 rounded border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50" title={readOnly ? "Start an Estimate Revision before copying Parts." : "Copy Parts from another estimate"}>
             Copy BOM from…
           </button>
-          <button type="button" onClick={async () => {
-            const raw = window.prompt("Copy sections from which estimate id or number?", "");
-            const q = String(raw || "").trim();
-            if (!q) return;
-            try {
-              const sessionToken = getSessionToken();
-              let src = await staffEntities.AllInOneEstimate.filter({ estimate_number: q }, undefined, 1).catch(() => []);
-              if (!Array.isArray(src) || !src.length) src = await staffEntities.AllInOneEstimate.get(q).catch(() => null);
-              const srcRow = Array.isArray(src) ? src[0] : src;
-              if (!srcRow?.id) throw new Error("No estimate found with that id or number.");
-              if (!window.confirm(`Copy ${srcRow.project_name || srcRow.id}'s sections (module projects + builder products) into this estimate?`)) return;
-              const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "copy_sections", from_estimate_id: srcRow.id, to_estimate_id: estimate.id });
-              const d = res?.data || res;
-              window.alert(d?.success ? `Copied ${d.copied_sections || 0} section(s).` : (d?.error || "Copy failed."));
-            } catch (e) { window.alert(e?.message || "Copy failed."); }
-          }}
-            className="ml-2 inline-flex items-center gap-1 rounded border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 hover:bg-sky-100" title="Copy sections (module projects + builder products) from another estimate (#467)">
+          <button type="button" onClick={() => openCopyFrom("sections")} disabled={readOnly || saving || trashing || duplicating || refreshing || copyFromChecking}
+            className="ml-2 inline-flex items-center gap-1 rounded border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50" title={readOnly ? "Start an Estimate Revision before copying Products." : "Copy Products from another estimate"}>
             Copy sections…
           </button>
+          {copyFromError && <span role="alert" className="ml-2 text-[10px] text-red-700">{copyFromError}</span>}
         </div>
       )}
 
@@ -2122,6 +2118,10 @@ export default function EstimateDetail() {
         onClose={() => setMergeOpen(false)}
         onMerge={handleMerge}
       />
+
+      <CopyFromEstimateDialog open={!!copyFromMode} mode={copyFromMode} estimate={estimate}
+        expectedEstimateUpdatedAt={serverUpdatedAtRef.current} onClose={() => setCopyFromMode("")}
+        onCopied={refreshProducts} />
 
       <AlertDialog open={duplicateChoiceOpen} onOpenChange={setDuplicateChoiceOpen}>
         <AlertDialogContent>

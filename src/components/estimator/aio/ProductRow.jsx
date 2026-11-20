@@ -196,7 +196,7 @@ export default function ProductRow({
                                 : pendingPriceAcceptance?.kind === "builder_product_remove"
                                   ? "Resume Product Remove"
                                   : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
-                        ? pendingPriceAcceptance?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
+                        ? ["product_clone", "estimate_section_copy"].includes(pendingPriceAcceptance?.source_type) ? "Resume Product Clone" : "Resume Quick Product"
                         : "Resume Price Update";
   const isCustom = line.module_key === "custom";
   const StatusIcon = meta.icon;
@@ -354,7 +354,7 @@ export default function ProductRow({
                                             : pendingPriceAcceptance?.kind === "builder_product_remove"
                                               ? "Resume the previously started Product removal from its saved recovery marker."
                                               : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
-                                    ? pendingPriceAcceptance?.source_type === "product_clone"
+                                    ? ["product_clone", "estimate_section_copy"].includes(pendingPriceAcceptance?.source_type)
                                       ? "Resume the previously started Product clone from its saved recovery marker."
                                       : "Resume the previously started Quick Product insertion from its saved recovery marker."
                                     : "Resume the previously started Update Price operation from its saved recovery marker."}

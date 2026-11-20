@@ -185,6 +185,7 @@ async function completedQuickInsertResult(estimate, line, flags = {}) {
 }
 
 function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, operationKey, sourceType = "quick_product" }) {
+  const productCopy = sourceType === "product_clone" || sourceType === "estimate_section_copy";
   const productName = productPayload.product_name || "Quick Product";
   const templateLine = cloneSnapshot(productPayload.product_snapshot?.line || {});
   const templateBuilder = stripEntitySystemFields(productPayload.product_snapshot?.builder_product || {});
@@ -212,6 +213,7 @@ function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, op
     if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "client_name")) sourceExpectedData.client_name = estimate.client_name || sourceExpectedData.client_name;
     if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "customer_id")) sourceExpectedData.customer_id = estimate.customer_id || sourceExpectedData.customer_id;
     if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "estimate_number")) sourceExpectedData.estimate_number = estimate.estimate_number || sourceExpectedData.estimate_number;
+    if (sourceType === "estimate_section_copy" && Object.prototype.hasOwnProperty.call(sourceExpectedData, "estimate_id")) sourceExpectedData.estimate_id = estimate.id;
     sourceExpectedData.notes = String(sourceExpectedData.notes || "");
     sourceRecoveryToken = `[SEP-QUICK-RECOVERY:${operationKey}]`;
     sourceTaggedData = {
@@ -359,11 +361,11 @@ function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, op
     finalPriceState,
     builderCreateData,
     finalLineBase,
-    revisionAction: sourceType === "product_clone" ? "cloned_with_product" : "created_from_quick_product",
-    revisionNotes: sourceType === "product_clone"
+    revisionAction: productCopy ? "cloned_with_product" : "created_from_quick_product",
+    revisionNotes: productCopy
       ? `Cloned Product “${productName}”. Frozen pricing and Part/Group snapshots were preserved.`
       : `Created from Quick Product “${productName}”. Frozen Product/Part pricing was preserved.`,
-    revisionPriceSnapshotAfter: { ...priceSnapshot, total: frozenTotal, source: sourceType === "product_clone" ? "product_clone" : "quick_product" },
+    revisionPriceSnapshotAfter: { ...priceSnapshot, total: frozenTotal, source: productCopy ? sourceType : "quick_product" },
   };
 }
 

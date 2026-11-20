@@ -472,7 +472,7 @@ export function buildCopiedBomPackages({ groups = [], parts = [] } = {}) {
     if (part.part_group_id && grouped.has(part.part_group_id)) grouped.get(part.part_group_id).push(part);
     else loose.push(part);
   }
-  const packages = activeGroups.map((group) => ({
+  const packages = activeGroups.filter((group) => grouped.get(group.id).length > 0).map((group) => ({
     itemType: "part_group",
     itemName: group.client_label || group.group_name || "Part Group",
     payload: {
@@ -492,6 +492,7 @@ export async function copyProductBomToProduct({
   targetBuilderProductId,
   expectedEstimateUpdatedAt = "",
   addPackageFn = addPartPackageToProduct,
+  estimateEntity = staffEntities.AllInOneEstimate,
 } = {}) {
   if (!estimateId || !sourceBuilderProductId || !targetBuilderProductId) {
     throw new Error("Source and target Products are required to copy a BOM.");
@@ -503,17 +504,28 @@ export async function copyProductBomToProduct({
   const packages = buildCopiedBomPackages({ groups, parts });
   if (!packages.length) throw new Error("The source Product has no active Parts to copy.");
   const results = [];
-  for (const pkg of packages) {
-    results.push(await addPackageFn({
-      estimateId,
-      targetBuilderProductId,
-      itemType: pkg.itemType,
-      itemName: pkg.itemName,
-      payload: pkg.payload,
-      sourceType: "estimate_bom_copy",
-      sourceId: sourceBuilderProductId,
-      expectedEstimateUpdatedAt,
-    }));
+  let expectedVersion = expectedEstimateUpdatedAt;
+  for (const [index, pkg] of packages.entries()) {
+    try {
+      results.push(await addPackageFn({
+        estimateId,
+        targetBuilderProductId,
+        itemType: pkg.itemType,
+        itemName: pkg.itemName,
+        payload: pkg.payload,
+        sourceType: "estimate_bom_copy",
+        sourceId: sourceBuilderProductId,
+        expectedEstimateUpdatedAt: expectedVersion,
+      }));
+      if (results.length < packages.length) {
+        const current = await estimateEntity.get(estimateId);
+        if (!current?.updated_date) throw new Error("The target Estimate version could not be verified.");
+        expectedVersion = current.updated_date;
+      }
+    } catch (error) {
+      error.bomCopyProgress = { packages: results.length, total: packages.length, failedItem: results.length > index ? packages[index + 1]?.itemName : pkg.itemName, results };
+      throw error;
+    }
   }
   return { packages: packages.length, results };
 }
