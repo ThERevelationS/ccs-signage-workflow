@@ -3,6 +3,10 @@
   "type": "object",
   "description": "A reusable 'Quick Product' \u2014 a saved, pre-priced product built from a list of parts (fabrication, materials, design, service, install, etc.). Each part line = override ?? (part_price + modifier_price) x part_qty; parts total + setup fee - discount = product retail (x product_quantity for the extended total).",
   "properties": {
+    "owner_email": {
+      "type": "string",
+      "description": "Lower-cased email of the staff member who saved this item. Stamped server-side by estimatorProjectWrite; owners and admins may edit it, and 'my' items are shown only to their owner."
+    },
     "product_name": {
       "type": "string"
     },
