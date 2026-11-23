@@ -12,6 +12,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { estimateIdsOf, loadEstimateSiteAddress, workOrderSiteAddress } from "./jobSiteAddress";
 import { summarizeMatchedLocalityAuthority } from "@/shared/permittingAddressLocality.js";
 import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./permitWorkflowDesigner";
 
@@ -117,22 +118,6 @@ function mintResolutionRule({ address, resolution, pickedName, pickedType, picke
 
 const RECENT_KEY = "permitting_recent_addresses";
 
-// Imported work orders sometimes carry a date in install_location (column
-// drift) — never treat a date as an address part.
-const isAddressPart = (v) => {
-  const s = String(v || "").trim();
-  return Boolean(s) && !/^\d{4}-\d{2}-\d{2}(?:[T ].*)?$/.test(s) && !/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(s);
-};
-// The job's install address lives on its estimate (site_address). Never fall
-// back to the client's billing or office address — that is not the job site.
-async function loadEstimateSiteAddress(estimateIds) {
-  for (const id of estimateIds) {
-    const est = await staffEntities.AllInOneEstimate.get(id).catch(() => null);
-    const site = String(est?.site_address || "").trim();
-    if (isAddressPart(site)) return { address: site, estimateNumber: est.estimate_number || "" };
-  }
-  return null;
-}
 const loadRecent = () => { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; } };
 const rememberRecent = (addr) => {
   const a = String(addr || "").trim(); if (!a) return;
@@ -181,16 +166,14 @@ export default function PermitSetupWizard({
   const isEdit = existingLines.length > 0;
   const appliedLocalityId = existingLines.find(li => li.locality_id)?.locality_id || "";
   const startStep = Number.isInteger(initialStep) ? initialStep : isEdit ? 3 : 0;
-  const siteAddress = isAddressPart(wo.install_location)
-    ? [wo.install_location, wo.address_line_2, wo.township_city, wo.county, wo.state].filter(isAddressPart).join(", ")
-    : "";
+  const siteAddress = workOrderSiteAddress(wo);
 
   const [step, setStep] = useState(startStep);
   const [maxStep, setMaxStep] = useState(Math.max(startStep, isEdit ? 3 : 0));
   const [address, setAddress] = useState(siteAddress);
   const [addressSource, setAddressSource] = useState(siteAddress ? "work_order" : "");
   const [sourceEstimate, setSourceEstimate] = useState("");
-  const estimateIdsKey = [...new Set([wo.estimate_id, ...(wo.estimate_ids || [])].filter(Boolean))].join(",");
+  const estimateIdsKey = estimateIdsOf(wo).join(",");
   const addressRef = useRef(address);
   addressRef.current = address;
   const [resolving, setResolving] = useState(false);
