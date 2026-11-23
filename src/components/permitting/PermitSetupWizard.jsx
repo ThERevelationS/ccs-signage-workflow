@@ -123,24 +123,15 @@ const isAddressPart = (v) => {
   const s = String(v || "").trim();
   return Boolean(s) && !/^\d{4}-\d{2}-\d{2}(?:[T ].*)?$/.test(s) && !/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(s);
 };
-const joinAddress = (street, city, state, zip) =>
-  [street, city, [state, zip].filter(isAddressPart).join(" ")].filter(isAddressPart).join(", ");
-
-// Client address on file: primary site, then the customer's location, then billing.
-async function loadClientSiteAddress(customerId) {
-  const [customer, locations] = await Promise.all([
-    staffEntities.Customer.get(customerId).catch(() => null),
-    staffEntities.CustomerLocation.filter({ customer_id: customerId }, "label", 50).catch(() => []),
-  ]);
-  const sites = (Array.isArray(locations) ? locations : locations?.items || []).filter(l => isAddressPart(l?.address_line_1));
-  const site = sites.find(l => l.is_primary_site) || sites.find(l => !l.is_billing_address) || sites[0];
-  if (site) return joinAddress(site.address_line_1, site.city, site.state, site.postal_code || site.zip);
-  if (!customer) return "";
-  if (isAddressPart(customer.location_address_1))
-    return joinAddress(customer.location_address_1, customer.location_city, customer.location_state, customer.location_postal_code);
-  if (isAddressPart(customer.billing_address_1))
-    return joinAddress(customer.billing_address_1, customer.billing_city, customer.billing_state, customer.billing_postal_code);
-  return "";
+// The job's install address lives on its estimate (site_address). Never fall
+// back to the client's billing or office address — that is not the job site.
+async function loadEstimateSiteAddress(estimateIds) {
+  for (const id of estimateIds) {
+    const est = await staffEntities.AllInOneEstimate.get(id).catch(() => null);
+    const site = String(est?.site_address || "").trim();
+    if (isAddressPart(site)) return { address: site, estimateNumber: est.estimate_number || "" };
+  }
+  return null;
 }
 const loadRecent = () => { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; } };
 const rememberRecent = (addr) => {
@@ -198,6 +189,8 @@ export default function PermitSetupWizard({
   const [maxStep, setMaxStep] = useState(Math.max(startStep, isEdit ? 3 : 0));
   const [address, setAddress] = useState(siteAddress);
   const [addressSource, setAddressSource] = useState(siteAddress ? "work_order" : "");
+  const [sourceEstimate, setSourceEstimate] = useState("");
+  const estimateIdsKey = [...new Set([wo.estimate_id, ...(wo.estimate_ids || [])].filter(Boolean))].join(",");
   const addressRef = useRef(address);
   addressRef.current = address;
   const [resolving, setResolving] = useState(false);
@@ -228,19 +221,20 @@ export default function PermitSetupWizard({
   const initializedAppliedLocalityRef = useRef(false);
   const editPrefillLocalityRef = useRef("");
 
-  // No usable install address on the WO — fall back to the client's address on
-  // file. Only fills an empty field, so anything staff typed meanwhile wins.
+  // No usable install address on the WO — use the linked estimate's install
+  // site. Only fills an empty field, so anything staff typed meanwhile wins.
   useEffect(() => {
-    if (!isOpen || siteAddress || !wo.customer_id) return;
+    if (!isOpen || siteAddress || !estimateIdsKey) return;
     let alive = true;
-    loadClientSiteAddress(wo.customer_id).then(found => {
+    loadEstimateSiteAddress(estimateIdsKey.split(",")).then(found => {
       if (!alive || !found || String(addressRef.current || "").trim()) return;
-      setAddress(found);
-      setAddressSource("client");
-      setPlanForm(p => (p.address ? p : { ...p, address: found }));
+      setAddress(found.address);
+      setAddressSource("estimate");
+      setSourceEstimate(found.estimateNumber);
+      setPlanForm(p => (p.address ? p : { ...p, address: found.address }));
     });
     return () => { alive = false; };
-  }, [isOpen, siteAddress, wo.customer_id]);
+  }, [isOpen, siteAddress, estimateIdsKey]);
 
   const locality = useMemo(
     () => localities.find(l => l.id === localityId) || null,
@@ -626,11 +620,11 @@ export default function PermitSetupWizard({
                 </div>
               )}
               <p className="text-[11px] text-gray-500 mt-1">
-                {addressSource === "client"
-                  ? `Prefilled from ${wo.client_name || "the client"}'s address on file — fix it here if the install site differs.`
+                {addressSource === "estimate"
+                  ? `Prefilled from the install site on ${sourceEstimate ? `estimate ${sourceEstimate}` : "the estimate"} — fix it here if it differs.`
                   : addressSource === "work_order"
                     ? "Prefilled from the work order — fix it here if the install address differs."
-                    : "No address on the work order or client — enter the install site."}
+                    : "No install address on the work order or its estimate — enter the job site."}
               </p>
             </div>
             {recent.length > 0 && !suggestions.length && (
