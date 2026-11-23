@@ -54,9 +54,9 @@ const isDenied = (entity) => {
 const isForbidden = (err) => Number(err?.status ?? err?.response?.status) === 403;
 
 // List/filter results use 30s, or 15 minutes for settled catalogs. After a
-// write, catalog reads stay short-lived until the server's cache can settle;
-// reads overlapping a write also stay short-lived. Entries are scoped to the
-// session, facade writes bust the entity, and hits return array copies.
+// write, catalog reads stay short-lived until the server's cache can settle.
+// Reads share in-flight requests per session; writes invalidate both in-flight
+// and cached reads, and overlapping reads cannot repopulate the cache.
 const READ_CACHE_TTL_MS = 30000;
 const CATALOG_ENTITIES = new Set([
   "MarkupTier", "QuoteDefaults", "Settings", "LaborServiceInventory", "FoundationInventory",
@@ -68,7 +68,9 @@ const CATALOG_READ_CACHE_TTL_MS = 15 * 60 * 1000;
 const CATALOG_WRITE_SETTLE_MS = 60000;
 let pointReadSeq = 0;
 const readCache = new Map();
+const inFlight = new Map();
 const lastWriteAt = new Map();
+const writeGeneration = new Map();
 const readCacheKey = (entity, args) => `${getSessionToken()}|${entity}|${JSON.stringify(args)}`;
 const cachedRead = (key) => {
   const entry = readCache.get(key);
@@ -87,14 +89,20 @@ const readCacheTtl = (entity, startedAt) => {
 };
 const bustReadCache = (entity) => {
   lastWriteAt.set(entity, Date.now());
+  writeGeneration.set(entity, (writeGeneration.get(entity) ?? 0) + 1);
   const marker = `|${entity}|`;
   for (const key of readCache.keys()) {
     if (key.includes(marker)) readCache.delete(key);
   }
+  for (const key of inFlight.keys()) {
+    if (key.includes(marker)) inFlight.delete(key);
+  }
 };
-const writeEntity = (entity, payload) =>
-  (hasSession() ? invokeFleet(writeFunction(entity), payload) : Promise.reject(NO_SESSION_ERR()))
+const writeEntity = (entity, payload) => {
+  bustReadCache(entity);
+  return (hasSession() ? invokeFleet(writeFunction(entity), payload) : Promise.reject(NO_SESSION_ERR()))
     .finally(() => bustReadCache(entity));
+};
 
 // The platform's function client resolves with the transport envelope
 // ({ status, data, ... }) rather than the JSON body, while a few call paths hand
@@ -204,7 +212,7 @@ const batchedRead = (entity, args) => {
   if (PRIVATE_LIBRARY_ENTITIES.has(entity)) {
     return singleRead(entity, { ...args, session_token: getSessionToken() });
   }
-  const key = entity + "|" + JSON.stringify(args);
+  const key = `${readCacheKey(entity, args)}|${writeGeneration.get(entity) ?? 0}`;
   const existing = pendingBatch.get(key);
   if (existing) return existing.promise;
   let resolveRef, rejectRef;
@@ -212,6 +220,32 @@ const batchedRead = (entity, args) => {
   pendingBatch.set(key, { entity, args, resolve: resolveRef, reject: rejectRef, promise });
   if (!flushScheduled) { flushScheduled = true; setTimeout(flushBatch, BATCH_WINDOW_MS); }
   return promise;
+};
+
+const listRead = (entity, args, paged) => {
+  if (PRIVATE_LIBRARY_ENTITIES.has(entity)) {
+    return batchedRead(entity, args).then((rows) => paged ? page(rows) : rows);
+  }
+  const key = readCacheKey(entity, args);
+  const cached = cachedRead(key);
+  if (cached !== undefined) return Promise.resolve(paged ? page(cached.slice()) : cached.slice());
+  let promise = inFlight.get(key);
+  if (!promise) {
+    const startedAt = Date.now();
+    const generation = writeGeneration.get(entity) ?? 0;
+    promise = batchedRead(entity, args)
+      .then((rows) => {
+        if ((writeGeneration.get(entity) ?? 0) === generation) {
+          cacheRead(key, rows, readCacheTtl(entity, startedAt));
+        }
+        return rows;
+      })
+      .finally(() => {
+        if (inFlight.get(key) === promise) inFlight.delete(key);
+      });
+    inFlight.set(key, promise);
+  }
+  return promise.then((rows) => paged ? page(rows.slice()) : rows.slice());
 };
 
 const METHODS = {
@@ -227,30 +261,12 @@ const METHODS = {
   filter: (entity, query, sortOrOptions, limit, skip) => {
     const args = readArgs(sortOrOptions, limit, skip);
     if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
-    const key = readCacheKey(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip });
-    const uncached = PRIVATE_LIBRARY_ENTITIES.has(entity);
-    const cached = uncached ? undefined : cachedRead(key);
-    if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
-    const startedAt = Date.now();
-    return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip })
-      .then((rows) => {
-        if (!uncached) cacheRead(key, rows, readCacheTtl(entity, startedAt));
-        return args.paged ? page(rows) : rows;
-      });
+    return listRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip }, args.paged);
   },
   list: (entity, sortOrOptions, limit, skip) => {
     const args = readArgs(sortOrOptions, limit, skip);
     if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
-    const key = readCacheKey(entity, { sort: args.sort, limit: args.limit, skip: args.skip });
-    const uncached = PRIVATE_LIBRARY_ENTITIES.has(entity);
-    const cached = uncached ? undefined : cachedRead(key);
-    if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
-    const startedAt = Date.now();
-    return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip })
-      .then((rows) => {
-        if (!uncached) cacheRead(key, rows, readCacheTtl(entity, startedAt));
-        return args.paged ? page(rows) : rows;
-      });
+    return listRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip }, args.paged);
   },
   // Single-record reads must be current: the CAS save helpers re-read by id to
   // get the live updated_date before every retry. The gateway's in-isolate read
