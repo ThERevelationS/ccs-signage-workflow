@@ -21,6 +21,7 @@ import ClipboardManagerModal from "@/components/estimator/aio/ClipboardManagerMo
 import { computePricing } from "@/components/estimator/aioPricing";
 import { acceptedInternalEstimateCost } from "@/components/estimator/customerPricing";
 import { refreshSectionSnapshots } from "@/components/estimator/useSectionSync";
+import { createSingleFlight } from "@/components/estimator/singleFlight";
 import {
   acceptBuilderPrice,
   ensureEstimateBuilderProducts,
@@ -159,6 +160,13 @@ export default function EstimateDetail() {
   const [activeProduct, setActiveProduct] = useState(null);
   const [clipboardOpen, setClipboardOpen] = useState(false);
   const [reconciliationWarnings, setReconciliationWarnings] = useState([]);
+  const latestEstimateRef = useRef(estimate);
+  latestEstimateRef.current = estimate;
+  const runRefreshProductsRef = useRef(null);
+  const refreshProductsRef = useRef(null);
+  if (!refreshProductsRef.current) {
+    refreshProductsRef.current = createSingleFlight(() => runRefreshProductsRef.current());
+  }
   const [trashing, setTrashing] = useState(false);
   const [editStarting, setEditStarting] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
@@ -599,7 +607,8 @@ export default function EstimateDetail() {
     return current;
   };
 
-  const refreshProducts = async () => {
+  const runRefreshProducts = async () => {
+    const estimate = latestEstimateRef.current;
     const current = await staffEntities.AllInOneEstimate.get(estimate.id);
     const warnings = [];
     const withBuilders = await ensureEstimateBuilderProducts(current, {
@@ -624,6 +633,15 @@ export default function EstimateDetail() {
     serverUpdatedAtRef.current = refreshed.updated_date || serverUpdatedAtRef.current;
     setEstimate((prev) => ({ ...prev, ...refreshed, line_items }));
     setReconciliationWarnings(warnings);
+  };
+  runRefreshProductsRef.current = runRefreshProducts;
+  const refreshProducts = refreshProductsRef.current;
+  const reportProductRefreshError = (error) => {
+    setReconciliationWarnings((prev) => [...(prev || []), {
+      line_id: activeProduct?.line_id || "",
+      product_name: "Products",
+      message: error?.message || "Products could not be refreshed. Reload the estimate.",
+    }]);
   };
 
   const repriceAllProducts = async () => {
@@ -1934,10 +1952,15 @@ export default function EstimateDetail() {
                 estimateId={estimate.id}
                 expectedEstimateUpdatedAt={serverUpdatedAtRef.current}
                 onClose={async () => {
-                  await refreshProducts();
-                  setActiveProduct(null);
+                  try {
+                    await refreshProducts();
+                  } catch (error) {
+                    reportProductRefreshError(error);
+                  } finally {
+                    setActiveProduct(null);
+                  }
                 }}
-                onSaved={refreshProducts}
+                onSaved={() => refreshProducts().catch(reportProductRefreshError)}
                 onSwitchLine={(next) => setActiveProduct(next)}
               />
             ) : (
