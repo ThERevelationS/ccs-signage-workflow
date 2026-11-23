@@ -14,6 +14,24 @@ const num = (value, fallback = 0) =>
 
 const nowIso = () => new Date().toISOString();
 
+function isEstimateLineSyncConflict(error) {
+  const message = error?.message || "";
+  return /changed in another session \(line_items\)/.test(message)
+    && /No Estimate fields were overwritten/.test(message);
+}
+
+async function retryEstimateLineSync(run, reload) {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      return await run();
+    } catch (error) {
+      if (attempt === 3 || !isEstimateLineSyncConflict(error)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
+      if (reload) await reload();
+    }
+  }
+}
+
 export const makeStableId = (prefix = "id") => {
   const uuid = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   return `${prefix}-${uuid}`;
@@ -532,7 +550,15 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
   };
 }
 
-export async function ensureEstimateBuilderProducts(estimate, { strictReconciliation = false, onWarning = null } = {}) {
+export async function ensureEstimateBuilderProducts(estimate, options) {
+  let current = estimate;
+  return retryEstimateLineSync(
+    () => ensureEstimateBuilderProductsOnce(current, options),
+    async () => { current = await staffEntities.AllInOneEstimate.get(current.id); },
+  );
+}
+
+async function ensureEstimateBuilderProductsOnce(estimate, { strictReconciliation = false, onWarning = null } = {}) {
   if (!estimate?.id) return estimate;
   const original = estimate.line_items || [];
   const lineItems = [];
@@ -597,7 +623,11 @@ export async function ensureEstimateBuilderProducts(estimate, { strictReconcilia
   return { ...estimate, line_items: lineItems };
 }
 
-export async function recordBuilderSave({ estimateId, line, sourceProject, liveTotal, internalCost, customerPrice, expectedPendingKey }) {
+export async function recordBuilderSave(args) {
+  return retryEstimateLineSync(() => recordBuilderSaveOnce(args));
+}
+
+async function recordBuilderSaveOnce({ estimateId, line, sourceProject, liveTotal, internalCost, customerPrice, expectedPendingKey }) {
   if (!estimateId || !line) return line;
   if (!sourceProject || typeof sourceProject !== "object") {
     throw new Error("The saved Builder source could not be verified. Product pricing and Parts were not synchronized.");
