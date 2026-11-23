@@ -66,6 +66,7 @@ export default function JurisdictionsView({ focusJurisdiction = null, onOpenJob 
   const [aiDiscoverState,setAiDiscoverState]=useState("OH");
   const [trustFilter, setTrustFilter] = useState("all");
   const [repositoryNotice, setRepositoryNotice] = useState(null);
+  const [showDuplicateList, setShowDuplicateList] = useState(false);
 
   useEffect(() => {
     loadJurisdictions();
@@ -611,15 +612,27 @@ export default function JurisdictionsView({ focusJurisdiction = null, onOpenJob 
 
         {isAdmin && duplicateJurisdictionGroups.length > 0 && (
           <div className="mx-3 mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
-            <div className="font-semibold">Duplicate jurisdiction profiles require review</div>
-            <div className="mt-1">
-              {duplicateJurisdictionGroups.map((rows) => {
-                const first = rows[0];
-                const parent = first.type !== "county" && first.parent_county?.name ? ` · ${first.parent_county.name}` : "";
-                return `${first.name}, ${first.state}${parent} (${rows.length})`;
-              }).join(" · ")}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-semibold">
+                {duplicateJurisdictionGroups.length.toLocaleString()} jurisdictions have duplicate profiles
+                ({duplicateJurisdictionGroups.reduce((n, rows) => n + rows.length - 1, 0).toLocaleString()} extra records) — review before removing any.
+              </span>
+              <button type="button" onClick={() => setShowDuplicateList(v => !v)} className="font-semibold underline underline-offset-2">
+                {showDuplicateList ? "Hide list" : "Show list"}
+              </button>
             </div>
-            <div className="mt-1 text-amber-800">No profile was merged or deleted automatically. Review the records and keep the correct history before removing any duplicate.</div>
+            {showDuplicateList && (
+              <>
+                <div className="mt-1 max-h-48 overflow-y-auto">
+                  {duplicateJurisdictionGroups.map((rows) => {
+                    const first = rows[0];
+                    const parent = first.type !== "county" && first.parent_county?.name ? ` · ${first.parent_county.name}` : "";
+                    return `${first.name}, ${first.state}${parent} (${rows.length})`;
+                  }).join(" · ")}
+                </div>
+                <div className="mt-1 text-amber-800">No profile was merged or deleted automatically. Review the records and keep the correct history before removing any duplicate.</div>
+              </>
+            )}
           </div>
         )}
 
