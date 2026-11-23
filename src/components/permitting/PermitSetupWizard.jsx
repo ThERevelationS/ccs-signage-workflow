@@ -116,6 +116,32 @@ function mintResolutionRule({ address, resolution, pickedName, pickedType, picke
 }
 
 const RECENT_KEY = "permitting_recent_addresses";
+
+// Imported work orders sometimes carry a date in install_location (column
+// drift) — never treat a date as an address part.
+const isAddressPart = (v) => {
+  const s = String(v || "").trim();
+  return Boolean(s) && !/^\d{4}-\d{2}-\d{2}(?:[T ].*)?$/.test(s) && !/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(s);
+};
+const joinAddress = (street, city, state, zip) =>
+  [street, city, [state, zip].filter(isAddressPart).join(" ")].filter(isAddressPart).join(", ");
+
+// Client address on file: primary site, then the customer's location, then billing.
+async function loadClientSiteAddress(customerId) {
+  const [customer, locations] = await Promise.all([
+    staffEntities.Customer.get(customerId).catch(() => null),
+    staffEntities.CustomerLocation.filter({ customer_id: customerId }, "label", 50).catch(() => []),
+  ]);
+  const sites = (Array.isArray(locations) ? locations : locations?.items || []).filter(l => isAddressPart(l?.address_line_1));
+  const site = sites.find(l => l.is_primary_site) || sites.find(l => !l.is_billing_address) || sites[0];
+  if (site) return joinAddress(site.address_line_1, site.city, site.state, site.postal_code || site.zip);
+  if (!customer) return "";
+  if (isAddressPart(customer.location_address_1))
+    return joinAddress(customer.location_address_1, customer.location_city, customer.location_state, customer.location_postal_code);
+  if (isAddressPart(customer.billing_address_1))
+    return joinAddress(customer.billing_address_1, customer.billing_city, customer.billing_state, customer.billing_postal_code);
+  return "";
+}
 const loadRecent = () => { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; } };
 const rememberRecent = (addr) => {
   const a = String(addr || "").trim(); if (!a) return;
@@ -164,12 +190,16 @@ export default function PermitSetupWizard({
   const isEdit = existingLines.length > 0;
   const appliedLocalityId = existingLines.find(li => li.locality_id)?.locality_id || "";
   const startStep = Number.isInteger(initialStep) ? initialStep : isEdit ? 3 : 0;
-  const siteAddress = [wo.install_location, wo.address_line_2, wo.township_city, wo.county, wo.state]
-    .filter(v => String(v || "").trim()).join(", ");
+  const siteAddress = isAddressPart(wo.install_location)
+    ? [wo.install_location, wo.address_line_2, wo.township_city, wo.county, wo.state].filter(isAddressPart).join(", ")
+    : "";
 
   const [step, setStep] = useState(startStep);
   const [maxStep, setMaxStep] = useState(Math.max(startStep, isEdit ? 3 : 0));
   const [address, setAddress] = useState(siteAddress);
+  const [addressSource, setAddressSource] = useState(siteAddress ? "work_order" : "");
+  const addressRef = useRef(address);
+  addressRef.current = address;
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState("");
   const [resolution, setResolution] = useState(null);
@@ -197,6 +227,20 @@ export default function PermitSetupWizard({
   const suggestionReq = useRef(0);
   const initializedAppliedLocalityRef = useRef(false);
   const editPrefillLocalityRef = useRef("");
+
+  // No usable install address on the WO — fall back to the client's address on
+  // file. Only fills an empty field, so anything staff typed meanwhile wins.
+  useEffect(() => {
+    if (!isOpen || siteAddress || !wo.customer_id) return;
+    let alive = true;
+    loadClientSiteAddress(wo.customer_id).then(found => {
+      if (!alive || !found || String(addressRef.current || "").trim()) return;
+      setAddress(found);
+      setAddressSource("client");
+      setPlanForm(p => (p.address ? p : { ...p, address: found }));
+    });
+    return () => { alive = false; };
+  }, [isOpen, siteAddress, wo.customer_id]);
 
   const locality = useMemo(
     () => localities.find(l => l.id === localityId) || null,
@@ -581,7 +625,13 @@ export default function PermitSetupWizard({
                   ))}
                 </div>
               )}
-              <p className="text-[11px] text-gray-500 mt-1">Prefilled from the work order — fix it here if the install address differs.</p>
+              <p className="text-[11px] text-gray-500 mt-1">
+                {addressSource === "client"
+                  ? `Prefilled from ${wo.client_name || "the client"}'s address on file — fix it here if the install site differs.`
+                  : addressSource === "work_order"
+                    ? "Prefilled from the work order — fix it here if the install address differs."
+                    : "No address on the work order or client — enter the install site."}
+              </p>
             </div>
             {recent.length > 0 && !suggestions.length && (
               <div className="flex flex-wrap gap-1.5">
