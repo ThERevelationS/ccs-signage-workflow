@@ -84,7 +84,7 @@ try {
   {
     const first = { id: "estimate", updated_date: "old", line_items: [{ line_id: "old" }] };
     const fresh = { id: "estimate", updated_date: "new", line_items: [{ line_id: "new" }] };
-    const options = { strictReconciliation: true, onWarning: () => {} };
+    const options = { strictReconciliation: true, onWarning: () => {}, onlyLineIds: ["line"] };
     const seen = [], gets = [];
     globalThis.__retryGet = async (id) => { gets.push(id); return fresh; };
     globalThis.__retryStubs.ensureEstimateBuilderProductsOnce = async (estimate, receivedOptions) => {

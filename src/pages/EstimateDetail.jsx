@@ -21,7 +21,7 @@ import ClipboardManagerModal from "@/components/estimator/aio/ClipboardManagerMo
 import { computePricing } from "@/components/estimator/aioPricing";
 import { acceptedInternalEstimateCost } from "@/components/estimator/customerPricing";
 import { refreshSectionSnapshots } from "@/components/estimator/useSectionSync";
-import { createSingleFlight } from "@/components/estimator/singleFlight";
+import { createSingleFlight, mergeProductRefreshScopes } from "@/components/estimator/singleFlight";
 import {
   acceptBuilderPrice,
   ensureEstimateBuilderProducts,
@@ -158,6 +158,16 @@ export default function EstimateDetail() {
   });
   const [showCancel, setShowCancel] = useState(false);
   const [activeProduct, setActiveProduct] = useState(null);
+  const editorLineIdsRef = useRef(new Set());
+  const editorFullRefreshRef = useRef(false);
+  const openProductEditor = (line) => {
+    editorLineIdsRef.current = new Set(line?.line_id ? [line.line_id] : []);
+    editorFullRefreshRef.current = !line?.line_id;
+    setActiveProduct(line);
+  };
+  const editorRefreshScope = () => !editorFullRefreshRef.current && editorLineIdsRef.current.size
+    ? { lineIds: [...editorLineIdsRef.current] }
+    : undefined;
   const [clipboardOpen, setClipboardOpen] = useState(false);
   const [reconciliationWarnings, setReconciliationWarnings] = useState([]);
   const latestEstimateRef = useRef(estimate);
@@ -165,7 +175,7 @@ export default function EstimateDetail() {
   const runRefreshProductsRef = useRef(null);
   const refreshProductsRef = useRef(null);
   if (!refreshProductsRef.current) {
-    refreshProductsRef.current = createSingleFlight(() => runRefreshProductsRef.current());
+    refreshProductsRef.current = createSingleFlight((scope) => runRefreshProductsRef.current(scope), mergeProductRefreshScopes);
   }
   const [trashing, setTrashing] = useState(false);
   const [editStarting, setEditStarting] = useState(false);
@@ -428,7 +438,7 @@ export default function EstimateDetail() {
       const wantOpen = _params.get("open");
       if (wantOpen) {
         const match = (loaded?.line_items || []).find((l) => l.project_id === wantOpen || l.id === wantOpen);
-        if (match) setActiveProduct({ ...match, estimate_id: loaded.id });
+        if (match) openProductEditor({ ...match, estimate_id: loaded.id });
       }
       setLoading(false);
     });
@@ -607,16 +617,19 @@ export default function EstimateDetail() {
     return current;
   };
 
-  const runRefreshProducts = async () => {
+  const runRefreshProducts = async (scope) => {
     const estimate = latestEstimateRef.current;
     const current = await staffEntities.AllInOneEstimate.get(estimate.id);
     const warnings = [];
+    const onlyLineIds = Array.isArray(scope?.lineIds) ? scope.lineIds : null;
+    const scopedLineIds = onlyLineIds === null ? null : new Set(onlyLineIds);
     const withBuilders = await ensureEstimateBuilderProducts(current, {
       strictReconciliation: true,
+      onlyLineIds,
       onWarning: (warning) => warnings.push(warning),
     });
     for (const line of withBuilders.line_items || []) {
-      if (line.module_key === "custom" && line.builder_product_id && line.price_acceptance_pending?.kind !== "builder_product_remove") {
+      if ((!scopedLineIds || scopedLineIds.has(line.line_id)) && line.module_key === "custom" && line.builder_product_id && line.price_acceptance_pending?.kind !== "builder_product_remove") {
         try {
           await refreshManualProductPricing(line.builder_product_id);
         } catch (error) {
@@ -632,7 +645,21 @@ export default function EstimateDetail() {
     const line_items = await refreshSectionSnapshots(refreshed.line_items);
     serverUpdatedAtRef.current = refreshed.updated_date || serverUpdatedAtRef.current;
     setEstimate((prev) => ({ ...prev, ...refreshed, line_items }));
-    setReconciliationWarnings(warnings);
+    if (!scopedLineIds) {
+      setReconciliationWarnings(warnings);
+    } else {
+      const currentLines = refreshed.line_items || [];
+      const currentIds = new Set(currentLines.map((line) => line.line_id));
+      const currentBuilderIds = new Set(currentLines.map((line) => line.builder_product_id).filter(Boolean));
+      const scopedBuilderIds = new Set(currentLines.filter((line) => scopedLineIds.has(line.line_id)).map((line) => line.builder_product_id).filter(Boolean));
+      setReconciliationWarnings((prev) => [
+        ...(prev || []).filter((warning) =>
+          (!warning.line_id || (currentIds.has(warning.line_id) && !scopedLineIds.has(warning.line_id))) &&
+          (!warning.builder_product_id || (currentBuilderIds.has(warning.builder_product_id) && !scopedBuilderIds.has(warning.builder_product_id)))
+        ),
+        ...warnings,
+      ]);
+    }
   };
   runRefreshProductsRef.current = runRefreshProducts;
   const refreshProducts = refreshProductsRef.current;
@@ -666,9 +693,9 @@ export default function EstimateDetail() {
         line: loadedLine,
         expectedEstimateUpdatedAt: serverUpdatedAtRef.current,
       });
-      await refreshProducts();
+      await refreshProducts({ lineIds: [] });
     } catch (error) {
-      await refreshProducts().catch(() => null);
+      await refreshProducts({ lineIds: [] }).catch(() => null);
       window.alert(`${error?.message || "Product could not be removed."}\n\nThe estimate was refreshed. If removal had already started, use Resume Product Remove to safely continue it.`);
     }
   };
@@ -687,8 +714,8 @@ export default function EstimateDetail() {
         isCustom: false,
         expectedEstimateUpdatedAt: current.updated_date || serverUpdatedAtRef.current,
       });
-      await refreshProducts();
-      if (result?.line) setActiveProduct({ ...result.line, estimate_id: estimate.id });
+      await refreshProducts(result?.line?.line_id ? { lineIds: [result.line.line_id] } : undefined);
+      if (result?.line) openProductEditor({ ...result.line, estimate_id: estimate.id });
       return result;
     } catch (error) {
       await refreshProducts().catch(() => null);
@@ -709,7 +736,7 @@ export default function EstimateDetail() {
         isCustom: true,
         expectedEstimateUpdatedAt: current.updated_date || serverUpdatedAtRef.current,
       });
-      await refreshProducts();
+      await refreshProducts(result?.line?.line_id ? { lineIds: [result.line.line_id] } : undefined);
       return result;
     } catch (error) {
       await refreshProducts().catch(() => null);
@@ -750,7 +777,7 @@ export default function EstimateDetail() {
   const updateProductNotes = async (line, notes) => {
     if (readOnly) return;
     await saveProductNotes({ estimateId: estimate.id, line, notes, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
-    await refreshProducts();
+    await refreshProducts(line?.line_id ? { lineIds: [line.line_id] } : undefined);
   };
 
   const persistProductSettings = async (line, index, patch) => {
@@ -765,7 +792,7 @@ export default function EstimateDetail() {
       await rememberServerVersion();
       if (savedLine) patchLine(index, savedLine);
     } catch (error) {
-      await refreshProducts().catch(() => null);
+      await refreshProducts(line?.line_id ? { lineIds: [line.line_id] } : undefined).catch(() => null);
       const isPriceAdjustment = patch?.customer_price_snapshot !== undefined;
       window.alert(`${error?.message || "Product settings could not be saved."}${isPriceAdjustment ? "\n\nThe estimate was refreshed. If the price adjustment had already started, use Resume Product Price to safely continue it." : ""}`);
     }
@@ -789,8 +816,8 @@ export default function EstimateDetail() {
   const addQuickProduct = async (quickProduct) => {
     if (readOnly) return;
     try {
-      await instantiateQuickProduct({ estimateId: estimate.id, quickProduct, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
-      await refreshProducts();
+      const result = await instantiateQuickProduct({ estimateId: estimate.id, quickProduct, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
+      await refreshProducts(result?.line?.line_id ? { lineIds: [result.line.line_id] } : undefined);
     } catch (error) {
       await refreshProducts().catch(() => null);
       window.alert(`${error?.message || "Quick Product could not be added."}\n\nThe estimate was refreshed. If insertion had already started, use Resume Quick Product to safely continue it.`);
@@ -815,6 +842,11 @@ export default function EstimateDetail() {
 
   const updateProductPrice = async (line) => {
     if (readOnly) return;
+    const scope = line?.price_acceptance_pending?.kind === "builder_part_group_move"
+      ? undefined
+      : line?.price_acceptance_pending?.kind === "builder_product_remove"
+        ? { lineIds: [] }
+        : line?.line_id ? { lineIds: [line.line_id] } : undefined;
     try {
       const result = line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
         ? await resumeQuickProductInsertion({ estimateId: estimate.id, lineId: line.line_id || "" })
@@ -837,11 +869,11 @@ export default function EstimateDetail() {
           `${result.recalcReason || "This Builder must be recalculated with current Master Inventory before its price can be updated."}\n\nOpen the Builder, review the current pricing, and save it. The frozen Product price has not changed.`
         );
       }
-      await refreshProducts();
+      await refreshProducts(scope);
     } catch (error) {
       // A mid-write failure may have persisted the durable recovery marker. Reload
       // immediately so the row exposes Resume Price Update instead of stale state.
-      await refreshProducts().catch(() => null);
+      await refreshProducts(scope).catch(() => null);
       const recoveryLabel = line?.price_acceptance_pending?.kind === "builder_manual_product_price"
         ? "Resume Product Price"
         : line?.price_acceptance_pending?.kind === "builder_part_group_clone"
@@ -1953,15 +1985,19 @@ export default function EstimateDetail() {
                 expectedEstimateUpdatedAt={serverUpdatedAtRef.current}
                 onClose={async () => {
                   try {
-                    await refreshProducts();
+                    await refreshProducts(editorRefreshScope());
                   } catch (error) {
                     reportProductRefreshError(error);
                   } finally {
                     setActiveProduct(null);
                   }
                 }}
-                onSaved={() => refreshProducts().catch(reportProductRefreshError)}
-                onSwitchLine={(next) => setActiveProduct(next)}
+                onSaved={() => refreshProducts(editorRefreshScope()).catch(reportProductRefreshError)}
+                onSwitchLine={(next) => {
+                  if (next?.line_id) editorLineIdsRef.current.add(next.line_id);
+                  else editorFullRefreshRef.current = true;
+                  setActiveProduct(next);
+                }}
               />
             ) : (
               <>
@@ -1973,7 +2009,7 @@ export default function EstimateDetail() {
                   rawTotal={pricing.rawTotal}
                   onChange={patchLine}
                   onRemove={removeLine}
-                  onEdit={(line) => setActiveProduct(line)}
+                  onEdit={openProductEditor}
                   onUpdatePrice={updateProductPrice}
                   onProductRefresh={refreshProducts}
                   onClone={cloneProduct}
@@ -2058,8 +2094,8 @@ export default function EstimateDetail() {
               <EstimateQuoteDeliveryPanel estimate={estimate} refreshKey={deliveryRefreshKey + revisionRefreshKey} />
               <div className="flex flex-wrap items-center gap-1.5 rounded border border-gray-200 bg-gray-50 px-2 py-1.5">
                 <span className="text-[9px] font-bold tracking-wide text-gray-500">IMPORT / EXPORT</span>
-                <ImportLineItemsButton estimate={estimate} onApplied={refreshProducts} />
-                <ImportTemplateSectionsButton estimate={estimate} onApplied={refreshProducts} />
+                <ImportLineItemsButton estimate={estimate} onApplied={() => refreshProducts()} />
+                <ImportTemplateSectionsButton estimate={estimate} onApplied={() => refreshProducts()} />
                 <ExportJobCostingCsvButton estimate={estimate} />
               </div>
               <EstimateAcceptancePanel
@@ -2125,7 +2161,7 @@ export default function EstimateDetail() {
         expectedEstimateUpdatedAt={serverUpdatedAtRef.current}
         lines={lines}
         onClose={() => setClipboardOpen(false)}
-        onPasted={refreshProducts}
+        onPasted={() => refreshProducts()}
       />
 
       <CancelEstimateModal
@@ -2144,7 +2180,7 @@ export default function EstimateDetail() {
 
       <CopyFromEstimateDialog open={!!copyFromMode} mode={copyFromMode} estimate={estimate}
         expectedEstimateUpdatedAt={serverUpdatedAtRef.current} onClose={() => setCopyFromMode("")}
-        onCopied={refreshProducts} />
+        onCopied={() => refreshProducts()} />
 
       <AlertDialog open={duplicateChoiceOpen} onOpenChange={setDuplicateChoiceOpen}>
         <AlertDialogContent>

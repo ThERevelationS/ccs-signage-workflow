@@ -1,10 +1,15 @@
-export function createSingleFlight(fn) {
+export function mergeProductRefreshScopes(left, right) {
+  if (!Array.isArray(left?.lineIds) || !Array.isArray(right?.lineIds)) return undefined;
+  return { lineIds: [...new Set([...left.lineIds, ...right.lineIds])] };
+}
+
+export function createSingleFlight(fn, merge = (_left, right) => right) {
   let running = false;
   let queued = null;
 
-  const start = () => {
+  const start = (scope) => {
     running = true;
-    const result = Promise.resolve().then(fn);
+    const result = Promise.resolve().then(() => fn(scope));
     result.then(finish, finish);
     return result;
   };
@@ -16,15 +21,17 @@ export function createSingleFlight(fn) {
     }
     const next = queued;
     queued = null;
-    start().then(next.resolve, next.reject);
+    start(next.scope).then(next.resolve, next.reject);
   };
 
-  return () => {
-    if (!running) return start();
+  return (scope) => {
+    if (!running) return start(scope);
     if (!queued) {
       let resolve, reject;
       const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
-      queued = { promise, resolve, reject };
+      queued = { promise, resolve, reject, scope };
+    } else {
+      queued.scope = merge(queued.scope, scope);
     }
     return queued.promise;
   };

@@ -558,13 +558,18 @@ export async function ensureEstimateBuilderProducts(estimate, options) {
   );
 }
 
-async function ensureEstimateBuilderProductsOnce(estimate, { strictReconciliation = false, onWarning = null } = {}) {
+async function ensureEstimateBuilderProductsOnce(estimate, { strictReconciliation = false, onWarning = null, onlyLineIds = null } = {}) {
   if (!estimate?.id) return estimate;
   const original = estimate.line_items || [];
   const lineItems = [];
+  const scopedLineIds = onlyLineIds == null ? null : new Set(onlyLineIds);
   let changed = false;
 
   for (const line of original) {
+    if (scopedLineIds && !scopedLineIds.has(line?.line_id)) {
+      lineItems.push(line);
+      continue;
+    }
     try {
       if (line?.price_acceptance_pending?.kind === "builder_product_remove") {
         // Product removal may already have deleted its owned source and/or Builder.

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
-import { createSingleFlight } from "../src/components/estimator/singleFlight.js";
+import { createSingleFlight, mergeProductRefreshScopes } from "../src/components/estimator/singleFlight.js";
 
 const deferred = () => {
   let resolve, reject;
@@ -104,14 +104,40 @@ const tick = () => new Promise((resolve) => setImmediate(resolve));
 }
 
 {
+  for (const { first, queued, expected } of [
+    { first: { lineIds: ["a"] }, queued: [{ lineIds: ["b"] }, { lineIds: ["c", "b"] }], expected: { lineIds: ["b", "c"] } },
+    { first: { lineIds: ["a"] }, queued: [{ lineIds: ["b"] }, undefined, { lineIds: ["c"] }], expected: undefined },
+    { first: undefined, queued: [{ lineIds: ["b"] }, { lineIds: ["c"] }], expected: { lineIds: ["b", "c"] } },
+    { first: { lineIds: [] }, queued: [{ lineIds: [] }, { lineIds: ["b"] }], expected: { lineIds: ["b"] } },
+  ]) {
+    const hold = deferred(), calls = [];
+    const refresh = createSingleFlight((scope) => {
+      calls.push(scope);
+      return calls.length === 1 ? hold.promise : scope;
+    }, mergeProductRefreshScopes);
+    const firstPromise = refresh(first);
+    await tick();
+    const trailing = queued.map((scope) => refresh(scope));
+    hold.resolve("first");
+    assert.equal(await firstPromise, "first");
+    const values = await Promise.all(trailing);
+    assert.equal(calls.length, 2);
+    assert.deepEqual(calls[0], first);
+    assert.deepEqual(calls[1], expected);
+    values.forEach((value) => assert.deepEqual(value, expected));
+  }
+}
+
+{
   const source = readFileSync(new URL("../src/pages/EstimateDetail.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
   const editor = source.slice(source.indexOf("<InlineProductEditor"));
   const close = editor.match(/onClose=\{(async \(\) => \{[\s\S]*?\n                \})\}/);
-  const saved = editor.match(/onSaved=\{(\(\) => refreshProducts\(\)\.catch\(reportProductRefreshError\))\}/);
+  const saved = editor.match(/onSaved=\{(\(\) => refreshProducts\(editorRefreshScope\(\)\)\.catch\(reportProductRefreshError\))\}/);
   assert.ok(close && saved, "editor callbacks handle refresh errors");
   const reports = [], closed = [];
   const context = {
     refreshProducts: async () => { throw new Error("refresh failed"); },
+    editorRefreshScope: () => ({ lineIds: ["line-1"] }),
     reportProductRefreshError: (error) => reports.push(error.message),
     setActiveProduct: (value) => closed.push(value),
   };
@@ -130,6 +156,26 @@ const tick = () => new Promise((resolve) => setImmediate(resolve));
   assert.equal(warnings[0].line_id, "line-1");
   assert.equal(warnings[0].product_name, "Products");
   assert.equal(warnings[0].message, "synthetic failure");
+  const open = source.match(/const openProductEditor = (\(line\) => \{[\s\S]*?\n  \});/);
+  const scope = source.match(/const editorRefreshScope = (\(\) => [\s\S]*? : undefined);/);
+  const switchLine = editor.match(/onSwitchLine=\{(\(next\) => \{[\s\S]*?\n                \})\}/);
+  assert.ok(open && scope && switchLine, "editor session tracks all opened lines");
+  const editorContext = {
+    editorLineIdsRef: { current: new Set() },
+    editorFullRefreshRef: { current: false },
+    setActiveProduct: () => {},
+  };
+  const openEditor = runInNewContext(`(${open[1]})`, editorContext);
+  const getScope = runInNewContext(`(${scope[1]})`, editorContext);
+  const switchEditor = runInNewContext(`(${switchLine[1]})`, editorContext);
+  openEditor({ line_id: "one" });
+  switchEditor({ line_id: "two" });
+  switchEditor({ line_id: "one" });
+  assert.equal(JSON.stringify(getScope()), JSON.stringify({ lineIds: ["one", "two"] }));
+  switchEditor({});
+  assert.equal(getScope(), undefined, "unknown editor identity falls back to full refresh");
+  openEditor({ line_id: "new" });
+  assert.equal(JSON.stringify(getScope()), JSON.stringify({ lineIds: ["new"] }));
 }
 
 console.log("PASS estimate refresh single-flight, trailing runs, failures, latest callback and editor error handling");
