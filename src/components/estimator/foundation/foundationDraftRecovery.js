@@ -66,7 +66,7 @@ const checkAssembly = (data) => {
     if (f in data && !Array.isArray(data[f])) return `${f} must be an array.`;
     if (Array.isArray(data[f])) for (const r of data[f]) if (!isPlain(r)) return `${f} must contain plain records.`;
   }
-  if (data.customer_pricing !== undefined && !isPlain(data.customer_pricing))
+  if (data.customer_pricing != null && !isPlain(data.customer_pricing))
     return "customer_pricing must be a record.";
   if (data.assembly_schema_version != null && data.assembly_schema_version !== 1)
     return `Unsupported assembly_schema_version: ${data.assembly_schema_version}`;
