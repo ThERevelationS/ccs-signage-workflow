@@ -152,11 +152,21 @@ export default function Permitting() {
     try {
       // Batch the four catalog reads into one gateway call, then prime the
       // short-TTL cache so these loaders return instantly on remount.
-      const batched = await loadEntitiesBatch([
-        { entity: "PermitLineItem", sort: "-updated_date" },
-        { entity: "PermitLocality" },
-        { entity: "AuthorizedEmail" },
+      // Batch reads return a plain array capped at the request limit with no
+      // "more rows" flag. A full page means the list may be cut off, so only a
+      // short page is trusted; otherwise the paged loader reads everything.
+      const BATCH_LIMIT = 100;
+      const raw = await loadEntitiesBatch([
+        { entity: "PermitLineItem", sort: "-updated_date", limit: BATCH_LIMIT },
+        { entity: "PermitLocality", limit: BATCH_LIMIT },
+        { entity: "AuthorizedEmail", limit: BATCH_LIMIT },
       ]).catch(() => null);
+      const complete = (rows) => (Array.isArray(rows) && rows.length < BATCH_LIMIT ? rows : null);
+      const batched = raw && {
+        PermitLineItem: complete(raw.PermitLineItem),
+        PermitLocality: complete(raw.PermitLocality),
+        AuthorizedEmail: complete(raw.AuthorizedEmail),
+      };
       // The board itself only needs lines + work orders — if a helper list
       // (offices, users, settings) fails, degrade that piece and say so
       // instead of blanking the whole board on one slow read.
