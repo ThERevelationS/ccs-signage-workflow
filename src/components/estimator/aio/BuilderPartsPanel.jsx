@@ -35,7 +35,7 @@ import MovePartGroupModal from "./MovePartGroupModal";
 import SavePartTemplateModal from "@/components/estimator/parts/SavePartTemplateModal";
 import PartLibraryPickerModal from "@/components/estimator/parts/PartLibraryPickerModal";
 import VendorCostBadge from "@/components/estimator/VendorCostBadge";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadBuilderPartsAndGroups } from "./builderPartsBatchLoader";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -603,10 +603,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
       }
       setLoading(true);
       try {
-        const [partRows, groupRows] = await Promise.all([
-          loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Parts" }),
-          loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Groups" }),
-        ]);
+        const { parts: partRows, groups: groupRows } = await loadBuilderPartsAndGroups(builderProductId);
         if (!active) return;
         const activeParts = (partRows || [])
           .filter((part) => part.is_active !== false)
