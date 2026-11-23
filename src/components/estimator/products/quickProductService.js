@@ -213,7 +213,7 @@ function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, op
     if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "client_name")) sourceExpectedData.client_name = estimate.client_name || sourceExpectedData.client_name;
     if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "customer_id")) sourceExpectedData.customer_id = estimate.customer_id || sourceExpectedData.customer_id;
     if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "estimate_number")) sourceExpectedData.estimate_number = estimate.estimate_number || sourceExpectedData.estimate_number;
-    if (sourceType === "estimate_section_copy" && Object.prototype.hasOwnProperty.call(sourceExpectedData, "estimate_id")) sourceExpectedData.estimate_id = estimate.id;
+    if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "estimate_id")) sourceExpectedData.estimate_id = estimate.id;
     sourceExpectedData.notes = String(sourceExpectedData.notes || "");
     sourceRecoveryToken = `[SEP-QUICK-RECOVERY:${operationKey}]`;
     sourceTaggedData = {

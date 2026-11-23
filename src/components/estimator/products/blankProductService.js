@@ -326,6 +326,7 @@ export async function addBlankProduct({
       client_name: current.client_name,
       customer_id: current.customer_id,
       estimate_number: current.estimate_number,
+      ...(sourceEntity === "FoundationProject" ? { estimate_id: estimateId } : {}),
     },
     product_name: productName,
     builder_name: builderName,
