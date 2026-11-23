@@ -27,6 +27,7 @@ const ESTIMATOR_WRITE_ENTITIES = new Set([
   "ChannelLetterInstallEquipment",
 ]);
 const PRIVATE_LIBRARY_ENTITIES = new Set(["PartTemplate", "QuickProduct", "QuickProductCategory"]);
+const LIVE_READ_ENTITIES = new Set(["BuilderProduct", "BuilderPart", "BuilderPartGroup", "BuilderPriceRevision"]);
 const writeFunction = (entity) => ESTIMATOR_WRITE_ENTITIES.has(entity) ? "estimatorProjectWrite" : "staffEntityWrite";
 
 // Per-session negative cache of denied entities. Once the gateway refuses an
@@ -212,11 +213,12 @@ const METHODS = {
     const args = readArgs(sortOrOptions, limit, skip);
     if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
     const key = readCacheKey(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip });
-    const cached = PRIVATE_LIBRARY_ENTITIES.has(entity) ? undefined : cachedRead(key);
+    const uncached = PRIVATE_LIBRARY_ENTITIES.has(entity) || LIVE_READ_ENTITIES.has(entity);
+    const cached = uncached ? undefined : cachedRead(key);
     if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
     return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => {
-        if (!PRIVATE_LIBRARY_ENTITIES.has(entity)) cacheRead(key, rows);
+        if (!uncached) cacheRead(key, rows);
         return args.paged ? page(rows) : rows;
       });
   },
@@ -224,11 +226,12 @@ const METHODS = {
     const args = readArgs(sortOrOptions, limit, skip);
     if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
     const key = readCacheKey(entity, { sort: args.sort, limit: args.limit, skip: args.skip });
-    const cached = PRIVATE_LIBRARY_ENTITIES.has(entity) ? undefined : cachedRead(key);
+    const uncached = PRIVATE_LIBRARY_ENTITIES.has(entity) || LIVE_READ_ENTITIES.has(entity);
+    const cached = uncached ? undefined : cachedRead(key);
     if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
     return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => {
-        if (!PRIVATE_LIBRARY_ENTITIES.has(entity)) cacheRead(key, rows);
+        if (!uncached) cacheRead(key, rows);
         return args.paged ? page(rows) : rows;
       });
   },

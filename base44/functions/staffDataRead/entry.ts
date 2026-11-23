@@ -455,6 +455,8 @@ async function countRows(entity: any, query: any) {
 const staffReadCache = new Map();
 const staffReadInFlight = new Map();
 const STAFF_READ_CACHE_MS = 45_000;
+// CAS-verified Builder records must not receive cached pre-save versions.
+const LIVE_READ_ENTITIES = new Set(['BuilderProduct', 'BuilderPart', 'BuilderPartGroup', 'BuilderPriceRevision']);
 
 const isRateLimited = (error: any) => Number(error?.status) === 429
   || /rate limit|too many requests|traffic volume/i.test(String(error?.message || error));
@@ -503,7 +505,8 @@ function staffReadEntryKey(request: any, user: any, deniedFieldScope: string) {
 // also skip the TTL so a switch from shared to personal takes effect promptly.
 async function readOneCached(base44: any, user: any, request: any, deniedFieldScope: string) {
   const key = staffReadEntryKey(request, user, deniedFieldScope);
-  const uncached = String(request?.id ?? '').trim() !== '' || LIBRARY_ENTITIES.has(String(request?.entity || '').trim());
+  const entity = String(request?.entity || '').trim();
+  const uncached = String(request?.id ?? '').trim() !== '' || LIBRARY_ENTITIES.has(entity) || LIVE_READ_ENTITIES.has(entity);
   const hit = uncached ? undefined : staffReadCache.get(key);
   if (hit && hit.expires > Date.now()) return hit.result;
   const pending = staffReadInFlight.get(key);
