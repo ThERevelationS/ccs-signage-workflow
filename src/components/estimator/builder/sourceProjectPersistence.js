@@ -1,6 +1,8 @@
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { staffEntities } from "@/components/staff/staffEntities";
 
+const SYSTEM_FIELDS = new Set(["id", "created_date", "updated_date", "created_by", "created_by_id"]);
+
 // String fields can differ only by stray or repeated whitespace; normalize
 // whitespace (but not case) so stored rows match their intended patches.
 const cleanString = (value) => String(value ?? "").trim().replace(/\s+/g, " ");
@@ -31,7 +33,7 @@ function sameValue(a, b) {
 
 export function sourcePatchMatches(record, patch) {
   if (!record || !patch) return false;
-  return Object.entries(patch).every(([key, value]) => sameValue(record?.[key], value));
+  return Object.entries(patch).every(([key, value]) => SYSTEM_FIELDS.has(key) || sameValue(record?.[key], value));
 }
 
 export async function preflightBuilderSourceMutation({ estimateId = "" } = {}) {
@@ -60,16 +62,17 @@ export async function updateBuilderSourceProject({
 
   await preflightBuilderSourceMutation({ estimateId });
 
+  const patch = Object.fromEntries(Object.entries(data).filter(([key]) => !SYSTEM_FIELDS.has(key)));
   const verified = (record) => !!record && record.id === sourceId
     && typeof record.updated_date === "string" && record.updated_date.length > 0
-    && sourcePatchMatches(record, data);
+    && sourcePatchMatches(record, patch);
   const conflict = () => new Error(`${label} changed in another session. Reload it before saving.`);
 
   let result;
   try {
     result = await entity.updateMany(
       { id: sourceId, updated_date: expected },
-      { $set: data },
+      { $set: patch },
     );
   } catch (error) {
     const current = await entity.get(sourceId).catch(() => null);

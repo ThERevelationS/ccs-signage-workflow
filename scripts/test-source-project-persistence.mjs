@@ -54,6 +54,60 @@ await ok('updated=1 + reread same payload -> accept', async () => {
   const r = await M.updateBuilderSourceProject({ ...base, entity: e });
   assert.equal(r.id, 'p1'); assert.equal(r.updated_date, 'v2'); assert.equal(r.a, 1);
 });
+await ok('updated=1 strips top-level system fields and retains nested identity', async () => {
+  seed();
+  const e = mkEntity({ id: 'p1', updated_date: 'v1', created_date: 'old-created' });
+  const data = {
+    id: 'p1', created_date: 'old-created', updated_date: 'v1', created_by: 'staff', created_by_id: 'staff-id',
+    total_cost: 12, items: [{ id: 'item-1', updated_date: 'nested-version', created_by: 'nested-owner' }],
+  };
+  const original = structuredClone(data);
+  const saved = await M.updateBuilderSourceProject({ ...base, entity: e, data });
+  assert.equal(saved.updated_date, 'v2');
+  const [, query, update] = e.calls.find(call => call[0] === 'updateMany');
+  assert.deepEqual(query, { id: 'p1', updated_date: 'v1' });
+  assert.deepEqual(update.$set, { total_cost: 12, items: data.items });
+  assert.deepEqual(data, original);
+});
+await ok('updated=1 detects a real field changed on readback', async () => {
+  seed(); const e = mkEntity({ id: 'p1', updated_date: 'v1' });
+  e.getOverride = row => ({ ...row, total_cost: 10 });
+  await assert.rejects(
+    () => M.updateBuilderSourceProject({ ...base, entity: e, data: { id: 'p1', updated_date: 'v1', total_cost: 12 } }),
+    /X changed in another session\. Reload it before saving\./,
+  );
+});
+await ok('updated=0 accepts a matching retry despite stale system fields', async () => {
+  seed(); const e = mkEntity({ id: 'p1', updated_date: 'v2', created_date: 'server-created', total_cost: 12 });
+  const data = { id: 'stale-id', updated_date: 'v1', created_date: 'stale-created', total_cost: 12 };
+  const saved = await M.updateBuilderSourceProject({ ...base, entity: e, data });
+  assert.equal(saved.updated_date, 'v2');
+  assert.deepEqual(e.calls.find(call => call[0] === 'updateMany').slice(1), [{ id: 'p1', updated_date: 'v1' }, { $set: { total_cost: 12 } }]);
+});
+await ok('updated=0 still rejects a differing retry with stale system fields', async () => {
+  seed(); const e = mkEntity({ id: 'p1', updated_date: 'v2', total_cost: 10 });
+  await assert.rejects(
+    () => M.updateBuilderSourceProject({ ...base, entity: e, data: { id: 'p1', updated_date: 'v1', total_cost: 12 } }),
+    /X changed in another session\. Reload it before saving\./,
+  );
+});
+await ok('lost-response verification ignores stale system fields', async () => {
+  seed(); const e = mkEntity({ id: 'p1', updated_date: 'v2', created_date: 'server-created', total_cost: 12 });
+  e.fail = new Error('network lost');
+  const saved = await M.updateBuilderSourceProject({
+    ...base, entity: e, data: { id: 'p1', updated_date: 'v1', created_date: 'old-created', total_cost: 12 },
+  });
+  assert.equal(saved.updated_date, 'v2');
+  assert.deepEqual(e.calls.find(call => call[0] === 'updateMany')[2].$set, { total_cost: 12 });
+});
+await ok('sourcePatchMatches skips only top-level entity metadata', async () => {
+  const record = { id: 'p1', created_date: 'new', updated_date: 'v2', created_by: 'new', created_by_id: 'new', total_cost: 12, items: [{ id: 'nested', updated_date: 'nested-v1' }] };
+  assert.equal(M.sourcePatchMatches(record, { id: 'stale', created_date: 'old', updated_date: 'v1', created_by: 'old', created_by_id: 'old', total_cost: 12 }), true);
+  assert.equal(M.sourcePatchMatches(record, { total_cost: 10 }), false);
+  assert.equal(M.sourcePatchMatches(record, { items: [{ id: 'other', updated_date: 'nested-v1' }] }), false);
+  assert.equal(M.sourcePatchMatches(record, { items: [{ id: 'nested', updated_date: 'nested-v2' }] }), false);
+  assert.equal(M.sourcePatchMatches({ edit_reason: 'new' }, { edit_reason: 'old' }), false);
+});
 await ok('updated=1 + foreign reread -> conflict throw', async () => {
   seed(); const e = mkEntity({ id: 'p1', updated_date: 'v1' });
   e.getOverride = row => ({ id: 'p1', updated_date: 'v3', a: 999 });
