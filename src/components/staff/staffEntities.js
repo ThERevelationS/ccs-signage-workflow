@@ -53,16 +53,22 @@ const isDenied = (entity) => {
 };
 const isForbidden = (err) => Number(err?.status ?? err?.response?.status) === 403;
 
-// Short-TTL positive cache for list/filter results. Page mounts re-read the
-// same semi-static catalogs on every navigation; a 30s hit turns a remount
-// into a free local read. Entries are keyed by session token so a sign-in
-// change can never see another session's rows, and every successful write
-// through this facade busts its entity's entries so the writer always
-// re-reads fresh rows. Hits return a copy so in-place sorts cannot corrupt
-// the cached array for other callers.
+// List/filter results use 30s, or 15 minutes for settled catalogs. After a
+// write, catalog reads stay short-lived until the server's cache can settle;
+// reads overlapping a write also stay short-lived. Entries are scoped to the
+// session, facade writes bust the entity, and hits return array copies.
 const READ_CACHE_TTL_MS = 30000;
+const CATALOG_ENTITIES = new Set([
+  "MarkupTier", "QuoteDefaults", "Settings", "LaborServiceInventory", "FoundationInventory",
+  "BrickStoneInventory", "Inventory", "VinylInventory", "VinylMachine", "ChannelLetterInstallInventory",
+  "ChannelLetterInstallEquipment", "DimensionalLetterMaterial", "MaintenanceInventory", "MaintenanceEquipment",
+  "MaintenanceActionRate", "SignLightingInventory", "SignHardwareInventory", "SignPartsSuppliesInventory",
+]);
+const CATALOG_READ_CACHE_TTL_MS = 15 * 60 * 1000;
+const CATALOG_WRITE_SETTLE_MS = 60000;
 let pointReadSeq = 0;
 const readCache = new Map();
+const lastWriteAt = new Map();
 const readCacheKey = (entity, args) => `${getSessionToken()}|${entity}|${JSON.stringify(args)}`;
 const cachedRead = (key) => {
   const entry = readCache.get(key);
@@ -70,15 +76,25 @@ const cachedRead = (key) => {
   if (entry.expires <= Date.now()) { readCache.delete(key); return undefined; }
   return entry.value;
 };
-const cacheRead = (key, value) => {
-  readCache.set(key, { value, expires: Date.now() + READ_CACHE_TTL_MS });
+const cacheRead = (key, value, ttl) => {
+  readCache.set(key, { value, expires: Date.now() + ttl });
+};
+const readCacheTtl = (entity, startedAt) => {
+  const lastWrite = lastWriteAt.get(entity) ?? -Infinity;
+  return CATALOG_ENTITIES.has(entity) && lastWrite < startedAt && Date.now() - lastWrite >= CATALOG_WRITE_SETTLE_MS
+    ? CATALOG_READ_CACHE_TTL_MS
+    : READ_CACHE_TTL_MS;
 };
 const bustReadCache = (entity) => {
+  lastWriteAt.set(entity, Date.now());
   const marker = `|${entity}|`;
   for (const key of readCache.keys()) {
     if (key.includes(marker)) readCache.delete(key);
   }
 };
+const writeEntity = (entity, payload) =>
+  (hasSession() ? invokeFleet(writeFunction(entity), payload) : Promise.reject(NO_SESSION_ERR()))
+    .finally(() => bustReadCache(entity));
 
 // The platform's function client resolves with the transport envelope
 // ({ status, data, ... }) rather than the JSON body, while a few call paths hand
@@ -215,9 +231,10 @@ const METHODS = {
     const uncached = PRIVATE_LIBRARY_ENTITIES.has(entity);
     const cached = uncached ? undefined : cachedRead(key);
     if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
+    const startedAt = Date.now();
     return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => {
-        if (!uncached) cacheRead(key, rows);
+        if (!uncached) cacheRead(key, rows, readCacheTtl(entity, startedAt));
         return args.paged ? page(rows) : rows;
       });
   },
@@ -228,9 +245,10 @@ const METHODS = {
     const uncached = PRIVATE_LIBRARY_ENTITIES.has(entity);
     const cached = uncached ? undefined : cachedRead(key);
     if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
+    const startedAt = Date.now();
     return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => {
-        if (!uncached) cacheRead(key, rows);
+        if (!uncached) cacheRead(key, rows, readCacheTtl(entity, startedAt));
         return args.paged ? page(rows) : rows;
       });
   },
@@ -254,15 +272,15 @@ const METHODS = {
     );
   },
   create: (entity, data) =>
-    hasSession() ? invokeFleet(writeFunction(entity), { entity, op: "create", data }).then((r) => { bustReadCache(entity); return bodyOf(r).record; }) : Promise.reject(NO_SESSION_ERR()),
+    writeEntity(entity, { entity, op: "create", data }).then((r) => bodyOf(r).record),
   update: (entity, id, data) =>
-    hasSession() ? invokeFleet(writeFunction(entity), { entity, op: "update", id, data }).then((r) => { bustReadCache(entity); return bodyOf(r).record; }) : Promise.reject(NO_SESSION_ERR()),
+    writeEntity(entity, { entity, op: "update", id, data }).then((r) => bodyOf(r).record),
   updateMany: (entity, query, update) =>
-    hasSession() ? invokeFleet(writeFunction(entity), { entity, op: "updateMany", id: query?.id, query, update }).then((r) => { bustReadCache(entity); return bodyOf(r).result; }) : Promise.reject(NO_SESSION_ERR()),
+    writeEntity(entity, { entity, op: "updateMany", id: query?.id, query, update }).then((r) => bodyOf(r).result),
   delete: (entity, id) =>
-    hasSession() ? invokeFleet(writeFunction(entity), { entity, op: "delete", id }).then((r) => { bustReadCache(entity); return bodyOf(r).deleted === true; }) : Promise.reject(NO_SESSION_ERR()),
+    writeEntity(entity, { entity, op: "delete", id }).then((r) => bodyOf(r).deleted === true),
   deleteMany: (entity, query) =>
-    hasSession() ? invokeFleet(writeFunction(entity), { entity, op: "deleteMany", query }).then((r) => { bustReadCache(entity); return bodyOf(r).result; }) : Promise.reject(NO_SESSION_ERR()),
+    writeEntity(entity, { entity, op: "deleteMany", query }).then((r) => bodyOf(r).result),
   // Staff sessions cannot use platform live-subscriptions (entity RLS is
   // backend-only), so subscribe polls staffDataRead and emits a synthetic
   // change event when the row set changes. Returns an unsubscribe function,
