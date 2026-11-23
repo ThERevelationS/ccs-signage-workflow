@@ -32,6 +32,7 @@ import {
 } from "@/components/workflow/workOrderPersistence";
 import { updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
 import AddTaskDialog from "@/components/workflow/AddTaskDialog";
+import { stageForTaskDescription } from "@/components/workflow/taskStageMap";
 import LoadErrorBanner from "@/components/LoadErrorBanner";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
 import TrainingSection from "@/components/training/TrainingSection";
@@ -65,15 +66,13 @@ const parseLocalDate = (dateString) => {
   return new Date(year, month - 1, day);
 };
 
-function JobAssignmentInlineRow({ wo, users, descOptions = [], onSaveField, onAssigneeChange }) {
+function JobAssignmentInlineRow({ wo, users, descOptions = [], onSaveField, onDescriptionChange, onAssigneeChange }) {
   const [dateOpen, setDateOpen] = useState(false);
   const descValue = wo.current_task_description || "";
-  const stageOptions = Object.keys(stageDisplayNames);
-  if (wo.current_stage && !stageOptions.includes(wo.current_stage)) stageOptions.push(wo.current_stage);
   return (
     <div className="inline-flex items-center gap-0.5 rounded bg-purple-50 px-1" onClick={(e) => e.stopPropagation()}>
       <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
-      <Select value={descValue} onValueChange={(next) => { if (next !== descValue) onSaveField(wo, { current_task_description: next }); }}>
+      <Select value={descValue} onValueChange={(next) => { if (next !== descValue) onDescriptionChange(wo, next); }}>
         <SelectTrigger className="h-7 w-64 text-xs border-0 bg-transparent px-1 truncate" title={descValue || "Task description"}>
           <SelectValue placeholder="Task" />
         </SelectTrigger>
@@ -84,11 +83,12 @@ function JobAssignmentInlineRow({ wo, users, descOptions = [], onSaveField, onAs
           {descOptions.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
         </SelectContent>
       </Select>
+      <span className="text-[10px] text-gray-500">Task due</span>
       <Popover open={dateOpen} onOpenChange={setDateOpen}>
         <PopoverTrigger asChild>
-          <button type="button" title="Deadline" className="h-7 inline-flex items-center gap-1 rounded px-1 text-xs text-gray-700 hover:bg-purple-100">
+          <button type="button" title="Task due date" className="h-7 inline-flex items-center gap-1 rounded px-1 text-xs text-gray-700 hover:bg-purple-100">
             <CalendarDays className="w-3 h-3 text-purple-500" />
-            {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "M/d/yy") : "—"}
+            {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "M/d/yy") : "Set date"}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -106,15 +106,30 @@ function JobAssignmentInlineRow({ wo, users, descOptions = [], onSaveField, onAs
         className="h-7 w-24 text-xs border-0 bg-transparent px-1"
         context={wo.client_name || "this job"}
       />
-      <Select value={wo.current_stage || ""} onValueChange={(next) => { if (next !== wo.current_stage) onSaveField(wo, { current_stage: next }); }}>
-        <SelectTrigger className="h-7 w-20 text-xs border-0 bg-transparent px-1" title="Stage">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {stageOptions.map((s) => <SelectItem key={s} value={s}>{stageDisplayNames[s] || s}</SelectItem>)}
-        </SelectContent>
-      </Select>
     </div>
+  );
+}
+
+function DueDateCell({ wo, onSaveField }) {
+  const [open, setOpen] = useState(false);
+  if (wo._isGeneral) {
+    return <span className="text-xs">{wo.due_date ? format(parseLocalDate(wo.due_date), "M/d/yy") : "-"}</span>;
+  }
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button type="button" title="Project due date" className="h-7 inline-flex items-center rounded px-1 text-xs text-gray-700 hover:bg-gray-100">
+          {wo.due_date ? format(parseLocalDate(wo.due_date), "M/d/yy") : "Set date"}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={wo.due_date ? parseLocalDate(wo.due_date) : undefined}
+          onSelect={(day) => { if (day) onSaveField(wo, { due_date: format(day, "yyyy-MM-dd") }); setOpen(false); }}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -139,6 +154,7 @@ export default function MyWorkflow() {
   const [addTaskForWo, setAddTaskForWo] = useState(null);
   const [assigneeConfirm, setAssigneeConfirm] = useState(null);
   const [taskDescriptions, setTaskDescriptions] = useState([]);
+  const [taskDescriptionItems, setTaskDescriptionItems] = useState([]);
   const [editingSipTask, setEditingSipTask] = useState(null);
   const [dropdownConditions, setDropdownConditions] = useState([]);
   // Stage filter persists per-employee via the workspace blob — local seed
@@ -291,7 +307,9 @@ export default function MyWorkflow() {
       // the pickers populated.
       setAllUsers(bundle.users || []);
       setDropdownConditions(bundle.dropdownConditions?.setting_value?.items || []);
-      setTaskDescriptions((bundle.taskDescriptions?.setting_value?.items || []).map((i) => i.text || i));
+      const taskDescItems = bundle.taskDescriptions?.setting_value?.items || [];
+      setTaskDescriptionItems(taskDescItems);
+      setTaskDescriptions(taskDescItems.map((i) => i.text || i));
       if (bundle.tasksError) throw bundle.tasksError;
       applyOrderRows(allOrders, bundle.generalTasks);
       setLoadError("");
@@ -550,12 +568,37 @@ export default function MyWorkflow() {
         nextFields: patch,
       });
       setWorkOrders(prev => prev.map(w => w.id === wo.id ? { ...w, ...saved } : w));
-      return true;
+      return saved;
     } catch (error) {
       console.error("Job field update blocked:", error);
       await loadMyWorkOrders();
       alert(error?.message || "This job changed in another session. The latest version was reloaded.");
       return false;
+    }
+  };
+
+  // Task descriptions drive the stage pages: a description whose mapping
+  // points elsewhere moves the job through the normal guarded transition.
+  const handleTaskDescriptionChange = async (wo, next) => {
+    const saved = await saveJobField(wo, { current_task_description: next });
+    if (!saved) return;
+    const stage = stageForTaskDescription(next, taskDescriptionItems);
+    if (!stage || stage === wo.current_stage) return;
+    try {
+      const transitioned = await transitionWorkOrderFromLoadedSnapshot({
+        workOrder: { ...wo, current_task_description: next, updated_date: saved.updated_date },
+        newStage: stage,
+        label: "My Workflow task stage",
+      });
+      if (transitioned && typeof transitioned === "object") {
+        setWorkOrders(prev => prev.map(w => w.id === wo.id ? { ...w, ...transitioned } : w));
+      } else {
+        await loadMyWorkOrders();
+      }
+    } catch (error) {
+      console.error("Task stage transition blocked:", error);
+      alert(error?.message || "This Work Order changed in another session. The latest version was reloaded.");
+      await loadMyWorkOrders();
     }
   };
 
@@ -759,19 +802,22 @@ export default function MyWorkflow() {
 
         {/* Spreadsheet Table */}
         <div className="clay-card p-2 w-full overflow-x-auto">
-          <table className="w-full border-collapse" style={{ fontSize: '13px', minWidth: '760px' }}>
+          <table className="w-full border-collapse" style={{ fontSize: '13px', minWidth: '1100px' }}>
             <thead className="bg-gray-100">
               <tr className="border-b">
                 <th className="px-2 py-2 border-r text-center font-bold text-gray-700" style={{ width: '35px' }}>#</th>
                 <th className="px-2 py-2 border-r text-left font-bold text-gray-700" style={{ width: '150px' }}>Customer</th>
                 <th className="px-2 py-2 border-r text-left font-bold text-gray-700" style={{ width: '90px' }}>Stage</th>
-                <th className="px-2 py-2 border-r text-left font-bold text-gray-700" style={{ width: '80px' }}>Due</th>
-                <th className="px-2 py-2 text-left font-bold text-gray-700">My Assigned Tasks</th>
+                <th className="px-2 py-2 border-r text-left font-bold text-gray-700" style={{ width: '90px' }}>Project Due</th>
+                <th className="px-2 py-2 border-r text-left font-bold text-gray-700" style={{ width: '500px' }}>Workflow Task</th>
+                <th className="px-2 py-2 text-left font-bold text-gray-700">Project Tasks</th>
               </tr>
             </thead>
             <tbody>
               {visibleWorkOrders.slice(0, visibleRows).map((wo, index) => {
                 const myTasks = getMyTasksForWorkOrder(wo);
+                const jobTaskItems = myTasks.filter((t) => t.type === 'job_assignment');
+                const projectTaskItems = myTasks.filter((t) => t.type !== 'job_assignment');
                 
                 return (
                   <tr 
@@ -815,38 +861,47 @@ export default function MyWorkflow() {
                       </Badge>
                     </td>
 
-                    {/* Due Date */}
+                    {/* Project Due */}
                     <td className="px-2 py-1 border-r">
-                      <span className="text-xs">
-                        {wo.due_date ? format(parseLocalDate(wo.due_date), "M/d/yy") : "-"}
-                      </span>
+                      <DueDateCell wo={wo} onSaveField={saveJobField} />
                     </td>
 
-                    {/* My Assigned Tasks */}
+                    {/* Workflow Task — the job-assignment row */}
                     <td className="px-2 py-1">
+                      {jobTaskItems.length > 0 ? (
+                        <div className="space-y-1">
+                          {jobTaskItems.map((item) => (
+                            <JobAssignmentInlineRow
+                              key={item.workOrderId}
+                              wo={wo}
+                              users={allUsers}
+                              descOptions={taskDescriptions}
+                              onSaveField={saveJobField}
+                              onDescriptionChange={handleTaskDescriptionChange}
+                              onAssigneeChange={(target, name) => setAssigneeConfirm({ wo: target, nextAssignee: name })}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                      )}
+                    </td>
+
+                    {/* Project Tasks */}
+                    <td className="px-2 py-1 border-l">
                       <div className="space-y-1">
                         {!wo._isGeneral && (
                           <button type="button" onClick={() => setAddTaskForWo(wo)} className="inline-flex items-center gap-0.5 rounded border border-purple-200 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 hover:bg-purple-50">
                             <Plus className="w-2.5 h-2.5" /> Add task
                           </button>
                         )}
-                        {myTasks.map((item, idx) => {
+                        {projectTaskItems.map((item, idx) => {
                           const taskKey = `${wo.id}-${item.taskIndex}`;
                           const isExpanded = expandedTasks[taskKey] !== false;
                           const isEditingThisTask = editingTask?.woId === wo.id && editingTask?.taskIndex === item.taskIndex && editingTask?.type === 'task';
                           
                           return (
                             <div key={idx} className="group">
-                              {/* Job-level assignment: the job itself acts like a task */}
-                              {item.type === 'job_assignment' && (
-                                <JobAssignmentInlineRow
-                                  wo={wo}
-                                  users={allUsers}
-                                  descOptions={taskDescriptions}
-                                  onSaveField={saveJobField}
-                                  onAssigneeChange={(target, name) => setAssigneeConfirm({ wo: target, nextAssignee: name })}
-                                />
-                              )}
                               {/* Task with my subtasks/details - show parent as context */}
                               {item.type === 'task_with_my_items' && (
                                 <div className="p-1 rounded border bg-gray-50 border-gray-200">
@@ -1086,7 +1141,7 @@ export default function MyWorkflow() {
                             </div>
                           );
                         })}
-                        {myTasks.length === 0 && (
+                        {projectTaskItems.length === 0 && (
                           <span className="text-xs text-gray-400">-</span>
                         )}
                       </div>
@@ -1096,7 +1151,7 @@ export default function MyWorkflow() {
               })}
               {workOrders.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-2 py-6 text-center text-gray-500 text-sm">
+                  <td colSpan={6} className="px-2 py-6 text-center text-gray-500 text-sm">
                     <User className="w-8 h-8 mx-auto text-gray-300 mb-2" />
                     <p className="font-semibold">No tasks assigned to you</p>
                     <p className="text-xs mt-1">When tasks are assigned to you, they'll appear here.</p>
