@@ -410,7 +410,7 @@ export default function PermitSetupWizard({
       let data;
       for (let attempt = 0; ; attempt++) {
         try {
-          ({ data } = await base44.functions.invoke("resolvePermittingAddress", { address: normalizeAddress(q), session_token: sessionToken }));
+          ({ data } = await base44.functions.invoke("resolvePermittingAddressV2", { address: normalizeAddress(q), session_token: sessionToken }));
           break;
         } catch (e) {
           if (!/status code (429|5\d\d)/.test(String(e?.message || "")) || attempt >= 2) throw e;
@@ -627,7 +627,7 @@ export default function PermitSetupWizard({
             )}
             <div className="flex justify-end gap-2">
               {isEdit && <Button variant="outline" size="sm" onClick={() => goTo(1)}>Skip — keep current office</Button>}
-              <Button size="sm" onClick={runResolve} disabled={!canNext || resolving}
+              <Button size="sm" onClick={() => runResolve()} disabled={!canNext || resolving}
                 className="bg-purple-600 hover:bg-purple-700 gap-1.5">
                 {resolving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
                 {resolving ? "Resolving jurisdiction…" : "Find jurisdiction"}
