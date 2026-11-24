@@ -487,16 +487,30 @@ export default function PermitSetupWizard({
 
   // Fetch the linked JurisdictionProfile once per jurisdiction when the AI plan
   // step opens — feeds the rules-on-file panel, unit flags, and the plan call.
+  // planProfile itself can't be a dep: setPlanProfile would re-fire the effect
+  // and the cleanup would drop the in-flight fetch. The ref guards instead, and
+  // a killed fetch clears it so revisiting the step refetches.
+  const planProfileReq = useRef("");
   useEffect(() => {
     const pid = locality?.jurisdiction_profile_id || "";
-    if (!isOpen || step !== 2 || !pid || planProfile.pid === pid) return;
+    if (!isOpen || step !== 2 || !pid || planProfileReq.current === pid) return;
+    planProfileReq.current = pid;
     let alive = true;
+    let done = false;
+    const finish = (value) => {
+      if (!alive) return;
+      done = true;
+      setPlanProfile({ pid, loading: false, value });
+    };
     setPlanProfile({ pid, loading: true, value: undefined });
     withRateLimitRetry(() => staffEntities.JurisdictionProfile.get(pid))
-      .then(p => { if (alive) setPlanProfile({ pid, loading: false, value: p || null }); })
-      .catch(() => { if (alive) setPlanProfile({ pid, loading: false, value: null }); });
-    return () => { alive = false; };
-  }, [isOpen, step, locality?.jurisdiction_profile_id, planProfile.pid]);
+      .then(p => finish(p || null))
+      .catch(() => finish(null));
+    return () => {
+      alive = false;
+      if (!done && planProfileReq.current === pid) planProfileReq.current = "";
+    };
+  }, [isOpen, step, locality?.jurisdiction_profile_id]);
 
   const loadedPlanProfile = planProfile.pid === (locality?.jurisdiction_profile_id || "")
     ? planProfile.value : undefined;
