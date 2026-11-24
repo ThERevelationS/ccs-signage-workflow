@@ -117,6 +117,14 @@ feeds (queueFeed, reports) may stay server-side. (3) Customers use the app-gener
   LIBRARY_ENTITIES (3, product_group/owner_email rule). Also query-shape guards (operators, $in≤200,
   regex≤200, limit≤5000) — direct reads lose these; acceptable for staff, note for review.
 
+**Brett 2026-11-24:** (1) every staff member has an email; (2) the Time Clock runs on a shared
+shop PC → that screen must never hold one person's Base44 session; it stays on the function path
+(each punch authenticates the person, nothing persists). (3) Google sign-in ALLOWED — some staff
+use personal Gmail, so AuthorizedEmail.email must equal the address they sign in with (sync must
+match on email; mismatches → stay on gateway path + admin report). (4) Test account: Brett invites
+a non-admin test user; credentials go in `C:/Users/BrettHeinlein/.ccs-test-user.json` (outside
+every repo, never in chat).
+
 **Open (ask Brett):** does every staff member have a real email inbox (invites + password reset)?
 Are any devices shared by several staff (shop kiosk / time clock tablet)? Google sign-in allowed?
 
