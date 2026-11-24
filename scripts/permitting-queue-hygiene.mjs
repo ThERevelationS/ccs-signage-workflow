@@ -29,6 +29,7 @@ import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from 'node:fs'
 import { mirrorRead, mirrorApply } from './lib/entity-mirror.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
+import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 
 const APP = '68dfcc5e57bbbc35387da97c';
 const FN = `https://base44.app/api/apps/${APP}/functions`;
@@ -275,7 +276,8 @@ async function pass() {
   emit({ stage: 'queue_hygiene_pass', ok: true, start: true, step: true, detail: 'queue hygiene worker up' });
   if (!DRY && !(await login())) { emit({ stage: 'queue_hygiene_error', ok: false, detail: 'login failed' }); process.exit(1); }
   do {
+    await waitWhilePaused('queue-hygiene', { item: 'hygiene pass' });
     try { await pass(); } catch (e) { emit({ stage: 'queue_hygiene_error', ok: false, detail: String(e?.message || e).slice(0, 180) }); }
-    if (!ONCE) await sleep(PASS_SLEEP);
+    if (!ONCE) { heartbeat('queue-hygiene', 'idle', 'between passes'); await sleep(PASS_SLEEP); }
   } while (!ONCE);
 })();

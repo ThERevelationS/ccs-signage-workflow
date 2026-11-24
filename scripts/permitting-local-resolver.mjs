@@ -18,6 +18,7 @@ import { buildIndexEntry, indexAddressKey } from '../base44/shared/permittingLoo
 import { normalizeAddressState } from '../base44/shared/permittingAddressState.js';
 import { getMirror } from './lib/entity-mirror.mjs';
 import { enqueue } from './lib/outbox.mjs';
+import { waitWhilePaused } from './lib/server-control.mjs';
 
 const args = process.argv.slice(2);
 const arg = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
@@ -425,6 +426,7 @@ async function main() {
     while (true) {
       const i = idx++;
       if (i >= pool.length) return;
+      await waitWhilePaused('forever-runner', { item: pool[i] });
       const r = await resolveOne(pool[i], id);
       counts[r.stage] = (counts[r.stage] || 0) + 1;
       if (++done % 20 === 0) console.log(`[local ${id}] ${done}/${pool.length} — ${JSON.stringify(counts)}`);

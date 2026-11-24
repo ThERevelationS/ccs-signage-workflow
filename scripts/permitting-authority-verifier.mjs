@@ -29,6 +29,7 @@ import { enqueue } from './lib/outbox.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { ohioCertifiedDept, kyElectricalRoster } from './lib/rosters/certified-depts.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
+import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 
 const APP = '68dfcc5e57bbbc35387da97c';
 const FN = `https://base44.app/api/apps/${APP}/functions`;
@@ -540,13 +541,14 @@ async function main() {
   console.log(`[auth-verifier] slice ${SLICE}/${SLICES} ${ONCE ? 'once' : 'loop'} — evidence-based staff_verified promotion`);
   await freshToken();
   do {
+    await waitWhilePaused('authority-verifier', { item: 'verify pass' });
     try { await pass(); } catch (e) { emit({ stage: 'auth_verify_error', detail: String(e?.message || e).slice(0, 200) }); console.error('[auth-verifier] pass error:', e?.message || e); }
     // Trigger-aware idle: backfilled offices wake a targeted scan within
     // ~20s; the full pass still runs on the 10-min schedule as backstop.
-    if (!ONCE) await idleWait(PASS_SLEEP, 'verify', async (hints) => {
+    if (!ONCE) { heartbeat('authority-verifier', 'idle', 'between passes'); await idleWait(PASS_SLEEP, 'verify', async (hints) => {
       emit({ stage: 'auth_verify_trigger', detail: `${hints.length} hint(s) — targeted verify now` });
       await pass(hints);
-    }, { emit });
+    }, { emit }); }
   } while (!ONCE);
 }
 main();

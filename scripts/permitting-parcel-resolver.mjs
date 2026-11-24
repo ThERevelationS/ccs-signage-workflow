@@ -24,6 +24,7 @@
 // Emits parcel_resolve_* stages to .live-events.jsonl.
 import { execFileSync } from 'node:child_process';
 import { openSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 
 const args = process.argv.slice(2);
 const ONCE = args.includes('--once');
@@ -363,6 +364,7 @@ async function pass() {
   const flags = flagged.filter((e) => !doneAt(e.address) || tms(e) > doneAt(e.address));
   emit({ stage: 'parcel_resolve_pass', detail: `${flags.length} boundary flags to check` });
   for (const e of flags) {
+    await waitWhilePaused('parcel-resolver', { item: e.address });
     const state = (String(e.address).match(/, ([A-Z]{2})/) || [])[1] || 'OH';
     const g = await geocode(e.address);
     if (!g) { emit({ stage: 'parcel_resolve_none', address: e.address, detail: 'geocode miss' }); continue; }
@@ -401,7 +403,8 @@ async function pass() {
 
 (async () => {
   do {
+    await waitWhilePaused('parcel-resolver', { item: 'parcel pass' });
     try { await pass(); } catch (e) { emit({ stage: 'parcel_resolve_error', detail: String(e?.message || e).slice(0, 180) }); }
-    if (!ONCE) await sleep(PASS_SLEEP);
+    if (!ONCE) { heartbeat('parcel-resolver', 'idle', 'between passes'); await sleep(PASS_SLEEP); }
   } while (!ONCE);
 })();

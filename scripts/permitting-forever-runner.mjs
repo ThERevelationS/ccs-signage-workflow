@@ -15,6 +15,7 @@
 import { readFileSync, writeFileSync, existsSync, openSync, writeFileSync as writeFd } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { permitCreds } from './lib/permit-creds.mjs';
+import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 
 const arg = (name, dflt) => { const i = process.argv.indexOf(name); return i >= 0 ? Number(process.argv[i + 1]) : dflt; };
 const WORKERS = Math.min(arg('--workers', 4), 12);
@@ -108,10 +109,12 @@ function runValidator(pool, token) {
 emit({ stage: 'loop_start', address: 'forever runner', ok: true, detail: `continuous validation — ${WORKERS} workers, retries needs_review + failures every cycle` });
 let cycle = 0;
 while (true) {
+  await waitWhilePaused('forever-runner', { item: 'validation cycle' });
   cycle++;
   const { pool, counts } = buildPool();
   if (!pool.length) {
     emit({ stage: 'loop_idle', address: `cycle ${cycle}`, ok: true, detail: 'nothing retryable — all fixture addresses terminal' });
+    heartbeat('forever-runner', 'idle', 'between cycles');
     await sleep(IDLE_SLEEP);
     continue;
   }
@@ -119,15 +122,18 @@ while (true) {
   const token = await ensureToken();
   if (!token) {
     emit({ stage: 'loop_idle', address: `cycle ${cycle}`, ok: false, detail: 'no live session token after retries — holding the cycle rather than running public-mode' });
+    heartbeat('forever-runner', 'idle', 'between cycles');
     await sleep(IDLE_SLEEP);
     continue;
   }
   const code = await runValidator(pool, token);
   if (code === 42) {
     emit({ stage: 'loop_idle', address: `cycle ${cycle}`, ok: false, detail: 'child refused public-mode (token dropped) — retrying next cycle' });
+    heartbeat('forever-runner', 'idle', 'between cycles');
     await sleep(IDLE_SLEEP);
     continue;
   }
   emit({ stage: 'loop_cycle_done', address: `cycle ${cycle}`, ok: code === 0, detail: `validator exited ${code}` });
+  heartbeat('forever-runner', 'idle', 'between cycles');
   await sleep(CYCLE_SLEEP);
 }

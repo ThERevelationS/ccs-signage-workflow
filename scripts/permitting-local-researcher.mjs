@@ -18,6 +18,7 @@ import { fetchText, extract, crawlSite, discoverSite, PHONE_RE, EMAIL_RE, PAGE_K
 import { pdfPages } from './lib/pdf-extract.mjs';
 import { rosterContact } from './lib/office-research.mjs';
 import { regionalProvidersFor } from '../base44/shared/regionalProviders.mjs';
+import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 
 const args = process.argv.slice(2);
 const arg = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
@@ -252,6 +253,7 @@ async function fulfillPass(profiles) {
 async function main() {
   emit({ stage: 'office_res_boot', address: 'local researcher', ok: true, start: true, detail: 'deterministic local research v2 — sitemap + PDF evidence + directory parse + county fallback · ZERO spend' });
   do {
+    await waitWhilePaused(`local-res-${SLICE}`, { item: 'research pass' });
     const queue = getMirror('queue')?.rows || [];
     const profiles = [...(getMirror('profiles-oh')?.rows || []), ...(getMirror('profiles-ky')?.rows || [])];
     const base = (n) => String(n || '').toLowerCase().replace(/\s+(city|village|township|county)$/i, '').trim();
@@ -276,12 +278,14 @@ async function main() {
       if (!didWork) {
         emit({ stage: 'office_res_idle', address: 'local researcher', ok: true, detail: 'queue empty · offices fulfilled — standing by' });
         if (ONCE) break;
+        heartbeat(`local-res-${SLICE}`, 'idle', 'queue empty');
         await sleep(5 * 60 * 1000);
       }
       if (ONCE) break;
       continue;
     }
     for (const row of pending.slice(0, 200)) {
+      await waitWhilePaused(`local-res-${SLICE}`, { item: row.jurisdiction_name });
       try {
         const result = await research(row, profileOf(row), profiles);
         claims[claimKey(row)] = { result, at: new Date().toISOString() };

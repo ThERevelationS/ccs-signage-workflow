@@ -16,6 +16,7 @@ import { openSync, writeFileSync, readFileSync, existsSync, appendFileSync, mkdi
 import { enqueue, takeBatch, outboxDepth, journal, requeueTail, compactOutbox, OUTBOX, OUTBOX_DONE, OUTBOX_ERR } from './lib/outbox.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
+import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 
 const args = process.argv.slice(2);
 const flag = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
@@ -185,6 +186,7 @@ function rotateEvents() {
 }
 
 while (true) {
+  await waitWhilePaused('write-flusher', { item: 'outbox drain' });
   try { writeFileSync(HB, String(Date.now())); } catch {}
   // FIFO compaction: when the backlog grows huge, most lines are superseded
   // writes to the same rows — merge them before taking a batch.
@@ -196,6 +198,7 @@ while (true) {
   const batch = takeBatch(BATCH);
   if (!batch.length) {
     if (ONCE) break;
+    heartbeat('write-flusher', 'idle', 'queue empty');
     await sleep(10000);
     continue;
   }

@@ -25,6 +25,7 @@ import { jurisdictionToPermitLocality, normalizePermitJurisdictionName } from '.
 import { normalizeAddressState } from '../src/shared/permittingAddressState.js';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
+import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 
 const FN = 'https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions';
 const EVENTS = '.live-events.jsonl';
@@ -214,6 +215,7 @@ async function sweep(onlyNames = null) {
   let done = 0;
   for (const loc of targets) {
     const label = `${loc.name}, ${loc.state}`;
+    await waitWhilePaused('seed-scan', { item: label });
     try {
       // Find the profile in the local index first: explicit link, else a
       // UNIQUE normalized name+state match — seeding offices from an
@@ -304,7 +306,9 @@ async function sweep(onlyNames = null) {
 // happen in seconds, not at the next poll.
 async function main() {
   for (;;) {
+    await waitWhilePaused('seed-scan', { item: 'seed sweep' });
     await sweep().catch((e) => { emit({ stage: 'seed_office_error', address: 'office seed scan', ok: false, detail: `sweep failed: ${String(e?.message || e).slice(0, 140)}` }); });
+    heartbeat('seed-scan', 'idle', 'between sweeps');
     await idleWait(10 * 60 * 1000, 'seed', async (hints) => {
       emit({ stage: 'seed_office_trigger', detail: `${hints.length} hint(s) — targeted merge now` });
       await sweep(hints);
