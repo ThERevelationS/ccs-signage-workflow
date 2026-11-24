@@ -368,9 +368,11 @@ export async function runDesignerPipeline(input, preselectedJurisdiction = null,
   const [rules, sourceDocs, profile] = await Promise.all([
     loadJurisdictionRules(jurisdiction.jurisdiction_name, jurisdiction.jurisdiction_id),
     loadJurisdictionSourceDocs(jurisdiction.jurisdiction_name, jurisdiction.jurisdiction_id),
-    options.profileId
-      ? withRateLimitRetry(() => staffEntities.JurisdictionProfile.get(options.profileId)).catch(() => null)
-      : Promise.resolve(null),
+    options.profile !== undefined
+      ? Promise.resolve(options.profile)
+      : options.profileId
+        ? withRateLimitRetry(() => staffEntities.JurisdictionProfile.get(options.profileId)).catch(() => null)
+        : Promise.resolve(null),
   ]);
 
   // 3. Compose workflow via native AI

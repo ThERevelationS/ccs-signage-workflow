@@ -9,6 +9,7 @@ const prompts = await import(pathToFileURL(resolve(here, "../src/components/perm
 const {
   SIGN_TYPES, SIGN_SCOPES, newUnit, setTypeCount, unitAreaSqFt,
   mergeScannedSigns, legacyInputsFromSigns, describeSignsForPrompt, totalUnitCount,
+  addWorkingDays, workingDaysBetween, profileLimits, unitRuleFlags, preBuildWarnings,
 } = signs;
 const { buildSignScanPrompt, buildPermitPlanPrompt } = prompts;
 
@@ -197,6 +198,128 @@ const { buildSignScanPrompt, buildPermitPlanPrompt } = prompts;
   for (const l of lines) assert.ok(prompt.includes(l.name), `scan prompt missing ${l.name}`);
   for (const t of SIGN_TYPES) assert.ok(prompt.includes(`${t.key} — ${t.label}`));
   for (const s of SIGN_SCOPES) assert.ok(["new", "reface", "repair", "removal", "relocate"].includes(s.key));
+}
+
+// ── addWorkingDays: weekends, n=0, invalid ──
+{
+  // Fri Nov 20 2026 +1 working day → Mon Nov 23; +5 → Fri Nov 27.
+  const fri = new Date(2026, 10, 20);
+  const plus1 = addWorkingDays(fri, 1);
+  assert.equal(plus1.getDay(), 1);
+  assert.equal(plus1.getDate(), 23);
+  const plus5 = addWorkingDays(fri, 5);
+  assert.equal(plus5.getDay(), 5);
+  assert.equal(plus5.getDate(), 27);
+  // n<=0 returns the same day; ISO strings accepted; input not mutated.
+  const same = addWorkingDays("2026-11-20T00:00:00", 0);
+  assert.equal(same.getDate(), 20);
+  assert.equal(addWorkingDays(fri, -3).getDate(), 20);
+  assert.equal(fri.getDate(), 20);
+  assert.equal(addWorkingDays("not-a-date", 3), null);
+  assert.equal(addWorkingDays(null, 1), null);
+  // Sat +1 → Mon (weekend not counted).
+  assert.equal(addWorkingDays(new Date(2026, 10, 21), 1).getDate(), 23);
+}
+
+// ── workingDaysBetween ──
+{
+  assert.equal(workingDaysBetween(new Date(2026, 10, 20), new Date(2026, 10, 23)), 1); // Fri→Mon = 1
+  assert.equal(workingDaysBetween(new Date(2026, 10, 20), new Date(2026, 10, 20)), 0);
+  assert.equal(workingDaysBetween(new Date(2026, 10, 23), new Date(2026, 10, 20)), 0);
+}
+
+// ── profileLimits: real-shaped profile, empty, "information not found" ──
+{
+  const limits = profileLimits({
+    permit_requirements: {
+      requires_permit: true,
+      max_sign_area_sqft: 80,
+      max_height_ft: 30,
+      illumination_allowed: true,
+      electronic_signs_allowed: null,
+      fee_range: "INFORMATION NOT FOUND (fee schedule pending)",
+      processing_time: "INFORMATION NOT FOUND",
+    },
+    sqft_width_height_rules: "Wall signs: 1.5 sq ft per foot of frontage",
+    height_allowances: "",
+    setback_rules: "INFORMATION NOT FOUND",
+    lighting_allowances: "No internal illumination in residential",
+  });
+  assert.equal(limits.maxAreaSqFt, 80);
+  assert.equal(limits.maxHeightFt, 30);
+  assert.equal(limits.illuminationAllowed, true);
+  assert.equal(limits.electronicAllowed, null);
+  assert.equal(limits.feeRange, null);
+  assert.equal(limits.processingTime, null);
+  assert.equal(limits.texts.length, 2);
+  assert.equal(limits.texts[0].label, "Size / area");
+  assert.equal(limits.texts[1].label, "Lighting");
+
+  const none = profileLimits(null);
+  assert.deepEqual(none, {
+    maxAreaSqFt: null, maxHeightFt: null, illuminationAllowed: null,
+    electronicAllowed: null, feeRange: null, processingTime: null, texts: [],
+  });
+  assert.deepEqual(profileLimits({}).maxAreaSqFt, null);
+  // Non-finite / non-positive numbers drop; non-boolean drops.
+  const bad = profileLimits({ permit_requirements: { max_sign_area_sqft: -3, max_height_ft: "lots", illumination_allowed: "yes", electronic_signs_allowed: false, fee_range: "$50–$200", processing_time: "10 days" } });
+  assert.equal(bad.maxAreaSqFt, null);
+  assert.equal(bad.maxHeightFt, null);
+  assert.equal(bad.illuminationAllowed, null);
+  assert.equal(bad.electronicAllowed, false);
+  assert.equal(bad.feeRange, "$50–$200");
+  assert.equal(bad.processingTime, "10 days");
+}
+
+// ── unitRuleFlags: over / under / none ──
+{
+  const limits = {
+    maxAreaSqFt: 80, maxHeightFt: 30,
+    illuminationAllowed: false, electronicAllowed: false,
+    feeRange: null, processingTime: null, texts: [],
+  };
+  const over = unitRuleFlags(
+    { width_in: 120, height_in: 120, faces: 1, overall_height_in: 480, illuminated: true },
+    "emc", limits);
+  assert.equal(over.length, 4);
+  assert.match(over[0], /Area 100\.0 sq ft is over the 80 sq ft limit on file/);
+  assert.match(over[1], /Height 40 ft is over the 30 ft limit on file/);
+  assert.match(over[2], /Illumination not allowed per rules on file/);
+  assert.match(over[3], /Electronic signs not allowed per rules on file/);
+
+  const under = unitRuleFlags(
+    { width_in: 48, height_in: 96, faces: 1, overall_height_in: 240, illuminated: false },
+    "cabinet", limits);
+  assert.deepEqual(under, []);
+
+  // emc electronic flag only applies to emc type.
+  const emcNotElec = unitRuleFlags({ illuminated: false }, "cabinet", limits);
+  assert.deepEqual(emcNotElec, []);
+  const emcYes = unitRuleFlags({ illuminated: false }, "emc", limits);
+  assert.equal(emcYes.length, 1);
+
+  // Missing limits → nothing.
+  assert.deepEqual(unitRuleFlags({ width_in: 120, height_in: 120, faces: 1 }, "cabinet", null), []);
+  assert.deepEqual(unitRuleFlags({ width_in: 120, height_in: 120, faces: 1 }, "cabinet", { ...limits, maxAreaSqFt: null }), []);
+  // Missing sizes → no area/height flags even when limits exist.
+  assert.deepEqual(unitRuleFlags({}, "cabinet", limits), []);
+}
+
+// ── preBuildWarnings ──
+{
+  assert.deepEqual(preBuildWarnings({ signs: [], offices: [] }),
+    ["No signs listed — the plan will be generic.", "No offices selected — the AI will have to guess them."]);
+  const sized = mergeScannedSigns([
+    { type: "cabinet", count: 1, width_in: 48, height_in: 96 },
+    { type: "channel_letters", count: 2 },            // #2, #3 missing sizes
+    { type: "blade", count: 1, width_in: 12, height_in: null },
+  ]);
+  const w = preBuildWarnings({ signs: sized, offices: [{ name: "Zoning" }] });
+  assert.deepEqual(w, ["Sizes missing on #2, #3, #4 — size limits can't be checked."]);
+  assert.deepEqual(preBuildWarnings({ signs: sized, offices: [] }),
+    ["Sizes missing on #2, #3, #4 — size limits can't be checked.", "No offices selected — the AI will have to guess them."]);
+  const allSized = mergeScannedSigns([{ type: "cabinet", count: 1, width_in: 48, height_in: 96 }]);
+  assert.deepEqual(preBuildWarnings({ signs: allSized, offices: [{ name: "Zoning" }] }), []);
 }
 
 console.log("PASS permit-signs");

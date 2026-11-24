@@ -211,3 +211,110 @@ export function mapAiError(error) {
   if (/402|credit/i.test(text)) return new Error(AI_CREDITS_MESSAGE);
   return error instanceof Error ? error : new Error(String(error || "AI request failed"));
 }
+
+// ── Schedule + rules-on-file helpers ──
+
+// n working days (Mon–Fri) after `date` (Date or ISO string); n<=0 → same day.
+export function addWorkingDays(date, n) {
+  const d = date instanceof Date ? new Date(date.getTime()) : new Date(String(date || ""));
+  if (Number.isNaN(d.getTime())) return null;
+  let remaining = Math.max(0, Math.floor(Number(n)) || 0);
+  while (remaining > 0) {
+    d.setDate(d.getDate() + 1);
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) remaining -= 1;
+  }
+  return d;
+}
+
+// Working days strictly after `from` up to and including `to` (0 when to <= from).
+export function workingDaysBetween(from, to) {
+  const a = from instanceof Date ? new Date(from.getTime()) : new Date(String(from || ""));
+  const b = to instanceof Date ? new Date(to.getTime()) : new Date(String(to || ""));
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime()) || b <= a) return 0;
+  let count = 0;
+  while (a < b && count < 10000) {
+    a.setDate(a.getDate() + 1);
+    const day = a.getDay();
+    if (day !== 0 && day !== 6) count += 1;
+  }
+  return count;
+}
+
+const notFoundText = /information not found/i;
+const limitNum = (v) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : null; };
+const limitBool = (v) => (typeof v === "boolean" ? v : null);
+const limitText = (v) => {
+  const s = String(v || "").trim();
+  return s && !notFoundText.test(s) ? s : null;
+};
+
+// Structured rules from a JurisdictionProfile — for the rules-on-file panel
+// and the per-unit over-limit flags. Empty / "information not found" → null.
+export function profileLimits(profile) {
+  const none = {
+    maxAreaSqFt: null, maxHeightFt: null, illuminationAllowed: null,
+    electronicAllowed: null, feeRange: null, processingTime: null, texts: [],
+  };
+  if (!profile || typeof profile !== "object") return none;
+  const req = profile.permit_requirements && typeof profile.permit_requirements === "object"
+    ? profile.permit_requirements : {};
+  const texts = [
+    ["Size / area", profile.sqft_width_height_rules],
+    ["Height", profile.height_allowances],
+    ["Setback", profile.setback_rules],
+    ["Lighting", profile.lighting_allowances],
+  ].map(([label, v]) => ({ label, text: limitText(v) })).filter(t => t.text);
+  return {
+    maxAreaSqFt: limitNum(req.max_sign_area_sqft),
+    maxHeightFt: limitNum(req.max_height_ft),
+    illuminationAllowed: limitBool(req.illumination_allowed),
+    electronicAllowed: limitBool(req.electronic_signs_allowed),
+    feeRange: limitText(req.fee_range),
+    processingTime: limitText(req.processing_time),
+    texts,
+  };
+}
+
+// Short red flags when a unit breaks a rule on file. Missing limits → nothing.
+export function unitRuleFlags(unit, type, limits) {
+  if (!limits) return [];
+  const flags = [];
+  const area = unitAreaSqFt(unit);
+  if (area != null && limits.maxAreaSqFt != null && area > limits.maxAreaSqFt) {
+    flags.push(`Area ${area.toFixed(1)} sq ft is over the ${limits.maxAreaSqFt} sq ft limit on file`);
+  }
+  const ft = hasSize(unit?.overall_height_in) ? Number(unit.overall_height_in) / 12 : null;
+  if (ft != null && limits.maxHeightFt != null && ft > limits.maxHeightFt) {
+    flags.push(`Height ${Math.round(ft * 10) / 10} ft is over the ${limits.maxHeightFt} ft limit on file`);
+  }
+  if (unit?.illuminated === true && limits.illuminationAllowed === false) {
+    flags.push("Illumination not allowed per rules on file");
+  }
+  if (type === "emc" && limits.electronicAllowed === false) {
+    flags.push("Electronic signs not allowed per rules on file");
+  }
+  return flags;
+}
+
+// Honest warnings before spending an AI call on a plan we know is thin.
+export function preBuildWarnings({ signs, offices } = {}) {
+  const warnings = [];
+  if (totalUnitCount(signs) === 0) {
+    warnings.push("No signs listed — the plan will be generic.");
+  } else {
+    const missing = [];
+    let n = 0;
+    for (const entry of Array.isArray(signs) ? signs : []) {
+      for (const unit of Array.isArray(entry?.units) ? entry.units : []) {
+        n += 1;
+        if (!hasSize(unit?.width_in) || !hasSize(unit?.height_in)) missing.push(`#${n}`);
+      }
+    }
+    if (missing.length) warnings.push(`Sizes missing on ${missing.join(", ")} — size limits can't be checked.`);
+  }
+  if (!(Array.isArray(offices) && offices.length)) {
+    warnings.push("No offices selected — the AI will have to guess them.");
+  }
+  return warnings;
+}

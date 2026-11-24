@@ -19,10 +19,12 @@ import { summarizeMatchedLocalityAuthority } from "@/shared/permittingAddressLoc
 import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./permitWorkflowDesigner";
 import {
   EXTRA_LABELS, SIGN_SCOPES, SIGN_TYPE_MAP, SIGN_TYPES,
-  ensureUnitIds, legacyInputsFromSigns, mapAiError, mergeScannedSigns,
-  setTypeCount, totalUnitCount, unitAreaSqFt,
+  addWorkingDays, ensureUnitIds, legacyInputsFromSigns, mapAiError, mergeScannedSigns,
+  preBuildWarnings, profileLimits, setTypeCount, totalUnitCount, unitAreaSqFt,
+  unitRuleFlags, workingDaysBetween,
 } from "./permitSigns";
 import { buildSignScanPrompt, SIGN_SCAN_JSON_SCHEMA } from "./permitPlanPrompt";
+import { withRateLimitRetry } from "@/lib/loadAllEntityRows";
 
 const ROLE_LABELS = {
   sign_permit: "Sign permit", zoning: "Zoning", building: "Building",
@@ -149,6 +151,68 @@ const UnitSizeInput = ({ label, value, onChange }) => (
 
 const stripHtml = (v) => String(v || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 600);
 
+const fmtDay = (d) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+const fmtDateMaybe = (v) => {
+  const d = v instanceof Date ? v : new Date(String(v || ""));
+  return Number.isNaN(d.getTime()) ? String(v || "") : fmtDay(d);
+};
+// "due Mon, Dec 8" for a step's working-day offset, or "" when unset/invalid.
+const stepDueLabel = (step) => {
+  const v = step?.target_days_from_start;
+  const n = v === null || v === undefined || v === "" ? null : Number(v);
+  if (!Number.isFinite(n) || n < 0) return "";
+  const d = addWorkingDays(new Date(), n);
+  return d ? `due ${fmtDay(d)}` : "";
+};
+
+const RulesOnFilePanel = ({ jurisdiction, limits }) => {
+  const [showText, setShowText] = useState(false);
+  const chips = [];
+  if (limits.maxAreaSqFt != null) chips.push(`Max area ${limits.maxAreaSqFt} sq ft`);
+  if (limits.maxHeightFt != null) chips.push(`Max height ${limits.maxHeightFt} ft`);
+  if (limits.illuminationAllowed === true) chips.push("Illumination allowed");
+  else if (limits.illuminationAllowed === false) chips.push("Illumination not allowed");
+  if (limits.electronicAllowed === true) chips.push("Electronic signs allowed");
+  else if (limits.electronicAllowed === false) chips.push("Electronic signs not allowed");
+  if (limits.feeRange) chips.push(`Fees: ${limits.feeRange}`);
+  if (limits.processingTime) chips.push(`Processing: ${limits.processingTime}`);
+  if (!chips.length && !limits.texts.length) {
+    return <p className="text-[10px] text-gray-400">No size or height rules on file for this jurisdiction.</p>;
+  }
+  return (
+    <div className="space-y-1 rounded-lg border border-gray-200 bg-gray-50/60 px-2.5 py-1.5">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-semibold text-gray-600">
+          Rules on file for {jurisdiction} — from research, not verified
+        </span>
+        {limits.texts.length > 0 && (
+          <button type="button" onClick={() => setShowText(v => !v)}
+            className="ml-auto shrink-0 text-[10px] font-medium text-purple-700 underline underline-offset-2">
+            {showText ? "Hide rule text" : "Show rule text"}
+          </button>
+        )}
+      </div>
+      {chips.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {chips.map((c, i) => (
+            <span key={i} className="rounded-full border border-gray-200 bg-white px-1.5 py-px text-[9px] text-gray-600">{c}</span>
+          ))}
+        </div>
+      )}
+      {showText && (
+        <div className="space-y-1 border-t border-gray-100 pt-1">
+          {limits.texts.map((t, i) => (
+            <p key={i} className="text-[10px] text-gray-600">
+              <span className="font-semibold">{t.label}: </span>
+              {t.text.length > 600 ? `${t.text.slice(0, 600)}…` : t.text}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const STEP_BASIS_BADGE = {
   approved_rule: { label: "approved", cls: "border-emerald-200 bg-emerald-50 text-emerald-700" },
   pending_review: { label: "research-backed", cls: "border-amber-200 bg-amber-50 text-amber-700" },
@@ -158,6 +222,7 @@ const PlanStepRow = ({ index, step, officeNames, signCount, expanded, onToggleEx
   const [docInput, setDocInput] = useState("");
   const badge = STEP_BASIS_BADGE[step.basis] || { label: "needs confirmation", cls: "border-gray-200 bg-gray-50 text-gray-500" };
   const officeIsKnown = officeNames.includes(step.office);
+  const dueLabel = stepDueLabel(step);
   return (
     <div className="px-2 py-1.5 text-xs">
       <div className="flex items-center gap-1.5 cursor-pointer" onClick={onToggleExpand}>
@@ -170,6 +235,7 @@ const PlanStepRow = ({ index, step, officeNames, signCount, expanded, onToggleEx
           <span key={n} className="shrink-0 rounded-full border border-sky-200 bg-sky-50 px-1 py-px text-[9px] font-semibold text-sky-700">#{n}</span>
         ))}
         <span className={`shrink-0 rounded-full border px-1.5 py-px text-[9px] font-semibold ${badge.cls}`}>{badge.label}</span>
+        {dueLabel && <span className="shrink-0 text-[9px] text-gray-400">{dueLabel}</span>}
         <button type="button" disabled={isFirst} aria-label="Move step up"
           onClick={e => { e.stopPropagation(); onMove(index, -1); }}
           className="shrink-0 text-gray-400 hover:text-purple-700 disabled:opacity-30"><ChevronUp className="w-3.5 h-3.5" /></button>
@@ -278,12 +344,36 @@ const PlanStepRow = ({ index, step, officeNames, signCount, expanded, onToggleEx
   );
 };
 
-const PlanStepsEditor = ({ steps, officeNames, signCount, expanded, onToggleExpand, onEdit, onMove, onDelete, onAdd }) => {
+const PlanStepsEditor = ({ steps, officeNames, signCount, expanded, onToggleExpand, onEdit, onMove, onDelete, onAdd, installDate }) => {
   const officeCount = new Set(steps.map(s => s.office).filter(Boolean)).size;
+  const targets = steps.map(s => {
+    const v = s?.target_days_from_start;
+    const n = v === null || v === undefined || v === "" ? null : Number(v);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }).filter(n => n != null);
+  const latestDue = targets.length ? addWorkingDays(new Date(), Math.max(...targets)) : null;
+  const install = installDate ? new Date(String(installDate)) : null;
+  const installValid = install && !Number.isNaN(install.getTime());
+  const overrunDays = installValid && latestDue && latestDue > install ? workingDaysBetween(install, latestDue) : 0;
   return (
     <div className="rounded-lg border border-purple-200 bg-purple-50/50">
-      <div className="border-b border-purple-100 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-purple-700">
-        {steps.length} step{steps.length === 1 ? "" : "s"} across {officeCount} office{officeCount === 1 ? "" : "s"}
+      <div className="border-b border-purple-100 px-3 py-1.5">
+        <div className="text-[10px] font-bold uppercase tracking-wide text-purple-700">
+          {steps.length} step{steps.length === 1 ? "" : "s"} across {officeCount} office{officeCount === 1 ? "" : "s"}
+        </div>
+        <div className="mt-0.5 text-[9px] font-normal normal-case tracking-normal text-gray-500">
+          {installDate ? (
+            <>
+              Install {installValid ? fmtDay(install) : fmtDateMaybe(installDate)}
+              {latestDue ? ` · plan finishes ${fmtDay(latestDue)}` : ""}
+              {overrunDays > 0 && (
+                <span className="font-semibold text-amber-700">
+                  {" "}· Plan runs {overrunDays} working day{overrunDays === 1 ? "" : "s"} past the install date
+                </span>
+              )}
+            </>
+          ) : "No install date on the work order"}
+        </div>
       </div>
       <div className="max-h-72 divide-y divide-purple-100 overflow-y-auto">
         {steps.map((s, i) => (
@@ -343,6 +433,8 @@ export default function PermitSetupWizard({
   const [recent, setRecent] = useState(() => loadRecent());
   const [planForm, setPlanForm] = useState(() => defaultPlanForm(wo, siteAddress));
   const [planning, setPlanning] = useState(false);
+  const [preBuild, setPreBuild] = useState([]);
+  const [planProfile, setPlanProfile] = useState({ pid: "", loading: false, value: undefined });
   const [plan, setPlan] = useState(null);
   const [planError, setPlanError] = useState("");
   const [planSaved, setPlanSaved] = useState(false);
@@ -392,6 +484,23 @@ export default function PermitSetupWizard({
       .then(rows => setDrafts(Array.isArray(rows) ? rows : []))
       .catch(() => {});
   }, [isOpen, locality?.id]);
+
+  // Fetch the linked JurisdictionProfile once per jurisdiction when the AI plan
+  // step opens — feeds the rules-on-file panel, unit flags, and the plan call.
+  useEffect(() => {
+    const pid = locality?.jurisdiction_profile_id || "";
+    if (!isOpen || step !== 2 || !pid || planProfile.pid === pid) return;
+    let alive = true;
+    setPlanProfile({ pid, loading: true, value: undefined });
+    withRateLimitRetry(() => staffEntities.JurisdictionProfile.get(pid))
+      .then(p => { if (alive) setPlanProfile({ pid, loading: false, value: p || null }); })
+      .catch(() => { if (alive) setPlanProfile({ pid, loading: false, value: null }); });
+    return () => { alive = false; };
+  }, [isOpen, step, locality?.jurisdiction_profile_id, planProfile.pid]);
+
+  const loadedPlanProfile = planProfile.pid === (locality?.jurisdiction_profile_id || "")
+    ? planProfile.value : undefined;
+  const planLimits = useMemo(() => profileLimits(loadedPlanProfile ?? null), [loadedPlanProfile]);
 
   // Address autocomplete — same places_autocomplete the picker uses.
   useEffect(() => {
@@ -631,6 +740,7 @@ export default function PermitSetupWizard({
       .filter(e => e.units.length > 0));
   const signUnitCount = totalUnitCount(planForm.signs);
   const estimateIds = estimateIdsOf(wo);
+  const installDate = wo.project_install_date || wo.due_date || "";
 
   const scanEstimateSigns = async (rescan = false) => {
     if (!estimateIds.length || scanning) return;
@@ -749,8 +859,13 @@ export default function PermitSetupWizard({
     return next;
   });
 
-  const buildPlan = async () => {
+  const buildPlan = async (skipCheck = false) => {
     if (planning) return;
+    if (!skipCheck) {
+      const warnings = preBuildWarnings({ signs: planForm.signs, offices: chosenOffices });
+      if (warnings.length) { setPreBuild(warnings); return; }
+    }
+    setPreBuild([]);
     setPlanning(true); setPlanError(""); setPlan(null); setPlanSaved(false);
     try {
       const jurisdiction = locality ? {
@@ -777,7 +892,8 @@ export default function PermitSetupWizard({
         }),
         signs: planForm.signs || [],
         profileId: locality?.jurisdiction_profile_id || "",
-        installDate: wo.target_install_date || wo.install_date || "",
+        profile: loadedPlanProfile,
+        installDate,
         county: locality?.county_name || "",
       };
       const input = { ...planForm, ...legacyInputsFromSigns(planForm.signs) };
@@ -1124,6 +1240,9 @@ export default function PermitSetupWizard({
         {/* ── Step 2: AI plan ── */}
         {step === 2 && (
           <div className="space-y-3">
+            {locality && (planProfile.loading
+              ? <p className="text-[10px] text-gray-400">Loading rules…</p>
+              : <RulesOnFilePanel jurisdiction={locality.name} limits={planLimits} />)}
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <Label className="text-xs">Signs</Label>
@@ -1238,6 +1357,9 @@ export default function PermitSetupWizard({
                               {unit.source_line ? (
                                 <p className="truncate pl-6 text-[9px] text-gray-400">from "{unit.source_line}"</p>
                               ) : null}
+                              {unitRuleFlags(unit, entry.type, planLimits).map((f, fi) => (
+                                <p key={fi} className="pl-6 text-[10px] font-medium text-red-600">{f}</p>
+                              ))}
                             </div>
                           );
                         })}
@@ -1248,6 +1370,17 @@ export default function PermitSetupWizard({
               )}
             </div>
 
+            {preBuild.length > 0 && (
+              <div className="space-y-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                {preBuild.map((w, i) => <p key={i} className="text-[11px] text-amber-800">• {w}</p>)}
+                <div className="flex gap-2 pt-0.5">
+                  <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
+                    onClick={() => setPreBuild([])}>Fix first</Button>
+                  <Button type="button" size="sm" className="h-7 text-xs bg-amber-600 hover:bg-amber-700"
+                    onClick={() => buildPlan(true)}>Build anyway</Button>
+                </div>
+              </div>
+            )}
             {planError && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{planError}</div>
             )}
@@ -1258,7 +1391,8 @@ export default function PermitSetupWizard({
                   signCount={signUnitCount}
                   expanded={expandedSteps}
                   onToggleExpand={toggleExpandedStep}
-                  onEdit={editStep} onMove={moveStep} onDelete={deleteStep} onAdd={addStep} />
+                  onEdit={editStep} onMove={moveStep} onDelete={deleteStep} onAdd={addStep}
+                  installDate={installDate} />
                 {(Array.isArray(plan.gaps) ? plan.gaps : []).length > 0 && (
                   <div className="space-y-0.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
                     {(plan.gaps || []).map((g, gi) => (
@@ -1305,7 +1439,7 @@ export default function PermitSetupWizard({
                 {plan && !planSaved && (
                   <Button variant="outline" size="sm" onClick={savePlan} className="gap-1">Save plan</Button>
                 )}
-                <Button size="sm" onClick={buildPlan} disabled={planning}
+                <Button size="sm" onClick={() => buildPlan()} disabled={planning}
                   className="bg-purple-600 hover:bg-purple-700 gap-1.5">
                   {planning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                   {planning ? "Building…" : plan ? "Rebuild plan" : "Build with AI"}
