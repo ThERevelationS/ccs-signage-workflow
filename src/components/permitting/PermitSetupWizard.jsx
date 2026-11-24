@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, ArrowRight, CheckCircle2, Loader2, MapPin, Search, Sparkles,
-  AlertTriangle, Pencil, ListChecks, FileText,
+  AlertTriangle, Pencil, ListChecks, FileText, ChevronDown, ChevronUp, Minus, Plus, X,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -15,6 +17,12 @@ import { staffEntities } from "@/components/staff/staffEntities";
 import { estimateIdsOf, loadEstimateSiteAddress, workOrderSiteAddress } from "./jobSiteAddress";
 import { summarizeMatchedLocalityAuthority } from "@/shared/permittingAddressLocality.js";
 import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./permitWorkflowDesigner";
+import {
+  EXTRA_LABELS, SIGN_SCOPES, SIGN_TYPE_MAP, SIGN_TYPES,
+  ensureUnitIds, legacyInputsFromSigns, mapAiError, mergeScannedSigns,
+  setTypeCount, totalUnitCount, unitAreaSqFt,
+} from "./permitSigns";
+import { buildSignScanPrompt, SIGN_SCAN_JSON_SCHEMA } from "./permitPlanPrompt";
 
 const ROLE_LABELS = {
   sign_permit: "Sign permit", zoning: "Zoning", building: "Building",
@@ -61,6 +69,7 @@ const STEP_ICONS = { Site: MapPin, Offices: ListChecks, "AI plan": Sparkles, Rev
 
 const defaultPlanForm = (wo, address) => ({
   address: address || "", customer: wo?.client_name || "",
+  signs: [],
   signTypes: "", dimensions: "", illuminated: false, electricalWork: false,
   freestanding: false, emcDigital: false,
   temporaryVsPermanent: "Permanent", newVsReplacement: "New sign",
@@ -128,34 +137,169 @@ const rememberRecent = (addr) => {
   } catch {}
 };
 
-const PlanSteps = ({ steps, dropped, onToggle }) => (
-  <div className="rounded-lg border border-purple-200 bg-purple-50/50 divide-y divide-purple-100 max-h-56 overflow-y-auto">
-    <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-purple-700">
-      {(steps?.length || 0) - (dropped?.size || 0)} of {steps?.length || 0} steps kept
-    </div>
-    {(steps || []).map((s, i) => {
-      const off = dropped?.has(i);
-      return (
-        <div key={i} className={`px-3 py-1.5 text-xs flex items-center gap-2 ${off ? "opacity-40" : ""}`}>
-          <span className="text-purple-400 font-mono w-4 flex-shrink-0">{i + 1}</span>
-          <span className={`font-medium truncate ${off ? "line-through text-gray-400" : "text-gray-800"}`}>{s.title || s.action || `Step ${i + 1}`}</span>
-          <span className={`ml-auto flex-shrink-0 rounded-full border px-1.5 py-px text-[9px] font-semibold ${
-            s.basis === "approved_rule" ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-            : s.basis === "pending_review" ? "border-amber-200 bg-amber-50 text-amber-700"
-            : "border-gray-200 bg-gray-50 text-gray-500"}`}>
-            {s.basis === "approved_rule" ? "verified" : s.basis === "pending_review" ? "pending" : "confirm"}
-          </span>
-          {onToggle && (
-            <button type="button" onClick={() => onToggle(i)}
-              className="flex-shrink-0 text-[9px] font-semibold text-gray-400 hover:text-red-600 underline underline-offset-2">
-              {off ? "restore" : "drop"}
-            </button>
+const UnitSizeInput = ({ label, value, onChange }) => (
+  <label className="flex items-center gap-1 text-[10px] text-gray-500">
+    <span className="whitespace-nowrap">{label}</span>
+    <input type="number" min="0" step="any" value={value ?? ""}
+      onChange={e => onChange(e.target.value === "" ? null : Number(e.target.value))}
+      className="h-7 w-16 rounded-md border border-gray-200 bg-white px-1.5 text-xs" />
+    <span>in</span>
+  </label>
+);
+
+const stripHtml = (v) => String(v || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 600);
+
+const STEP_BASIS_BADGE = {
+  approved_rule: { label: "approved", cls: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+  pending_review: { label: "research-backed", cls: "border-amber-200 bg-amber-50 text-amber-700" },
+};
+
+const PlanStepRow = ({ index, step, officeNames, signCount, expanded, onToggleExpand, onEdit, onMove, onDelete, isFirst, isLast }) => {
+  const [docInput, setDocInput] = useState("");
+  const badge = STEP_BASIS_BADGE[step.basis] || { label: "needs confirmation", cls: "border-gray-200 bg-gray-50 text-gray-500" };
+  const officeIsKnown = officeNames.includes(step.office);
+  return (
+    <div className="px-2 py-1.5 text-xs">
+      <div className="flex items-center gap-1.5 cursor-pointer" onClick={onToggleExpand}>
+        <span className="w-4 shrink-0 font-mono text-purple-400">{index + 1}</span>
+        <span className="max-w-[130px] shrink-0 truncate rounded-full border border-purple-200 bg-white px-1.5 py-px text-[9px] font-semibold text-purple-700">
+          {step.office || "—"}
+        </span>
+        <span className="min-w-0 flex-1 truncate font-medium text-gray-800">{step.action || step.title || `Step ${index + 1}`}</span>
+        {(Array.isArray(step.signs) ? step.signs : []).map(n => (
+          <span key={n} className="shrink-0 rounded-full border border-sky-200 bg-sky-50 px-1 py-px text-[9px] font-semibold text-sky-700">#{n}</span>
+        ))}
+        <span className={`shrink-0 rounded-full border px-1.5 py-px text-[9px] font-semibold ${badge.cls}`}>{badge.label}</span>
+        <button type="button" disabled={isFirst} aria-label="Move step up"
+          onClick={e => { e.stopPropagation(); onMove(index, -1); }}
+          className="shrink-0 text-gray-400 hover:text-purple-700 disabled:opacity-30"><ChevronUp className="w-3.5 h-3.5" /></button>
+        <button type="button" disabled={isLast} aria-label="Move step down"
+          onClick={e => { e.stopPropagation(); onMove(index, 1); }}
+          className="shrink-0 text-gray-400 hover:text-purple-700 disabled:opacity-30"><ChevronDown className="w-3.5 h-3.5" /></button>
+        <button type="button" aria-label="Delete step"
+          onClick={e => { e.stopPropagation(); onDelete(index); }}
+          className="shrink-0 text-gray-300 hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
+      </div>
+      {expanded && (
+        <div className="mt-1.5 space-y-1.5 pl-6" onClick={e => e.stopPropagation()}>
+          <Textarea value={step.action || ""} rows={2} placeholder="Action"
+            onChange={e => onEdit(index, { action: e.target.value })}
+            className="min-h-[52px] text-xs" />
+          <div className="grid grid-cols-2 gap-1.5">
+            <div>
+              <Label className="text-[10px]">Office</Label>
+              <Select value={officeIsKnown ? step.office : "__other__"}
+                onValueChange={v => onEdit(index, { office: v === "__other__" ? (officeIsKnown ? "" : step.office) : v })}>
+                <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {officeNames.map(n => <SelectItem key={n} value={n} className="text-xs">{n}</SelectItem>)}
+                  <SelectItem value="__other__" className="text-xs">Other…</SelectItem>
+                </SelectContent>
+              </Select>
+              {!officeIsKnown && (
+                <Input value={step.office || ""} placeholder="Office name"
+                  onChange={e => onEdit(index, { office: e.target.value })} className="mt-1 h-7 text-xs" />
+              )}
+            </div>
+            <div>
+              <Label className="text-[10px]">Permit type</Label>
+              <Input value={step.permit_type || ""} onChange={e => onEdit(index, { permit_type: e.target.value })} className="h-7 text-xs" />
+            </div>
+          </div>
+          {signCount > 0 && (
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[10px] text-gray-500">Signs:</span>
+              {Array.from({ length: signCount }, (_, k) => k + 1).map(n => {
+                const on = (step.signs || []).includes(n);
+                return (
+                  <button key={n} type="button"
+                    onClick={() => onEdit(index, { signs: on ? (step.signs || []).filter(x => x !== n) : [...(step.signs || []), n].sort((a, b) => a - b) })}
+                    className={`rounded-full border px-1.5 py-px text-[9px] font-semibold ${on ? "border-sky-300 bg-sky-100 text-sky-800" : "border-gray-200 bg-white text-gray-400"}`}>
+                    #{n}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-[10px] text-gray-500">Docs:</span>
+            {(Array.isArray(step.required_documents) ? step.required_documents : []).map((d, di) => (
+              <span key={di} className="inline-flex items-center gap-0.5 rounded-full border border-gray-200 bg-white px-1.5 py-px text-[9px] text-gray-600">
+                {d}
+                <button type="button" className="text-gray-300 hover:text-red-500" aria-label="Remove document"
+                  onClick={() => onEdit(index, { required_documents: step.required_documents.filter((_, k) => k !== di) })}>
+                  <X className="w-2.5 h-2.5" />
+                </button>
+              </span>
+            ))}
+            <input value={docInput} onChange={e => setDocInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+                const v = docInput.trim();
+                if (!v) return;
+                onEdit(index, { required_documents: [...(Array.isArray(step.required_documents) ? step.required_documents : []), v] });
+                setDocInput("");
+              }}
+              placeholder="+ document" className="h-6 w-24 rounded border border-gray-200 px-1.5 text-[10px]" />
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <div>
+              <Label className="text-[10px]">Fee expectation</Label>
+              <Input value={step.fee_expectation || ""} onChange={e => onEdit(index, { fee_expectation: e.target.value })} className="h-7 text-xs" />
+            </div>
+            <div className="flex items-end gap-2 pb-0.5">
+              <div className="flex-1">
+                <Label className="text-[10px]">Days from start</Label>
+                <Input type="number" value={step.target_days_from_start ?? ""}
+                  onChange={e => onEdit(index, { target_days_from_start: e.target.value === "" ? null : Number(e.target.value) })}
+                  className="h-7 text-xs" />
+              </div>
+              <label className="flex items-center gap-1 pb-1 text-[10px] text-gray-600">
+                <input type="checkbox" className="accent-purple-600" checked={!!step.inspection_needed}
+                  onChange={e => onEdit(index, { inspection_needed: e.target.checked })} /> Inspection
+              </label>
+            </div>
+          </div>
+          {(Array.isArray(step.citations) ? step.citations : []).length > 0 && (
+            <div className="space-y-0.5 rounded border border-gray-100 bg-gray-50/60 p-1.5">
+              {step.citations.map((c, ci) => (
+                <div key={ci} className="text-[9px] text-gray-500">
+                  <span className="font-semibold">{c.title || c.section_or_page || c.source_document_id || `Source ${ci + 1}`}</span>
+                  {c.excerpt ? ` — ${String(c.excerpt).slice(0, 160)}` : ""}
+                  {c.url ? <> <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-purple-600 underline">link</a></> : null}
+                </div>
+              ))}
+            </div>
           )}
         </div>
-      );
-    })}
-  </div>
-);
+      )}
+    </div>
+  );
+};
+
+const PlanStepsEditor = ({ steps, officeNames, signCount, expanded, onToggleExpand, onEdit, onMove, onDelete, onAdd }) => {
+  const officeCount = new Set(steps.map(s => s.office).filter(Boolean)).size;
+  return (
+    <div className="rounded-lg border border-purple-200 bg-purple-50/50">
+      <div className="border-b border-purple-100 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-purple-700">
+        {steps.length} step{steps.length === 1 ? "" : "s"} across {officeCount} office{officeCount === 1 ? "" : "s"}
+      </div>
+      <div className="max-h-72 divide-y divide-purple-100 overflow-y-auto">
+        {steps.map((s, i) => (
+          <PlanStepRow key={i} index={i} step={s} officeNames={officeNames} signCount={signCount}
+            expanded={expanded.has(i)} onToggleExpand={() => onToggleExpand(i)}
+            onEdit={onEdit} onMove={onMove} onDelete={onDelete}
+            isFirst={i === 0} isLast={i === steps.length - 1} />
+        ))}
+      </div>
+      <button type="button" onClick={onAdd}
+        className="w-full border-t border-purple-100 px-3 py-1.5 text-left text-[11px] font-semibold text-purple-700 hover:bg-purple-100/60">
+        + Add step
+      </button>
+    </div>
+  );
+};
 
 // places_autocomplete returns { text, main, secondary }; older shapes used description/label.
 const suggestionText = (s) => (typeof s === "string" ? s : s?.text || s?.description || s?.label || [s?.main, s?.secondary].filter(Boolean).join(", ") || "");
@@ -191,7 +335,10 @@ export default function PermitSetupWizard({
   const [excludeElectrical, setExcludeElectrical] = useState(false);
   const [deselectedOffices, setDeselectedOffices] = useState(new Set());
   const [confirmRemoveLines, setConfirmRemoveLines] = useState(false);
-  const [droppedSteps, setDroppedSteps] = useState(new Set());
+  const [planSteps, setPlanSteps] = useState([]);
+  const [expandedSteps, setExpandedSteps] = useState(new Set());
+  const [scanning, setScanning] = useState(false);
+  const [scanInfo, setScanInfo] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [recent, setRecent] = useState(() => loadRecent());
   const [planForm, setPlanForm] = useState(() => defaultPlanForm(wo, siteAddress));
@@ -469,9 +616,142 @@ export default function PermitSetupWizard({
       : `No configured jurisdiction matches ${pickedCandidate.name} yet — search below`);
   }, [pickedCandidate, localities]);
 
+  // Signs — planForm.signs is the source of truth; the legacy flat keys are
+  // re-derived on every change so saved drafts and the old designer still work.
+  const updateSigns = (next) => setPlanForm(prev => {
+    const signs = typeof next === "function" ? next(prev.signs || []) : next;
+    return { ...prev, signs, ...legacyInputsFromSigns(signs) };
+  });
+  const updateUnit = (type, unitIndex, patch) => updateSigns(signs => signs.map(e =>
+    e.type === type
+      ? { ...e, units: e.units.map((u, i) => (i === unitIndex ? { ...u, ...patch } : u)) }
+      : e));
+  const removeUnit = (type, unitIndex) => updateSigns(signs =>
+    signs.map(e => (e.type === type ? { ...e, units: e.units.filter((_, i) => i !== unitIndex) } : e))
+      .filter(e => e.units.length > 0));
+  const signUnitCount = totalUnitCount(planForm.signs);
+  const estimateIds = estimateIdsOf(wo);
+
+  const scanEstimateSigns = async (rescan = false) => {
+    if (!estimateIds.length || scanning) return;
+    setScanning(true); setScanInfo(null); setPlanError("");
+    try {
+      const estimates = (await Promise.all(
+        estimateIds.map(id => staffEntities.AllInOneEstimate.get(id).catch(() => null)),
+      )).filter(Boolean);
+      if (!estimates.length) { setPlanError("Couldn't load the linked estimate."); return; }
+      const results = [];
+      let allCached = true;
+      for (const est of estimates) {
+        const cacheKey = `permit-sign-scan:v1:${est.id}:${est.updated_date || ""}`;
+        let result = null;
+        if (!rescan) { try { result = JSON.parse(localStorage.getItem(cacheKey) || "null"); } catch { result = null; } }
+        if (!result) {
+          allCached = false;
+          const lines = (Array.isArray(est.line_items) ? est.line_items : [])
+            .filter(li => li?.include_in_customer !== false)
+            .map(li => ({
+              name: stripHtml(li.client_product_name || li.builder_name || li.project_name || "Line item"),
+              category: li.product_category || "",
+              quantity: li.customer_quantity ?? 1,
+              description: stripHtml(li.customer_description || li.product_notes || ""),
+            }));
+          let ai;
+          try {
+            ai = await base44.integrations.Core.InvokeLLM({
+              model: "gemini_3_8_flash",
+              prompt: buildSignScanPrompt({
+                estimate_number: est.estimate_number || "",
+                project_name: est.project_name || "",
+                client_name: est.client_name || "",
+                site_address: est.site_address || "",
+                lines,
+              }),
+              response_json_schema: SIGN_SCAN_JSON_SCHEMA,
+              add_context_from_internet: false,
+            });
+          } catch (e) { throw mapAiError(e); }
+          result = {
+            estimate_number: est.estimate_number || "",
+            signs: Array.isArray(ai?.signs) ? ai.signs : [],
+            skipped_lines: Array.isArray(ai?.skipped_lines) ? ai.skipped_lines : [],
+          };
+          try { localStorage.setItem(cacheKey, JSON.stringify(result)); } catch {}
+        }
+        results.push(result);
+      }
+      const merged = mergeScannedSigns(results.flatMap(r => (r?.signs || [])));
+      updateSigns(merged);
+      const found = totalUnitCount(merged);
+      const skipped = results.flatMap(r => (r?.skipped_lines || []).map(String));
+      const names = results.map(r => r?.estimate_number).filter(Boolean).join(", ") || "the estimate";
+      setScanInfo({
+        text: `Found ${found} sign${found === 1 ? "" : "s"} on ${names} · ${skipped.length} line${skipped.length === 1 ? "" : "s"} skipped`,
+        skipped,
+        cached: allCached,
+      });
+    } catch (e) {
+      setPlanError(e?.message || "Couldn't scan the estimate — you can still enter signs by hand.");
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  // Plan step edits — planSteps is the editable copy; any change unsaves the plan.
+  const editStep = (i, patch) => {
+    setPlanSteps(prev => prev.map((s, j) => (j === i ? { ...s, ...patch } : s)));
+    setPlanSaved(false);
+  };
+  const remapDependencies = (steps, indexMap) => steps.map(s => ({
+    ...s,
+    dependencies: Array.isArray(s.dependencies)
+      ? s.dependencies.map(d => indexMap.get(Math.floor(Number(d)))).filter(v => v != null)
+      : [],
+  }));
+  const moveStep = (i, dir) => {
+    setPlanSteps(prev => {
+      const j = i + dir;
+      if (j < 0 || j >= prev.length) return prev;
+      const indexMap = new Map(prev.map((_, k) => [k, k === i ? j : k === j ? i : k]));
+      const next = prev.slice();
+      [next[i], next[j]] = [next[j], next[i]];
+      return remapDependencies(next, indexMap);
+    });
+    setPlanSaved(false);
+  };
+  const deleteStep = (i) => {
+    setPlanSteps(prev => {
+      const indexMap = new Map();
+      prev.forEach((_, k) => { if (k < i) indexMap.set(k, k); else if (k > i) indexMap.set(k, k - 1); });
+      return remapDependencies(prev.filter((_, k) => k !== i), indexMap);
+    });
+    setPlanSaved(false);
+  };
+  const addStep = () => {
+    setPlanSteps(prev => [...prev, {
+      office: chosenOffices[0]?.name || "",
+      office_type: "",
+      permit_type: "",
+      action: "",
+      required_documents: [],
+      signs: [],
+      target_days_from_start: null,
+      inspection_needed: false,
+      citations: [],
+      basis: "staff_confirmation_needed",
+      gap_reason: "Added by staff — confirm the details.",
+    }]);
+    setPlanSaved(false);
+  };
+  const toggleExpandedStep = (i) => setExpandedSteps(prev => {
+    const next = new Set(prev);
+    if (next.has(i)) next.delete(i); else next.add(i);
+    return next;
+  });
+
   const buildPlan = async () => {
     if (planning) return;
-    setPlanning(true); setPlanError(""); setPlan(null); setPlanSaved(false); setDroppedSteps(new Set());
+    setPlanning(true); setPlanError(""); setPlan(null); setPlanSaved(false);
     try {
       const jurisdiction = locality ? {
         jurisdiction_id: locality.jurisdiction_profile_id || "",
@@ -479,8 +759,32 @@ export default function PermitSetupWizard({
         state: locality.state || "",
         locality_id: locality.id, locality_name: locality.name || "",
       } : null;
-      const draft = await runDesignerPipeline(planForm, jurisdiction, sessionToken || "");
+      const officeRecords = Array.isArray(locality?.offices) ? locality.offices : [];
+      const options = {
+        offices: chosenOffices.map(o => {
+          const rec = officeRecords.find(r => String(r?.id || "") === String(o.officeId || ""))
+            || officeRecords.find(r => r?.name === o.name)
+            || {};
+          return {
+            name: o.name,
+            roles: o.roles,
+            verified: o.verified,
+            phone: rec.contact_phone || "",
+            email: rec.contact_email || "",
+            website: rec.contact_website || "",
+            submission_url: rec.submission_url || rec.online_portal_url || "",
+          };
+        }),
+        signs: planForm.signs || [],
+        profileId: locality?.jurisdiction_profile_id || "",
+        installDate: wo.target_install_date || wo.install_date || "",
+        county: locality?.county_name || "",
+      };
+      const input = { ...planForm, ...legacyInputsFromSigns(planForm.signs) };
+      const draft = await runDesignerPipeline(input, jurisdiction, sessionToken || "", options);
       setPlan(draft);
+      setPlanSteps(Array.isArray(draft.steps) ? draft.steps.map(s => ({ ...s })) : []);
+      setExpandedSteps(new Set());
     } catch (e) {
       setPlanError(e?.message || "Couldn't build the plan — you can skip this step and still create the setup.");
     } finally {
@@ -489,7 +793,15 @@ export default function PermitSetupWizard({
   };
 
   const cleanedPlan = () => plan
-    ? { ...plan, steps: (plan.steps || []).filter((_, i) => !droppedSteps.has(i)) }
+    ? {
+        ...plan,
+        steps: planSteps.map(s => ({
+          ...s,
+          signs: Array.isArray(s.signs)
+            ? s.signs.filter(n => Number.isInteger(n) && n >= 1 && n <= signUnitCount)
+            : [],
+        })),
+      }
     : null;
 
   const savePlan = async () => {
@@ -812,34 +1124,128 @@ export default function PermitSetupWizard({
         {/* ── Step 2: AI plan ── */}
         {step === 2 && (
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs">Sign type(s)</Label>
-                <Input value={planForm.signTypes} onChange={e => setPlanForm(p => ({ ...p, signTypes: e.target.value }))}
-                  placeholder="Channel letters, monument…" className="h-8 text-sm mt-0.5" />
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Label className="text-xs">Signs</Label>
+                <span className="text-[10px] text-gray-500">{signUnitCount} sign{signUnitCount === 1 ? "" : "s"}</span>
+                <span className="ml-auto flex items-center gap-1.5">
+                  <span className="text-[9px] text-gray-400">uses AI credits</span>
+                  <Button type="button" variant="outline" size="sm"
+                    className="h-7 gap-1 text-xs"
+                    disabled={!estimateIds.length || scanning}
+                    title={estimateIds.length ? "Read the linked estimate and prefill the signs below" : "No estimate linked to this work order"}
+                    onClick={() => scanEstimateSigns(false)}>
+                    {scanning ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    Scan estimate with AI
+                  </Button>
+                </span>
               </div>
-              <div>
-                <Label className="text-xs">Dimensions</Label>
-                <Input value={planForm.dimensions} onChange={e => setPlanForm(p => ({ ...p, dimensions: e.target.value }))}
-                  placeholder='e.g. 4×8 ft' className="h-8 text-sm mt-0.5" />
+              {scanInfo && (
+                <p className="text-[11px] text-gray-600"
+                  title={scanInfo.skipped.length ? `Skipped: ${scanInfo.skipped.join(", ")}` : undefined}>
+                  {scanInfo.cached ? "From an earlier scan · " : ""}{scanInfo.text}
+                  {scanInfo.cached && <> · <button type="button" className="font-semibold text-purple-700 underline underline-offset-2"
+                    onClick={() => scanEstimateSigns(true)}>Rescan</button></>}
+                </p>
+              )}
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" size="sm" className="h-7 gap-1 text-xs">
+                      Sign types <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="max-h-72 w-64 overflow-y-auto p-1">
+                    {SIGN_TYPES.map(t => {
+                      const count = (planForm.signs || []).find(e => e.type === t.key)?.units?.length || 0;
+                      return (
+                        <div key={t.key} className="flex items-center gap-1 px-2 py-0.5 text-xs">
+                          <span className="flex-1 truncate text-gray-700">{t.label}</span>
+                          <button type="button" aria-label={`Remove one ${t.label}`}
+                            className="flex h-5 w-5 items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-30"
+                            disabled={count === 0}
+                            onClick={() => updateSigns(s => setTypeCount(s, t.key, count - 1))}>
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-5 text-center font-semibold text-gray-800">{count}</span>
+                          <button type="button" aria-label={`Add one ${t.label}`}
+                            className="flex h-5 w-5 items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-100"
+                            onClick={() => updateSigns(s => setTypeCount(s, t.key, count + 1))}>
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </PopoverContent>
+                </Popover>
+                {signUnitCount === 0 && (
+                  <span className="text-[10px] text-gray-400">No signs yet — scan the estimate or add types.</span>
+                )}
               </div>
-              <div>
-                <Label className="text-xs">Scope</Label>
-                <Select value={planForm.newVsReplacement} onValueChange={v => setPlanForm(p => ({ ...p, newVsReplacement: v }))}>
-                  <SelectTrigger className="h-8 text-sm mt-0.5"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["New sign", "Face replacement", "Repair", "Temporary"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-end gap-3 pb-1">
-                {[["illuminated", "Illuminated"], ["electricalWork", "Electrical"], ["freestanding", "Freestanding"]].map(([k, lbl]) => (
-                  <label key={k} className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer">
-                    <input type="checkbox" checked={planForm[k]} onChange={e => setPlanForm(p => ({ ...p, [k]: e.target.checked }))} className="accent-purple-600" />
-                    {lbl}
-                  </label>
-                ))}
-              </div>
+              {(planForm.signs || []).length > 0 && (
+                <div className="max-h-72 space-y-1.5 overflow-y-auto pr-0.5">
+                  {planForm.signs.map((entry, entryIdx) => {
+                    const typeDef = SIGN_TYPE_MAP[entry.type];
+                    const offset = planForm.signs.slice(0, entryIdx).reduce((a, e) => a + (e.units?.length || 0), 0);
+                    return (
+                      <div key={entry.type} className="rounded-lg border border-gray-200 bg-white">
+                        <div className="flex items-center justify-between rounded-t-lg bg-gray-50 px-2 py-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-gray-500">{typeDef?.label || entry.type}</span>
+                          <span className="text-[10px] text-gray-400">×{entry.units?.length || 0}</span>
+                        </div>
+                        {(entry.units || []).map((unit, ui) => {
+                          const area = unitAreaSqFt(unit);
+                          return (
+                            <div key={unit.id || ui} className="space-y-1 border-t border-gray-100 px-2 py-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-6 shrink-0 text-[10px] font-bold text-purple-600">#{offset + ui + 1}</span>
+                                <Select value={unit.scope || "new"} onValueChange={v => updateUnit(entry.type, ui, { scope: v })}>
+                                  <SelectTrigger className="h-7 flex-1 text-xs"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    {SIGN_SCOPES.map(s => <SelectItem key={s.key} value={s.key} className="text-xs">{s.label}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                                <Select value={String(unit.faces === 2 ? 2 : 1)} onValueChange={v => updateUnit(entry.type, ui, { faces: Number(v) })}>
+                                  <SelectTrigger className="h-7 w-[78px] text-xs"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="1" className="text-xs">1 face</SelectItem>
+                                    <SelectItem value="2" className="text-xs">2 faces</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <button type="button" aria-label="Remove sign"
+                                  className="shrink-0 text-gray-300 hover:text-red-500"
+                                  onClick={() => removeUnit(entry.type, ui)}>
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 pl-6">
+                                <label className="flex items-center gap-1 text-[10px] text-gray-600">
+                                  <input type="checkbox" className="accent-purple-600" checked={!!unit.illuminated}
+                                    onChange={e => updateUnit(entry.type, ui, { illuminated: e.target.checked })} /> Illuminated
+                                </label>
+                                <label className="flex items-center gap-1 text-[10px] text-gray-600">
+                                  <input type="checkbox" className="accent-purple-600" checked={!!unit.electrical}
+                                    onChange={e => updateUnit(entry.type, ui, { electrical: e.target.checked })} /> Electrical
+                                </label>
+                                <UnitSizeInput label="W" value={unit.width_in} onChange={v => updateUnit(entry.type, ui, { width_in: v })} />
+                                <UnitSizeInput label="H" value={unit.height_in} onChange={v => updateUnit(entry.type, ui, { height_in: v })} />
+                                {(typeDef?.extras || []).map(f => (
+                                  <UnitSizeInput key={f} label={EXTRA_LABELS[f] || f} value={unit[f]}
+                                    onChange={v => updateUnit(entry.type, ui, { [f]: v })} />
+                                ))}
+                                {area != null && <span className="text-[10px] text-gray-500">{area.toFixed(1)} sq ft</span>}
+                              </div>
+                              {unit.source_line ? (
+                                <p className="truncate pl-6 text-[9px] text-gray-400">from "{unit.source_line}"</p>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {planError && (
@@ -847,12 +1253,21 @@ export default function PermitSetupWizard({
             )}
             {plan && (
               <>
-                <PlanSteps steps={plan.steps} dropped={droppedSteps}
-                  onToggle={(i) => setDroppedSteps(prev => {
-                    const next = new Set(prev);
-                    if (next.has(i)) next.delete(i); else next.add(i);
-                    return next;
-                  })} />
+                <PlanStepsEditor steps={planSteps}
+                  officeNames={chosenOffices.map(o => o.name)}
+                  signCount={signUnitCount}
+                  expanded={expandedSteps}
+                  onToggleExpand={toggleExpandedStep}
+                  onEdit={editStep} onMove={moveStep} onDelete={deleteStep} onAdd={addStep} />
+                {(Array.isArray(plan.gaps) ? plan.gaps : []).length > 0 && (
+                  <div className="space-y-0.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                    {(plan.gaps || []).map((g, gi) => (
+                      <p key={gi} className="text-[11px] text-amber-800">
+                        • {g.description || g.reason || "Open question"}{g.description && g.reason ? ` — ${g.reason}` : ""}
+                      </p>
+                    ))}
+                  </div>
+                )}
                 {plan.summary && <p className="text-[11px] text-purple-600">{plan.summary}</p>}
                 {planSaved && <p className="text-[11px] text-emerald-700 font-medium flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Saved to workflow drafts</p>}
               </>
@@ -864,7 +1279,16 @@ export default function PermitSetupWizard({
                 </div>
                 {drafts.slice(0, 4).map(d => (
                   <button key={d.id} type="button"
-                    onClick={() => { setPlan(d.snapshot); setPlanForm(prev => ({ ...prev, ...(d.project_inputs || {}) })); setDroppedSteps(new Set()); setPlanSaved(true); }}
+                    onClick={() => {
+                      const pi = d.project_inputs || {};
+                      const signs = ensureUnitIds(Array.isArray(pi.signs) ? pi.signs
+                        : Array.isArray(d.snapshot?.input_summary?.signs) ? d.snapshot.input_summary.signs : []);
+                      setPlan(d.snapshot);
+                      setPlanSteps(Array.isArray(d.snapshot?.steps) ? d.snapshot.steps.map(s => ({ ...s })) : []);
+                      setPlanForm(prev => ({ ...prev, ...pi, signs, ...legacyInputsFromSigns(signs) }));
+                      setExpandedSteps(new Set());
+                      setPlanSaved(true);
+                    }}
                     className="w-full text-left px-3 py-2 hover:bg-purple-50 text-xs flex items-center gap-2">
                     <FileText className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
                     <span className="font-medium text-gray-800 truncate">{d.title}</span>
@@ -975,7 +1399,7 @@ export default function PermitSetupWizard({
                 </div>
                 <div className="px-3 py-2 flex justify-between">
                   <span className="text-gray-500">AI plan</span>
-                  <span className="font-medium text-gray-800">{plan ? `${plan.steps?.length || 0} steps${planSaved ? " · saved" : ""}` : "Skipped"}</span>
+                  <span className="font-medium text-gray-800">{plan ? `${planSteps.length || 0} steps${planSaved ? " · saved" : ""}` : "Skipped"}</span>
                 </div>
               </div>
             )}
