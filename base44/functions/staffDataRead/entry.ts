@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { withEntityRateLimitRetry, entityCallIsolateStats } from '../../shared/entityRateLimitRetry.ts';
+import { loadVisibleLibraryRows } from '../../shared/libraryFilteredRead.ts';
 
 // Session-authenticated read gateway for non-Fleet role-gated entities.
 // Staff sessions are EmailGate sessions — not Base44 app users — so direct
@@ -244,6 +245,12 @@ const OWNER_SCOPED = new Set([
   'TimeOffRequest',
   'UserPTOBalance',
 ]);
+const LIBRARY_ENTITIES = new Set(['PartTemplate', 'QuickProduct', 'QuickProductCategory']);
+const canSeeLibraryRow = (row: any, user: any) => {
+  const owner = String(row?.owner_email || '').trim().toLowerCase();
+  return user.role === 'admin' || row?.product_group === 'global'
+    || !owner || owner === String(user.email || '').trim().toLowerCase();
+};
 const SORT_PATTERN = /^(-?[A-Za-z_][\w.]*)(\s*,\s*-?[A-Za-z_][\w.]*){0,3}$/;
 
 function projectItem(entityName: string, item: any, user?: any) {
@@ -448,6 +455,8 @@ async function countRows(entity: any, query: any) {
 const staffReadCache = new Map();
 const staffReadInFlight = new Map();
 const STAFF_READ_CACHE_MS = 45_000;
+// CAS-verified Builder records must not receive cached pre-save versions.
+const LIVE_READ_ENTITIES = new Set(['BuilderProduct', 'BuilderPart', 'BuilderPartGroup', 'BuilderPriceRevision']);
 
 const isRateLimited = (error: any) => Number(error?.status) === 429
   || /rate limit|too many requests|traffic volume/i.test(String(error?.message || error));
@@ -462,8 +471,8 @@ const MAX_BATCH = 16;
 const BATCH_CONCURRENCY = 4;
 
 // The cache key is the request itself plus the scoping the read actually
-// applies: role tier, the caller's email for OWNER_SCOPED entities (rows are
-// filtered to the owner), and the per-admin denied_fields projection scope.
+// applies: role tier, the caller's email for owner-scoped and library entities,
+// and the per-admin denied_fields projection scope.
 // Owner-field-denied entities (AuthorizedEmail.hr_data) also key on the caller
 // — cached pages are already projected, so a shared key would hand one
 // staffer's own-row HR fields to the next caller.
@@ -471,7 +480,7 @@ const BATCH_CONCURRENCY = 4;
 function staffReadEntryKey(request: any, user: any, deniedFieldScope: string) {
   const entity = String(request?.entity || '').trim();
   const ownerScope = user.role !== 'admin'
-    && (OWNER_SCOPED.has(entity) || (OWNER_FIELD_DENYLIST[entity] || []).length > 0)
+    && (OWNER_SCOPED.has(entity) || LIBRARY_ENTITIES.has(entity) || (OWNER_FIELD_DENYLIST[entity] || []).length > 0)
     ? String(user.email || '').trim().toLowerCase() : '';
   // STAFF_FIELD_DENYLIST entities apply the same projection to every staff
   // caller, so they share a cache entry — only owner-scoped keys differ.
@@ -492,17 +501,19 @@ function staffReadEntryKey(request: any, user: any, deniedFieldScope: string) {
 // isolate share one upstream call; only 200 results are retained. Single-record
 // id reads skip the TTL cache: the CAS helpers re-read a record by id to get its
 // current updated_date after every write, and a cached copy made each retry
-// target a stale version ("changed repeatedly while saving").
+// target a stale version ("changed repeatedly while saving"). Library reads
+// also skip the TTL so a switch from shared to personal takes effect promptly.
 async function readOneCached(base44: any, user: any, request: any, deniedFieldScope: string) {
   const key = staffReadEntryKey(request, user, deniedFieldScope);
-  const pointRead = String(request?.id ?? '').trim() !== '';
-  const hit = pointRead ? undefined : staffReadCache.get(key);
+  const entity = String(request?.entity || '').trim();
+  const uncached = String(request?.id ?? '').trim() !== '' || LIBRARY_ENTITIES.has(entity) || LIVE_READ_ENTITIES.has(entity);
+  const hit = uncached ? undefined : staffReadCache.get(key);
   if (hit && hit.expires > Date.now()) return hit.result;
   const pending = staffReadInFlight.get(key);
   if (pending) return pending;
   const promise = readOne(base44, user, request)
     .then((result: any) => {
-      if (result.status === 200 && !pointRead) {
+      if (result.status === 200 && !uncached) {
         if (staffReadCache.size > 300) staffReadCache.clear();
         staffReadCache.set(key, { result, expires: Date.now() + STAFF_READ_CACHE_MS });
       }
@@ -533,7 +544,8 @@ async function readOne(base44: any, user: any, body: any) {
     if (id) {
       const item = await entity.get(id).catch((e: any) => (Number(e?.status) === 404 ? null : Promise.reject(e)));
       if (!item) return { status: 404, body: { error: 'Record not found.' } };
-      if (OWNER_SCOPED.has(entityName) && ownerEmail && String(item?.user_email || '').trim().toLowerCase() !== ownerEmail) {
+      if ((OWNER_SCOPED.has(entityName) && ownerEmail && String(item?.user_email || '').trim().toLowerCase() !== ownerEmail)
+        || (LIBRARY_ENTITIES.has(entityName) && !canSeeLibraryRow(item, user))) {
         return { status: 404, body: { error: 'Record not found.' } };
       }
       return { status: 200, body: { success: true, item: projectItem(entityName, item, user) } };
@@ -550,8 +562,31 @@ async function readOne(base44: any, user: any, body: any) {
       effectiveQuery = { ...(effectiveQuery || {}), user_email: ownerEmail };
     }
     if (body?.count === true) {
+      if (LIBRARY_ENTITIES.has(entityName) && user.role !== 'admin') {
+        return { status: 400, body: { error: 'Count is not available for this record type.' } };
+      }
       const counted = await countRows(entity, effectiveQuery);
       return { status: 200, body: { success: true, count: counted.count, truncated: counted.truncated } };
+    }
+    if (LIBRARY_ENTITIES.has(entityName) && user.role !== 'admin') {
+      if (body?.cursor != null) {
+        return { status: 400, body: { error: 'Cursor pagination is not available for this library.' } };
+      }
+      const visible = await loadVisibleLibraryRows({
+        entity, query: effectiveQuery, sort, fields, canSee: (row: any) => canSeeLibraryRow(row, user),
+      });
+      const items = visible.slice(skip, skip + limit).map((row) => {
+        const item = projectItem(entityName, row, user);
+        if (fields) {
+          if (!fields.includes('owner_email')) delete item.owner_email;
+          if (!fields.includes('product_group')) delete item.product_group;
+        }
+        return item;
+      });
+      const hasMore = skip + limit < visible.length;
+      return { status: 200, body: {
+        success: true, items, returned: items.length, has_more: hasMore, truncated: hasMore, next_cursor: null,
+      } };
     }
     let rows: any[] = [];
     let nextCursor: string | null = null;
@@ -578,9 +613,12 @@ async function readOne(base44: any, user: any, body: any) {
         : await entity.list(sort || null, limit, skip);
       rows = Array.isArray(items) ? items : [];
     }
-    const scopedRows = OWNER_SCOPED.has(entityName) && ownerEmail
+    const ownerScopedRows = OWNER_SCOPED.has(entityName) && ownerEmail
       ? rows.filter((row) => String(row?.user_email || '').trim().toLowerCase() === ownerEmail)
       : rows;
+    const scopedRows = LIBRARY_ENTITIES.has(entityName)
+      ? ownerScopedRows.filter((row) => canSeeLibraryRow(row, user))
+      : ownerScopedRows;
     // `truncated` means "there may be more rows past this window" — a full
     // page or a live continuation cursor both raise it so callers can page on
     // instead of mistaking a clamped read for the whole set.
@@ -600,7 +638,7 @@ async function readOne(base44: any, user: any, body: any) {
       return { status: 429, body: { error: 'Data could not be loaded. Try again.', retry_after_ms: rateLimitRetryAfterMs(error) } };
     }
     const status = Number(error?.status || error?.response?.status || 500);
-    if ([400, 401, 403, 404, 429].includes(status)) {
+    if ([400, 401, 403, 404, 413, 429].includes(status)) {
       return { status, body: { error: error?.message || 'Staff read failed.' } };
     }
     console.error('staffDataRead error:', error);

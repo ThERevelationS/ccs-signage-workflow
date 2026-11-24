@@ -535,7 +535,8 @@ export default function MyWorkflow() {
       ...currentTask,
       text: newText.trim(),
       due_date: editTaskDue || "",
-      assigned_to: editTaskAssignees,
+      assigned_to: Array.isArray(editTaskAssignees) ? (editTaskAssignees[0] || "") : (editTaskAssignees || ""),
+      additional_assignees: Array.isArray(editTaskAssignees) ? editTaskAssignees.slice(1) : [],
     }));
     clearEditTask();
   };

@@ -506,7 +506,7 @@ export default function WorkOrderCard({
     const task = notes[taskIndex];
     if (!task) return;
     try {
-      const newSubTask = { text: newSubTaskText, completed: false, assigned_to: [] };
+      const newSubTask = { text: newSubTaskText, completed: false, assigned_to: "", additional_assignees: [] };
       const saved = await mutateLocatedWorkOrderArrayItem({
         workOrderId: workOrder.id,
         field: "notes",
@@ -539,7 +539,9 @@ export default function WorkOrderCard({
         field: "notes",
         item: task,
         label: "Work Order task",
-        mutateItem: (currentTask) => ({ ...currentTask, assigned_to: assignedUsers }),
+        mutateItem: (currentTask) => ({ ...currentTask,
+          assigned_to: Array.isArray(assignedUsers) ? (assignedUsers[0] || "") : (assignedUsers || ""),
+          additional_assignees: Array.isArray(assignedUsers) ? assignedUsers.slice(1) : [] }),
       });
       Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
       if (onUpdate) onUpdate();
@@ -570,7 +572,9 @@ export default function WorkOrderCard({
           return {
             ...currentTask,
             sub_tasks: currentSubTasks.map((currentSubTask, index) => index === currentSubTaskIndex
-              ? { ...currentSubTask, assigned_to: assignedUsers }
+              ? { ...currentSubTask,
+                  assigned_to: Array.isArray(assignedUsers) ? (assignedUsers[0] || "") : (assignedUsers || ""),
+                  additional_assignees: Array.isArray(assignedUsers) ? assignedUsers.slice(1) : [] }
               : currentSubTask),
           };
         },

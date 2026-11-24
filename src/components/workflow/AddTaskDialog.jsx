@@ -197,13 +197,30 @@ export default function AddTaskDialog({ isOpen, onClose, lockedWorkOrderId = nul
       } else {
         const wo = workOrders.find(w => w.id === selectedWorkOrder);
         if (!wo) return;
+        // WorkOrder notes declare assigned_to as a single string — the
+        // multi-select's array belongs in additional_assignees (same shape
+        // WorkOrderDetailsDialog writes). An array here breaks every later
+        // schema-validated update of the whole record.
+        const toWoAssignee = (list) => ({
+          assigned_to: Array.isArray(list) ? (list[0] || "") : (list || ""),
+          additional_assignees: Array.isArray(list) ? list.slice(1) : [],
+        });
+        const woTask = {
+          ...newTask,
+          ...toWoAssignee(newTask.assigned_to),
+          sub_tasks: (newTask.sub_tasks || []).map((st) => ({
+            ...st,
+            ...toWoAssignee(st.assigned_to),
+            details: (st.details || []).map((d) => ({ ...d, ...toWoAssignee(d.assigned_to) })),
+          })),
+        };
         const saved = await mutateWorkOrderArrayField({
           workOrderId: selectedWorkOrder,
           field: "notes",
           label: "Work Order task list",
-          mutate: (currentNotes) => currentNotes.some((task) => task?.id === newTask.id)
+          mutate: (currentNotes) => currentNotes.some((task) => task?.id === woTask.id)
             ? currentNotes
-            : [...currentNotes, newTask],
+            : [...currentNotes, woTask],
         });
         setWorkOrders((current) => current.map((row) => row.id === saved.id ? { ...row, ...saved } : row));
       }
