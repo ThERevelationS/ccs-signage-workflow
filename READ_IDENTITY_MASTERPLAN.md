@@ -67,6 +67,38 @@ own allowance. If (a) fails but (b) passes, design must use direct browser reads
 stop — the rework does not help.
 
 ### P1 — design (settle with Brett before code)
+**Decided 2026-11-24 (Brett):** (1) Base44 sign-in REPLACES EmailGate — one login. (2) Reads go
+direct from the browser as the person (path b, proven in P0) — chosen for reliability, load time and
+UX (no function hop, per-user allowance, live subscriptions instead of 2-min polling). Aggregate
+feeds (queueFeed, reports) may stay server-side. (3) Customers use the app-generated portal login
+(`CustomerPortal.jsx` → `customerPortalAction` with a portal token) — NOT Base44 users; untouched.
+
+**Draft design (awaiting Brett's approval):**
+- Identity: each AuthorizedEmail staff row ↔ one Base44 app user (same email). Server-maintained
+  User custom fields: `data.staff_id`, `data.is_staff`, `data.access_ok` (false when
+  `is_deactivated` or past `access_expires_on`). Base44 role `admin` ⇔ AuthorizedEmail role admin.
+  A sync function keeps these current on AuthorizedEmail change + daily.
+- Sign-in: Base44 login page; then a `staffSessionV2` call validates the staff record and returns
+  the profile EmailGate returns today (role, sales_roles, permissions). `authenticateSignShopSession`
+  accepts a Base44 user token (lookup by email, same deactivation/expiry checks) so the 115
+  functions keep working without per-function edits (needs a full app publish).
+- Reads: `staffEntities` keeps its API; per migrated entity its list/filter/get/subscribe call
+  `base44.entities.X` directly, else fall back to `staffDataRead`. Pages don't change.
+- Rules per entity (in `base44/entities/*.jsonc`): staff read
+  `{"user_condition": {"data.is_staff": true, "data.access_ok": true}}`; admin-only tables add
+  role admin; OWNER_SCOPED time-clock tables `$or` owner-field = `{{user.email}}` / admin (owner
+  field names to verify per entity); FIELD/STAFF/OWNER denylists → FLS `read` rules (admins are
+  not exempt — add the admin condition explicitly). Library product_group rules → RLS `$or`.
+- Writes stay on the service-role gateways for now (validation lives there; the bottleneck is
+  entity_list).
+- Shared devices (Time Clock face/kiosk flows) keep going through functions.
+- Parity harness before each group switch: for an admin and a non-admin test staff account,
+  direct read == gateway read (same rows, same fields) for every entity in the group. Denied
+  reads return EMPTY silently, so missing-data bugs only show up in this comparison.
+
+**Open (ask Brett):** does every staff member have a real email inbox (invites + password reset)?
+Are any devices shared by several staff (shop kiosk / time clock tablet)? Google sign-in allowed?
+
 - Identity link: Base44 User ↔ AuthorizedEmail by email; `data.is_staff`, `data.staff_role`
   maintained server-side; deactivation/expiry mirrored.
 - Sign-in UX: Base44 login replaces or follows EmailGate; decide which.
