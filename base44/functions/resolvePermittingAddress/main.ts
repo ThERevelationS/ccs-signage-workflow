@@ -739,14 +739,15 @@ function exactConfiguredLocality(localities, resolution, profiles = []) {
   const target = resolution.target;
   const matches = localities.filter((row) => {
     if (normalizeAddressState(row.state).toUpperCase() !== target.state) return false;
+    if (row.duplicate_of) return false;
     if (!sameJ(row.name, target.name) && !(target.aliases || []).some((a) => sameJ(row.name, a))) return false;
     const township = /township/i.test(row.name), county = /county$/i.test(String(row.name).trim());
     if (target.type === "county" && !county || target.type !== "county" && county) return false;
     if (target.type === "township" && !township || target.type !== "township" && township) return false;
     if (row.geographic_identity?.geoid) return row.geographic_identity.geoid === target.geoid;
     if (target.type !== "county") {
-      const profile = profiles.find((p) => p.id === row.jurisdiction_profile_id), county2 = row.county || row.parent_county?.name || profile?.parent_county?.name;
-      return sameJ(county2, target.county);
+      const profile = profiles.find((p) => p.id === row.jurisdiction_profile_id), county2 = row.county || row.county_name || row.parent_county?.name || row.parent_county_name || profile?.parent_county?.name;
+      return String(county2 || "").split(/[\/;]/).map((p) => p.trim()).filter(Boolean).some((part) => sameJ(part, target.county));
     }
     return true;
   });
@@ -1043,7 +1044,7 @@ async function kickOfficeResearch(base44, matched, _profiles) {
   }
 }
 function addressResponse(data, init = {}) {
-  const response = Response.json({ ...data, lookup_revision: ADDRESS_LOOKUP_REVISION, address_runtime: "slim-profiles-1" }, init);
+  const response = Response.json({ ...data, lookup_revision: ADDRESS_LOOKUP_REVISION, address_runtime: "slim-profiles-2" }, init);
   response.headers.set("X-CCS-Address-Revision", ADDRESS_LOOKUP_REVISION);
   return response;
 }

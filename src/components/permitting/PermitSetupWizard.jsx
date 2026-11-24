@@ -687,7 +687,7 @@ export default function PermitSetupWizard({
       let data;
       for (let attempt = 0; ; attempt++) {
         try {
-          ({ data } = await base44.functions.invoke("resolvePermittingAddressV2", { address: normalizeAddress(q), session_token: sessionToken }));
+          ({ data } = await base44.functions.invoke("resolvePermittingAddressV3", { address: normalizeAddress(q), session_token: sessionToken }));
           break;
         } catch (e) {
           if (!/status code (429|5\d\d)/.test(String(e?.message || "")) || attempt >= 2) throw e;
