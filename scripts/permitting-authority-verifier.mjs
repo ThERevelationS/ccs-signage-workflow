@@ -134,6 +134,10 @@ const ROLE_FUNC = {
   electrical_permit: /electr/i, electrical_inspection: /electr/i,
   right_of_way: /right.?of.?way|road|street|encroach|highway/i, historic_review: /historic|preserv|landmark|architectural/i,
 };
+// Bodies that never issue sign/zoning/building/electrical/ROW/historic permits.
+// "Community Corrections Planning Board" passed the zoning dept check on the
+// word "Planning" and was promoted as three townships' zoning office.
+const NON_PERMIT_BODY = /correction|probation|parole|\btax\b|taxation|auditor|treasurer|sheriff|police|court|coroner|recorder|prosecutor|library|school|cemetery|senior|veteran|election|board of health|health (dep|dist)|animal|dog warden|jail|\b911\b|\bems\b|emergency management|soil (and|&) water|job and family|children services|mental health|developmental disabilit/i;
 function roleEvidence(role, entry, profile) {
   const gaps = [];
   const src = clean(entry?.official_source_url);
@@ -142,6 +146,7 @@ function roleEvidence(role, entry, profile) {
   if (!q || q.length < 20 || NOT_FOUND.test(q)) gaps.push(`${role}:no_responsibility_quote`);
   else if (!quoteEvidences(q)) gaps.push(`${role}:quote_off_topic`);
   const on = clean(entry?.office_name);
+  if (on && NON_PERMIT_BODY.test(on)) gaps.push(`${role}:non_permit_office`);
   if (on && ROLE_DEPT[role] && !ROLE_DEPT[role].test(on) && !ROLE_FUNC[role]?.test(q)) gaps.push(`${role}:role_office_mismatch`);
   // County roles must be unincorporated-only — the "never combine" rule.
   // Ohio counties' unincorporated territory IS the townships, and county sites

@@ -354,13 +354,18 @@ export default function JurisdictionsView({ focusJurisdiction = null, onOpenJob 
     return queryTokens.every(t => hay.some(a => a.includes(t)));
   };
 
+  // Retired copies (historical — queue hygiene's duplicate loser mark) are not
+  // live duplicates; counting them kept ~2,400 profiles "Duplicate — blocked"
+  // when only a few dozen identities actually have two active profiles.
+  const isRetiredProfile = (jurisdiction) => String(jurisdiction?.verification_status || "").trim() === "historical";
   const duplicateMap = new Map();
   jurisdictions.forEach((jurisdiction) => {
+    if (isRetiredProfile(jurisdiction)) return;
     const key = jurisdictionIdentityKey(jurisdiction);
     if (String(jurisdiction.name || "").trim()) duplicateMap.set(key, [...(duplicateMap.get(key) || []), jurisdiction]);
   });
   const duplicateJurisdictionGroups = [...duplicateMap.values()].filter((rows) => rows.length > 1);
-  const duplicateCountFor = (jurisdiction) => duplicateMap.get(jurisdictionIdentityKey(jurisdiction))?.length || 1;
+  const duplicateCountFor = (jurisdiction) => (isRetiredProfile(jurisdiction) ? 1 : duplicateMap.get(jurisdictionIdentityKey(jurisdiction))?.length || 1);
   const trustCounts = jurisdictions.reduce((acc, jurisdiction) => {
     const trust = assessJurisdictionTrust(jurisdiction, duplicateCountFor(jurisdiction));
     acc[trust.key] = (acc[trust.key] || 0) + 1;
