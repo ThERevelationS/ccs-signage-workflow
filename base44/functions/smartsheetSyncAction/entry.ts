@@ -1135,8 +1135,7 @@ async function pullDataset(
           .filter((record: any) => !record?.deleted && record?.id)
           .map((record: any) => [String(record.id), record]),
       );
-      for (const item of salesBusinessVerifications) {
-        const persisted = verifiedSalesById.get(String(item.id));
+      const verifyPersisted = (persisted: any, item: any) => {
         const businessFieldsVerified = Boolean(
           persisted && salesPulledFieldsUnchanged(persisted, item.expectedFields),
         );
@@ -1158,7 +1157,22 @@ async function pullDataset(
               cleanText(persisted.smartsheet_sheet_id, 40) === sheetId &&
               cleanText(persisted.smartsheet_row_id, 40) === item.expectedRowId
             );
-        if (!businessFieldsVerified || !parentRowVerified || !stageVerified) {
+        return businessFieldsVerified && parentRowVerified && stageVerified;
+      };
+      for (const item of salesBusinessVerifications) {
+        let persisted = verifiedSalesById.get(String(item.id));
+        let verified = verifyPersisted(persisted, item);
+        // The bulk list read can lag a just-committed compare-and-set save;
+        // point-read failures once before flagging a record for review.
+        if (!verified) {
+          const point = await base44.asServiceRole.entities.WorkOrder.get(String(item.id))
+            .catch(() => null);
+          if (point && verifyPersisted(point, item)) {
+            persisted = point;
+            verified = true;
+          }
+        }
+        if (!verified) {
           salesBusinessWriteFailureIds.push(String(item.id));
           errors.push(
             `Sales ${item.id} business-field read-back did not match the pulled Smartsheet row. ` +
