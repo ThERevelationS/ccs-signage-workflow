@@ -53,6 +53,13 @@ Same 5-product flow on EST-00009, single-counted list entries: 62 → 32.
 ## Phases
 
 ### P0 — prove it (gate; no app code changes)
+**RESULT 2026-11-24 00:26Z — PASS for direct user reads (path b).** `base44 exec` (user-scoped, Brett's
+login, no `--privileged`) made 140 `Announcement.list` calls → call 141 got 429 "…140 requests per 60s
+for each caller… Retry after 37s". 1.4s later a staff read through `staffDataRead` (service role, uncached
+BuilderPart filter) succeeded. Brett's user allowance and the service-token allowance are separate.
+Scripts: `ccs-cb-import/.audit-work/q-func/p0-user.ts`, `p0-staff.mjs`. Still untested: path (a),
+user-scoped reads made INSIDE a backend function with the caller's token.
+
 Throwaway function + throwaway entity. With Brett signed in as a Base44 app user, make N list
 reads (a) user-scoped from inside a function, (b) direct from the browser SDK, (c) asServiceRole;
 drive one path to 429 and confirm the others still succeed. Pass = user-scoped reads have their
