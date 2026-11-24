@@ -577,42 +577,28 @@ async function readOne(base44: any, user: any, body: any) {
       });
       const items = visible.slice(skip, skip + limit).map((row) => {
         const item = projectItem(entityName, row, user);
-        if (fields) {
-          if (!fields.includes('owner_email')) delete item.owner_email;
-          if (!fields.includes('product_group')) delete item.product_group;
+        if (!fields) return item;
+        const picked: Record<string, any> = {};
+        for (const field of fields) {
+          if (Object.prototype.hasOwnProperty.call(item, field)) picked[field] = item[field];
         }
-        return item;
+        return picked;
       });
       const hasMore = skip + limit < visible.length;
       return { status: 200, body: {
         success: true, items, returned: items.length, has_more: hasMore, truncated: hasMore, next_cursor: null,
       } };
     }
-    let rows: any[] = [];
-    let nextCursor: string | null = null;
-    let hasMore = false;
-    if (cursor || fields) {
-      // Options-object read — cursor pagination and/or field projections go
-      // through the paged entity API ({sort, limit, skip, cursor, fields}).
-      // A cursor continues a previous page, so it replaces skip entirely.
-      const options: any = { sort: sort || undefined, limit };
-      if (!cursor && skip) options.skip = skip;
-      if (cursor) options.cursor = cursor;
-      if (fields) options.fields = fields;
-      const page = effectiveQuery
-        ? await entity.filter(effectiveQuery, options)
-        : await entity.list(options);
-      const pageRows = Array.isArray(page) ? page : page?.items;
-      rows = Array.isArray(pageRows) ? pageRows : [];
-      nextCursor = !Array.isArray(page) && typeof page?.next_cursor === 'string' && page.next_cursor
-        ? page.next_cursor : null;
-      hasMore = !Array.isArray(page) && (page?.has_more === true || Boolean(nextCursor));
-    } else {
-      const items = effectiveQuery
-        ? await entity.filter(effectiveQuery, sort || null, limit, skip)
-        : await entity.list(sort || null, limit, skip);
-      rows = Array.isArray(items) ? items : [];
+    if (cursor) {
+      // The deployed entity runtime rejects the options-object read this
+      // pagination needs. Plain limit/skip pages never emit next_cursor, so a
+      // cursor can only arrive from a foreign caller — reject it explicitly.
+      return { status: 400, body: { error: 'Cursor pagination is not supported by the staff read gateway.' } };
     }
+    const items = effectiveQuery
+      ? await entity.filter(effectiveQuery, sort || null, limit, skip)
+      : await entity.list(sort || null, limit, skip);
+    const rows: any[] = Array.isArray(items) ? items : [];
     const ownerScopedRows = OWNER_SCOPED.has(entityName) && ownerEmail
       ? rows.filter((row) => String(row?.user_email || '').trim().toLowerCase() === ownerEmail)
       : rows;
@@ -620,15 +606,25 @@ async function readOne(base44: any, user: any, body: any) {
       ? ownerScopedRows.filter((row) => canSeeLibraryRow(row, user))
       : ownerScopedRows;
     // `truncated` means "there may be more rows past this window" — a full
-    // page or a live continuation cursor both raise it so callers can page on
-    // instead of mistaking a clamped read for the whole set.
+    // page raises it so callers can page on instead of mistaking a clamped
+    // read for the whole set.
     const payload: any = {
       success: true,
-      items: scopedRows.map((row) => projectItem(entityName, row, user)),
+      items: scopedRows.map((row) => {
+        const projected = projectItem(entityName, row, user);
+        if (!fields) return projected;
+        // Response-side projection: the runtime rejects server-side field
+        // narrowing, so the request's field list applies here after the
+        // denylist strip — denied fields stay absent even when requested.
+        const picked: Record<string, any> = {};
+        for (const field of fields) {
+          if (Object.prototype.hasOwnProperty.call(projected, field)) picked[field] = projected[field];
+        }
+        return picked;
+      }),
       returned: scopedRows.length,
-      truncated: hasMore || Boolean(nextCursor) || rows.length >= limit,
+      truncated: rows.length >= limit,
     };
-    if (nextCursor) payload.next_cursor = nextCursor;
     return { status: 200, body: payload };
   } catch (error: any) {
     // A platform rate limit is transient whatever status it arrives with:

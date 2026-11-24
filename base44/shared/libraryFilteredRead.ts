@@ -13,18 +13,12 @@ export async function loadVisibleLibraryRows({
   const visible: any[] = [];
   let scanned = 0;
   while (scanned < LIBRARY_SCAN_CAP) {
-    let page: any;
-    if (fields) {
-      const options = {
-        sort: sort || undefined, limit: LIBRARY_SCAN_PAGE, skip: scanned,
-        fields: [...new Set([...fields, 'owner_email', 'product_group'])],
-      };
-      page = query ? await entity.filter(query, options) : await entity.list(options);
-    } else {
-      page = query
-        ? await entity.filter(query, sort || null, LIBRARY_SCAN_PAGE, scanned)
-        : await entity.list(sort || null, LIBRARY_SCAN_PAGE, scanned);
-    }
+    // Field narrowing happens response-side — the deployed entity runtime
+    // rejects server-side field projections on the options-object read.
+    void fields;
+    const page = query
+      ? await entity.filter(query, sort || null, LIBRARY_SCAN_PAGE, scanned)
+      : await entity.list(sort || null, LIBRARY_SCAN_PAGE, scanned);
     const rows = Array.isArray(page) ? page : page?.items;
     if (!Array.isArray(rows)) throw new Error('Library rows could not be read completely.');
     scanned += rows.length;
