@@ -20,8 +20,8 @@ import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./pe
 import {
   EXTRA_LABELS, SIGN_SCOPES, SIGN_TYPE_MAP, SIGN_TYPES,
   addWorkingDays, ensureUnitIds, legacyInputsFromSigns, mapAiError, mergeScannedSigns,
-  preBuildWarnings, profileLimits, setTypeCount, totalUnitCount, unitAreaSqFt,
-  unitRuleFlags, workingDaysBetween,
+  parseLocalDate, preBuildWarnings, profileLimits, setTypeCount, totalUnitCount,
+  unitAreaSqFt, unitRuleFlags, workingDaysBetween,
 } from "./permitSigns";
 import { buildSignScanPrompt, SIGN_SCAN_JSON_SCHEMA } from "./permitPlanPrompt";
 import { withRateLimitRetry } from "@/lib/loadAllEntityRows";
@@ -153,8 +153,8 @@ const stripHtml = (v) => String(v || "").replace(/<[^>]*>/g, " ").replace(/\s+/g
 
 const fmtDay = (d) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 const fmtDateMaybe = (v) => {
-  const d = v instanceof Date ? v : new Date(String(v || ""));
-  return Number.isNaN(d.getTime()) ? String(v || "") : fmtDay(d);
+  const d = parseLocalDate(v);
+  return d ? fmtDay(d) : String(v || "");
 };
 // "due Mon, Dec 8" for a step's working-day offset, or "" when unset/invalid.
 const stepDueLabel = (step) => {
@@ -352,8 +352,8 @@ const PlanStepsEditor = ({ steps, officeNames, signCount, expanded, onToggleExpa
     return Number.isFinite(n) && n >= 0 ? n : null;
   }).filter(n => n != null);
   const latestDue = targets.length ? addWorkingDays(new Date(), Math.max(...targets)) : null;
-  const install = installDate ? new Date(String(installDate)) : null;
-  const installValid = install && !Number.isNaN(install.getTime());
+  const install = parseLocalDate(installDate);
+  const installValid = !!install;
   const overrunDays = installValid && latestDue && latestDue > install ? workingDaysBetween(install, latestDue) : 0;
   return (
     <div className="rounded-lg border border-purple-200 bg-purple-50/50">

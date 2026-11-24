@@ -214,10 +214,22 @@ export function mapAiError(error) {
 
 // ── Schedule + rules-on-file helpers ──
 
+// WO date fields are often "YYYY-MM-DD" — new Date() would read them as UTC
+// midnight and land on the previous day in US timezones. Parse those as local
+// midnight; anything else goes through Date's own parsing. Invalid → null.
+export function parseLocalDate(v) {
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? null : new Date(v.getTime());
+  const s = String(v || "").trim();
+  if (!s) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 // n working days (Mon–Fri) after `date` (Date or ISO string); n<=0 → same day.
 export function addWorkingDays(date, n) {
-  const d = date instanceof Date ? new Date(date.getTime()) : new Date(String(date || ""));
-  if (Number.isNaN(d.getTime())) return null;
+  const d = parseLocalDate(date);
+  if (!d) return null;
   let remaining = Math.max(0, Math.floor(Number(n)) || 0);
   while (remaining > 0) {
     d.setDate(d.getDate() + 1);
@@ -229,9 +241,9 @@ export function addWorkingDays(date, n) {
 
 // Working days strictly after `from` up to and including `to` (0 when to <= from).
 export function workingDaysBetween(from, to) {
-  const a = from instanceof Date ? new Date(from.getTime()) : new Date(String(from || ""));
-  const b = to instanceof Date ? new Date(to.getTime()) : new Date(String(to || ""));
-  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime()) || b <= a) return 0;
+  const a = parseLocalDate(from);
+  const b = parseLocalDate(to);
+  if (!a || !b || b <= a) return 0;
   let count = 0;
   while (a < b && count < 10000) {
     a.setDate(a.getDate() + 1);

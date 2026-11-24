@@ -10,6 +10,7 @@ const {
   SIGN_TYPES, SIGN_SCOPES, newUnit, setTypeCount, unitAreaSqFt,
   mergeScannedSigns, legacyInputsFromSigns, describeSignsForPrompt, totalUnitCount,
   addWorkingDays, workingDaysBetween, profileLimits, unitRuleFlags, preBuildWarnings,
+  parseLocalDate,
 } = signs;
 const { buildSignScanPrompt, buildPermitPlanPrompt } = prompts;
 
@@ -198,6 +199,27 @@ const { buildSignScanPrompt, buildPermitPlanPrompt } = prompts;
   for (const l of lines) assert.ok(prompt.includes(l.name), `scan prompt missing ${l.name}`);
   for (const t of SIGN_TYPES) assert.ok(prompt.includes(`${t.key} — ${t.label}`));
   for (const s of SIGN_SCOPES) assert.ok(["new", "reface", "repair", "removal", "relocate"].includes(s.key));
+}
+
+// ── parseLocalDate: date-only strings are local midnight, not UTC ──
+{
+  const d = parseLocalDate("2026-12-10");
+  assert.equal(d.getDate(), 10);
+  assert.equal(d.getMonth(), 11);
+  assert.equal(d.getFullYear(), 2026);
+  assert.equal(d.getHours(), 0);
+  assert.equal(parseLocalDate("not-a-date"), null);
+  assert.equal(parseLocalDate(""), null);
+  assert.equal(parseLocalDate(null), null);
+  // Full ISO timestamps keep Date's parsing; Date input is cloned.
+  const ts = parseLocalDate("2026-12-10T15:30:00");
+  assert.equal(ts.getDate(), 10);
+  const src = new Date(2026, 11, 10);
+  const clone = parseLocalDate(src);
+  assert.equal(clone.getDate(), 10);
+  assert.notEqual(clone, src);
+  // workingDaysBetween on date-only strings is not off by a day in US timezones.
+  assert.equal(workingDaysBetween("2026-11-20", "2026-11-23"), 1);
 }
 
 // ── addWorkingDays: weekends, n=0, invalid ──
