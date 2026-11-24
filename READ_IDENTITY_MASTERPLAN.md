@@ -96,6 +96,27 @@ feeds (queueFeed, reports) may stay server-side. (3) Customers use the app-gener
   direct read == gateway read (same rows, same fields) for every entity in the group. Denied
   reads return EMPTY silently, so missing-data bugs only show up in this comparison.
 
+**Findings 2026-11-24 (read-only checks):**
+- SDK `@base44/sdk` has `auth.loginViaEmailPassword(email, password)`, `resetPasswordRequest`,
+  `resetPassword`, `inviteUser(email, role)`, `register`+`verifyOtp`, `setToken`, `logout`. So the
+  EXISTING EmailGate screen can stay and call Base44 underneath; no redirect to a Base44 page needed.
+- Transition login (no lockouts): EmailGate keeps calling `verifyLogin(username, password)`; on
+  success it also tries `loginViaEmailPassword(record.email, password)`. Success → direct reads;
+  failure (no Base44 account yet / different password) → today's gateway path, unchanged.
+- Gating must use `{{user.role}}`, NOT `user.data.*` flags: `auth.updateMe()` lets a user edit
+  their own custom User fields, so a `data.is_staff` flag would be self-grantable. Proposal: Base44
+  role `staff` (or `admin`), set by a server sync from AuthorizedEmail; deactivated/expired →
+  role `disabled` (or user removed). MUST PROBE: custom role values accepted? role not
+  self-editable via updateMe? does a role change apply to an existing token immediately?
+- Precedents already in schemas: field-level `rls` on properties (User.jsonc google tokens), and
+  9 time-clock entities already carry owner rules `{"data.user_email":"{{user.email}}"}` OR admin.
+  OWNER_SCOPED owner field is `user_email` on all 8 owner-scoped entities.
+- Gateway inventory (`staffDataRead`): ~119 STAFF_READABLE, 15 ADMIN_READABLE, FIELD_DENYLIST
+  (AuthorizedEmail secrets → server-only FLS), OWNER_FIELD_DENYLIST (AuthorizedEmail.hr_data → owner
+  or admin), STAFF_FIELD_DENYLIST (TimeClockPayPeriod payroll aggregates → admin), OWNER_SCOPED (8),
+  LIBRARY_ENTITIES (3, product_group/owner_email rule). Also query-shape guards (operators, $in≤200,
+  regex≤200, limit≤5000) — direct reads lose these; acceptable for staff, note for review.
+
 **Open (ask Brett):** does every staff member have a real email inbox (invites + password reset)?
 Are any devices shared by several staff (shop kiosk / time clock tablet)? Google sign-in allowed?
 
