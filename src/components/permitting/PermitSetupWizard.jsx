@@ -767,7 +767,7 @@ export default function PermitSetupWizard({
       const results = [];
       let allCached = true;
       for (const est of estimates) {
-        const cacheKey = `permit-sign-scan:v1:${est.id}:${est.updated_date || ""}`;
+        const cacheKey = `permit-sign-scan:v2:${est.id}:${est.updated_date || ""}`;
         let result = null;
         if (!rescan) { try { result = JSON.parse(localStorage.getItem(cacheKey) || "null"); } catch { result = null; } }
         if (!result) {
@@ -778,7 +778,8 @@ export default function PermitSetupWizard({
               name: stripHtml(li.client_product_name || li.builder_name || li.project_name || "Line item"),
               category: li.product_category || "",
               quantity: li.customer_quantity ?? 1,
-              description: stripHtml(li.customer_description || li.product_notes || ""),
+              description: stripHtml(li.customer_description || ""),
+              product_notes: String(li.product_notes || ""),
             }));
           let ai;
           try {
@@ -1360,8 +1361,8 @@ export default function PermitSetupWizard({
                                   <input type="checkbox" className="accent-purple-600" checked={!!unit.electrical}
                                     onChange={e => updateUnit(entry.type, ui, { electrical: e.target.checked })} /> Electrical
                                 </label>
-                                <UnitSizeInput label="W" value={unit.width_in} onChange={v => updateUnit(entry.type, ui, { width_in: v })} />
-                                <UnitSizeInput label="H" value={unit.height_in} onChange={v => updateUnit(entry.type, ui, { height_in: v })} />
+                                <UnitSizeInput label="W" value={unit.width_in} onChange={v => updateUnit(entry.type, ui, { width_in: v, size_basis: "staff" })} />
+                                <UnitSizeInput label="H" value={unit.height_in} onChange={v => updateUnit(entry.type, ui, { height_in: v, size_basis: "staff" })} />
                                 {(typeDef?.extras || []).map(f => (
                                   <UnitSizeInput key={f} label={EXTRA_LABELS[f] || f} value={unit[f]}
                                     onChange={v => updateUnit(entry.type, ui, { [f]: v })} />
@@ -1370,6 +1371,11 @@ export default function PermitSetupWizard({
                               </div>
                               {unit.source_line ? (
                                 <p className="truncate pl-6 text-[9px] text-gray-400">from "{unit.source_line}"</p>
+                              ) : null}
+                              {unit.size_basis === "stated" && unit.size_source ? (
+                                <p className="truncate pl-6 text-[9px] text-gray-400">Size from "{unit.size_source}"</p>
+                              ) : unit.size_basis === "material" && unit.size_source ? (
+                                <p className="pl-6 text-[9px] font-medium text-amber-700">Size from material sheet "{unit.size_source}" — check the real sign size</p>
                               ) : null}
                               {unitRuleFlags(unit, entry.type, planLimits).map((f, fi) => (
                                 <p key={fi} className="pl-6 text-[10px] font-medium text-red-600">{f}</p>
