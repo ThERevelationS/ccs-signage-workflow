@@ -81,6 +81,37 @@ export function rulesOnFileJson(profile) {
   return parts.length ? `{${parts.join(",")}}` : "";
 }
 
+// Imported CoreBridge lines dump the order detail into product_notes: a header
+// block ("Index · Product Name · Product Category · Is Vended · Price · Cost ·
+// Margin") then "Part N" tokens each followed by the part's description, plus
+// per-part price/cost/margin repeats. Extract just what the scan prompt needs.
+const PART_TOKEN = /^Part \d+$/;
+const MONEYISH = /^[$€£]?[\d,]+(\.\d+)?%?$/;
+export function estimatePartsText(productNotes) {
+  const none = { cbCategory: "", parts: [] };
+  const tokens = String(productNotes || "").split(/\r?\n/).map(t => t.trim()).filter(Boolean);
+  if (!tokens.length) return none;
+  let cbCategory = "";
+  const vendedIdx = tokens.indexOf("Is Vended");
+  if (vendedIdx >= 0) {
+    let i = vendedIdx + 1;
+    while (i < tokens.length && ["Price", "Cost", "Margin"].includes(tokens[i])) i += 1;
+    cbCategory = tokens[i + 2] || "";
+  }
+  const seen = new Set();
+  const parts = [];
+  tokens.forEach((t, i) => {
+    if (parts.length >= 25 || !PART_TOKEN.test(t)) return;
+    const desc = String(tokens[i + 1] || "").slice(0, 120);
+    if (!desc || MONEYISH.test(desc)) return;
+    const key = desc.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    parts.push(desc);
+  });
+  return { cbCategory, parts };
+}
+
 export const SIGN_SCAN_JSON_SCHEMA = {
   type: "object",
   properties: {
@@ -102,6 +133,8 @@ export const SIGN_SCAN_JSON_SCHEMA = {
           clearance_in: { type: "number" },
           projection_in: { type: "number" },
           source_line: { type: "string" },
+          size_source: { type: "string" },
+          size_basis: { type: "string", enum: ["stated", "material", "none"] },
           notes: { type: "string" },
         },
       },
@@ -111,11 +144,20 @@ export const SIGN_SCAN_JSON_SCHEMA = {
   required: ["signs", "skipped_lines"],
 };
 
-// lines: [{ name, category, quantity, description }] — already HTML-stripped/capped.
+// lines: [{ name, category, quantity, description, product_notes }] — already
+// HTML-stripped/capped; CoreBridge category + parts come from product_notes.
 export function buildSignScanPrompt({ estimate_number = "", project_name = "", client_name = "", site_address = "", lines = [] } = {}) {
   const typeList = SIGN_TYPES.map(t => `${t.key} — ${t.label}`).join("\n");
   const lineRows = (Array.isArray(lines) ? lines : [])
-    .map(l => `${l?.name || "Line item"} | category: ${l?.category || ""} | qty: ${l?.quantity ?? 1} | ${l?.description || ""}`)
+    .map(l => {
+      const { cbCategory, parts } = estimatePartsText(l?.product_notes);
+      const segs = [`${l?.name || "Line item"} | category: ${l?.category || ""}`];
+      if (cbCategory) segs[0] += ` | CoreBridge category: ${cbCategory}`;
+      segs.push(`qty: ${l?.quantity ?? 1}`);
+      segs.push(l?.description || "");
+      if (parts.length) segs.push(`parts: ${parts.join("; ").slice(0, 800)}`);
+      return segs.join(" | ");
+    })
     .join("\n");
   return `You read a sign company's estimate and list the physical signs on it that may need a permit.
 
@@ -123,7 +165,7 @@ Estimate: ${estimate_number} — ${project_name}
 Customer: ${client_name}
 Job site: ${site_address}
 
-Line items (name | category as entered | quantity | description):
+Line items (name | category as entered | CoreBridge category | quantity | description | parts used to build it):
 ${lineRows}
 
 Sign types you may use (return the key):
@@ -131,10 +173,15 @@ ${typeList}
 
 Rules:
 1. Return one entry per distinct sign product. "count" is how many identical signs that line covers — from the quantity or wording like "(2) blade signs". Default 1.
-2. Choose "type" from the name and description. The category column is often wrong or empty; ignore it when it conflicts with the name or description.
+2. Choose "type" from the name and description. The category column is often wrong or empty; ignore it when it conflicts with the name or description. The CoreBridge category is usually more accurate than the category as entered.
 3. Skip lines that are services or fees rather than signs: permit acquisition, design or artwork, surveys, travel, removal-only labor, deposits, discounts. List their names in skipped_lines.
 4. "scope": new = a new sign; reface = new faces or panels in an existing cabinet or frame; repair = fix, refurbish, restore, or LED retrofit; removal = remove only; relocate = move an existing sign.
-5. Fill a size only when the estimate states it (for example 4' x 8', 36" x 150", 18" letters). Convert to inches. Leave it out when not stated. Never guess a size.
+5. Sizes. Use the best source available, in this order:
+   a. A size written in the product name or description (for example 24" x 30", 48"W x 44"H, 4' x 8').
+   b. A size in a part that is the sign itself or its face, cabinet, or panel (for example "LED Retrofit - 4' x 8' x 6"", "Installation - Double Sided - 4x8", "Aluminum Wall Sign 48" x 168"").
+   c. The size of the sheet or panel material the sign face is cut from (for example "ACM - Aluminum Composite 6mm, 4'x8'", "Aluminum .063 - 8' x 4'"), only when a and b give nothing.
+   Never use sizes of hardware or stock rolls: studs, posts, post caps, sleeves, stakes, polycarbonate or vinyl rolls (for example "Polycarbonate 0.177" x 52" - Roll"). A third number such as the 6" in 4' x 8' x 6" is depth; leave it out.
+   Convert to inches (width first, then height). Put the exact text the size came from in "size_source", and set "size_basis" to "stated" for a or b, "material" for c, or "none" when no size applies. Never guess a size.
 6. illuminated = true only if the text says illuminated, lit, LED, neon, backlit, or EMC/digital. electrical = true when new wiring, power, or an LED retrofit is involved.
 7. "source_line" is the line item name the sign came from. "notes" holds anything permit-relevant in the text (double-sided, landlord, historic, percent of window covered); otherwise empty.`;
 }

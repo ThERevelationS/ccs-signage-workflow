@@ -66,6 +66,8 @@ export function newUnit(type, from) {
     projection_in: null,
     notes: "",
     source_line: "",
+    size_source: "",
+    size_basis: null,
   };
 }
 
@@ -112,6 +114,8 @@ const sanitizeSize = (v) => {
   return Number.isFinite(n) && n > 0 && n < 2000 ? n : null;
 };
 
+const SIZE_BASIS = new Set(["stated", "material", "none", "staff"]);
+
 // AI scan output → signs entries. Unknown types → 'other', bad scopes → 'new',
 // count clamped 1..50, sizes must be finite 0<x<2000 else null, faces only
 // 1|2. Same type merges into one entry, preserving first-seen order.
@@ -130,20 +134,29 @@ export function mergeScannedSigns(aiSigns) {
       out.push(entry);
     }
     for (let i = 0; i < count; i++) {
+      const width_in = sanitizeSize(raw.width_in);
+      const height_in = sanitizeSize(raw.height_in);
+      // A size with no stated basis is useless provenance; a basis with no
+      // size is noise — collapse unsized entries to 'none'.
+      const hasAnySize = width_in != null || height_in != null;
       entry.units.push({
         id: nextUnitId(),
         scope,
         illuminated: raw.illuminated === true,
         electrical: raw.electrical === true,
         faces: Number(raw.faces) === 2 ? 2 : 1,
-        width_in: sanitizeSize(raw.width_in),
-        height_in: sanitizeSize(raw.height_in),
+        width_in,
+        height_in,
         letter_height_in: sanitizeSize(raw.letter_height_in),
         overall_height_in: sanitizeSize(raw.overall_height_in),
         clearance_in: sanitizeSize(raw.clearance_in),
         projection_in: sanitizeSize(raw.projection_in),
         notes: String(raw.notes || "").slice(0, 300),
         source_line: String(raw.source_line || "").slice(0, 200),
+        size_source: hasAnySize ? String(raw.size_source || "").slice(0, 200) : "",
+        size_basis: hasAnySize
+          ? (SIZE_BASIS.has(raw.size_basis) ? raw.size_basis : null)
+          : "none",
       });
     }
   }
@@ -186,7 +199,10 @@ export function describeSignsForPrompt(signs) {
       const parts = [`scope: ${SCOPE_LABELS[unit?.scope] || "New sign"}`];
       if (unit?.illuminated) parts.push("illuminated");
       if (unit?.electrical) parts.push("electrical");
-      if (hasSize(unit?.width_in) && hasSize(unit?.height_in)) parts.push(`${unit.width_in}" W × ${unit.height_in}" H`);
+      if (hasSize(unit?.width_in) && hasSize(unit?.height_in)) {
+        const provenance = unit?.size_basis === "material" ? " (size from material sheet — unconfirmed)" : "";
+        parts.push(`${unit.width_in}" W × ${unit.height_in}" H${provenance}`);
+      }
       if (hasSize(unit?.letter_height_in)) parts.push(`letter height ${unit.letter_height_in}"`);
       if (hasSize(unit?.overall_height_in)) parts.push(`overall height ${unit.overall_height_in}"`);
       if (hasSize(unit?.clearance_in)) parts.push(`clearance ${unit.clearance_in}"`);

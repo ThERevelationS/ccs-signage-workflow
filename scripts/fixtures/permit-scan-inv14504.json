@@ -1,0 +1,22 @@
+{
+  "estimate_number": "INV-14504",
+  "project_name": "Face Replacement",
+  "client_name": "Forward In Faith",
+  "site_address": "1328 5th Ave, Dayton, KY, 41074",
+  "lines": [
+    {
+      "name": "Panel Face Replacement",
+      "category": "Chick-fil-A",
+      "quantity": 1,
+      "description": "Qty 1",
+      "product_notes": "CoreBridge product 34812 · status WIP : Permitting · qty 1\nProof: proof_11016_34812_0.jpg\n\nCoreBridge order detail (parts · price · cost · margin):\nINV-14504 \r\n Sales Person \r\n Entered By \r\n Industry Type \r\n Customer Origin \r\n Customer Type \r\n Forward In Faith \r\n Cameron Nettles \r\n Cameron Nettles \r\n Churches \r\n Web Marketing \r\n Unassigned \r\n Index \r\n Product Name \r\n Product Category \r\n Is Vended \r\n Price \r\n Cost \r\n Margin \r\n 1 \r\n Panel Face Replacement \r\n Monument Signs \r\n No \r\n $1,565.97 \r\n 538.18 \r\n 65.633% \r\n Item \r\n Description \r\n Price \r\n Cost \r\n Margin \r\n Part 1 \r\n ACM - Aluminum Composite 6mm, 4'x8', white \r\n $223.47 \r\n 81.12 \r\n 63.6998% \r\n Item \r\n Part Name \r\n Income Account \r\n Price \r\n Cost \r\n Margin \r\n Part \r\n ACM - Aluminum Composite 6mm, 4'x8', white \r\n 4000 Sales \r\n $223.47 \r\n $81.12 \r\n 63.6998% \r\n NT \r\n Part 2 \r\n Vinyl - 3M IJ175CV3 \r\n $313.01 \r\n 84.56 \r\n 72.9859% \r\n Item \r\n Part Name \r\n Income Account \r\n Price \r\n Cost \r\n Margin \r\n Part \r\n Vinyl - 3M IJ175CV3 \r\n 4000 Sales \r\n $251.51 \r\n $62.88 \r\n 75.00% \r\n NT \r\n Modifier \r\n Lamination \r\n 4000 Sales \r\n $20.04 \r\n $6.01 \r\n 69.9971% \r\n NT \r\n Modifier \r\n Adhesives \r\n 4000 Sales \r\n $38.13 \r\n $14.67 \r\n 61.5351% \r\n NT \r\n Layout Modifier \r\n Cutting \r\n 4000 Sales \r\n $3.33 \r\n $1.00 \r\n 69.9699% \r\n NT \r\n Part 3 \r\n Graphic Design Fee \r\n $67.50 \r\n 22.50 \r\n 66.6666% \r\n Item \r\n Part Name \r\n Income Account \r\n Price \r\n Cost \r\n Margin \r\n Part \r\n Graphic Design Fee \r\n 4000 Sales \r\n $67.50 \r\n $22.50 \r\n 66.6666% \r\n NT \r\n Part 4 \r\n Supplies \r\n $301.99 \r\n 130.00 \r\n 56.9522% \r\n Item \r\n Part Name \r\n Income Account \r\n Price \r\n Cost \r\n Margin \r\n Part \r\n Supplies \r\n 4000 Sales \r\n $301.99 \r\n $130.00 \r\n 56.9522% \r\n NT \r\n Part 5 \r\n Installation \r\n $660.00 \r\n 220.00 \r\n 66.6666% \r\n Item \r\n Part Name \r\n Income Account \r\n Price \r\n Cost \r\n Margin \r\n Part \r\n Installation \r\n 4000 Sales \r\n $660.00 \r\n $220.00 \r\n 66.6666% \r\n NT \r\n SetupFees \r\n ProductSetupFees \r\n $0.00 \r\n 0.00 \r\n 100.00% \r\n 2 \r\n Permitting Acquisitions - Non-Illuminated - To be done by Client \r\n Survey/Permitting \r\n No \r\n $0.00 \r\n 0.00 \r\n 0.00% \r\n Item \r\n Description \r\n Price \r\n Cost \r\n Margin \r\n Part 1 \r\n Permit Acquisition \r\n $0.00 \r\n 0.00 \r\n 0.00% \r\n Item \r\n Part Name \r\n Income Account \r\n Price \r\n Cost \r\n Margin \r\n Part \r\n Permit Acquisition \r\n 4000 Sales \r\n $0.00 \r\n $0.00 \r\n 0.00% \r\n NT \r\n SetupFees \r\n ProductSetupFees \r\n $0.00 \r\n 0.00 \r\n 100.00% \r\n overridden during order entry\r\n Order Totals \r\n Price \r\n Cost \r\n Margin \r\n Subtotal: \r\n $1,565.97 \r\n $538.18 \r\n 65.633% \r\n Discount: \r\n $0.00 \r\n $0.00 \r\n 100.00% \r\n Shipping: \r\n $0.00 \r\n $0.00 \r\n 100.00% \r\n NT \r\n Postage: \r\n $0.00 \r\n $0.00 \r\n 100.00% \r\n NT \r\n New Subtotal : \r\n $1,565.97 \r\n $538.18 \r\n 65.633% \r\n Tax (0%): \r\n $0.00 \r\n $0.00 \r\n 0.00% \r\n Total: \r\n $1,565.97 \r\n Price \r\n Cost \r\n Margin \r\n Taxable \r\n $0.00 \r\n $538.18 \r\n 0.00% \r\n Non-Taxable \r\n $1,565.97 \r\n $0.00 \r\n 100.00% \r\n $1,565.97 \r\n $538.18 \r\n 65.633%"
+    },
+    {
+      "name": "Permitting Acquisitions - Non-Illuminated - To be done by Client",
+      "category": "",
+      "quantity": 1,
+      "description": "Qty 1",
+      "product_notes": "CoreBridge product 34818 · status WIP : Permitting · qty 1"
+    }
+  ]
+}

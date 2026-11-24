@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
+import { readFileSync } from "node:fs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const signs = await import(pathToFileURL(resolve(here, "../src/components/permitting/permitSigns.js")).href);
@@ -12,7 +13,7 @@ const {
   addWorkingDays, workingDaysBetween, profileLimits, unitRuleFlags, preBuildWarnings,
   parseLocalDate,
 } = signs;
-const { buildSignScanPrompt, buildPermitPlanPrompt } = prompts;
+const { buildSignScanPrompt, buildPermitPlanPrompt, estimatePartsText } = prompts;
 
 // ── setTypeCount: grow / shrink / 0 / clone-from-last ──
 {
@@ -58,9 +59,16 @@ const { buildSignScanPrompt, buildPermitPlanPrompt } = prompts;
   assert.equal(plain.illuminated, false);
   assert.equal(plain.electrical, false);
   assert.equal(plain.width_in, null);
+  assert.equal(plain.size_basis, null);
   const emc = newUnit("emc");
   assert.equal(emc.illuminated, true);
   assert.equal(emc.electrical, true);
+  // Clones carry size provenance but reset id/source_line/notes.
+  const cloned = newUnit("cabinet", { size_source: "4' x 8'", size_basis: "material", width_in: 48, source_line: "x", notes: "y" });
+  assert.equal(cloned.size_source, "4' x 8'");
+  assert.equal(cloned.size_basis, "material");
+  assert.equal(cloned.width_in, 48);
+  assert.equal(cloned.source_line, "");
 }
 
 // ── unitAreaSqFt: faces=2, missing sizes ──
@@ -103,6 +111,22 @@ const { buildSignScanPrompt, buildPermitPlanPrompt } = prompts;
   const ordered = mergeScannedSigns([{ type: "pylon" }, { type: "awning" }, { type: "pylon" }]);
   assert.deepEqual(ordered.map(e => e.type), ["pylon", "awning"]);
   assert.equal(ordered[0].units.length, 2);
+
+  // size_source/size_basis carried; unsized units collapse to 'none'/"".
+  const sized = mergeScannedSigns([
+    { type: "cabinet", count: 1, width_in: 48, height_in: 96, size_source: "4' x 8'", size_basis: "material" },
+  ]);
+  assert.equal(sized[0].units[0].size_source, "4' x 8'");
+  assert.equal(sized[0].units[0].size_basis, "material");
+  const noSize = mergeScannedSigns([
+    { type: "cabinet", count: 1, size_source: "junk text", size_basis: "stated" },
+  ]);
+  assert.equal(noSize[0].units[0].size_basis, "none");
+  assert.equal(noSize[0].units[0].size_source, "");
+  const badBasis = mergeScannedSigns([
+    { type: "cabinet", count: 1, width_in: 10, height_in: 10, size_basis: "bogus" },
+  ]);
+  assert.equal(badBasis[0].units[0].size_basis, null);
 }
 
 // ── legacyInputsFromSigns ──
@@ -149,6 +173,16 @@ const { buildSignScanPrompt, buildPermitPlanPrompt } = prompts;
   assert.match(lines[2], /^#3 Monument — scope: Reface \(new faces\)/);
   assert.match(lines[2], /overall height 96"/);
   assert.doesNotMatch(lines[2], /W × /); // missing sizes omitted
+
+  // material-basis sizes carry the unconfirmed note; stated does not.
+  const mat = mergeScannedSigns([
+    { type: "cabinet", count: 1, width_in: 48, height_in: 96, size_basis: "material" },
+  ]);
+  assert.match(describeSignsForPrompt(mat), /48" W × 96" H \(size from material sheet — unconfirmed\)/);
+  const stated = mergeScannedSigns([
+    { type: "cabinet", count: 1, width_in: 48, height_in: 96, size_basis: "stated" },
+  ]);
+  assert.doesNotMatch(describeSignsForPrompt(stated), /material sheet/);
 }
 
 // ── Plan prompt: every office name + every sign number present ──
@@ -182,6 +216,32 @@ const { buildSignScanPrompt, buildPermitPlanPrompt } = prompts;
   assert.ok(noOffices.includes("(none on file)"));
 }
 
+// ── estimatePartsText: real CoreBridge product_notes fixtures ──
+{
+  const fix1 = JSON.parse(readFileSync(resolve(here, "fixtures/permit-scan-inv14504.json"), "utf8"));
+  const { cbCategory, parts } = estimatePartsText(fix1.lines[0].product_notes);
+  assert.equal(cbCategory, "Monument Signs");
+  for (const want of ["ACM - Aluminum Composite 6mm, 4'x8', white", "Vinyl - 3M IJ175CV3", "Installation"]) {
+    assert.ok(parts.includes(want), `missing part: ${want}`);
+  }
+  for (const p of parts) {
+    assert.ok(!p.includes("$"), `money token leaked into parts: ${p}`);
+    assert.ok(p !== "4000 Sales" && p !== "Margin", `header/value leaked into parts: ${p}`);
+  }
+  // Non-CoreBridge-dump notes → empty result.
+  assert.deepEqual(estimatePartsText(""), { cbCategory: "", parts: [] });
+  assert.deepEqual(estimatePartsText(fix1.lines[1].product_notes), { cbCategory: "", parts: [] });
+  assert.deepEqual(estimatePartsText("just a normal note\nnothing structured"), { cbCategory: "", parts: [] });
+
+  const fix2 = JSON.parse(readFileSync(resolve(here, "fixtures/permit-scan-parts2.json"), "utf8"));
+  const p2 = estimatePartsText(fix2.lines[0].product_notes);
+  assert.ok(p2.parts.includes("Aluminum .080 - Bright White - 4'x 8' - Baked Enamel"),
+    `size-bearing part missing; got ${JSON.stringify(p2.parts.slice(0, 6))}`);
+  // Dedupe: repeated parts appear once.
+  const dupes = p2.parts.filter((p, i) => p2.parts.indexOf(p) !== i);
+  assert.deepEqual(dupes, []);
+}
+
 // ── Scan prompt: every line item name present ──
 {
   const lines = [
@@ -199,6 +259,16 @@ const { buildSignScanPrompt, buildPermitPlanPrompt } = prompts;
   for (const l of lines) assert.ok(prompt.includes(l.name), `scan prompt missing ${l.name}`);
   for (const t of SIGN_TYPES) assert.ok(prompt.includes(`${t.key} — ${t.label}`));
   for (const s of SIGN_SCOPES) assert.ok(["new", "reface", "repair", "removal", "relocate"].includes(s.key));
+  assert.ok(prompt.includes("(name | category as entered | CoreBridge category | quantity | description | parts used to build it)"));
+  assert.ok(prompt.includes("size_basis"));
+
+  // From the real INV-14504 fixture: CoreBridge category + parts reach the prompt.
+  const fix1 = JSON.parse(readFileSync(resolve(here, "fixtures/permit-scan-inv14504.json"), "utf8"));
+  const p2 = buildSignScanPrompt({ estimate_number: "INV-14504", lines: fix1.lines });
+  assert.ok(p2.includes("parts:"));
+  assert.ok(p2.includes("ACM - Aluminum Composite 6mm, 4'x8', white"));
+  assert.ok(p2.includes("CoreBridge category: Monument Signs"));
+  assert.ok(p2.includes("Vinyl - 3M IJ175CV3"));
 }
 
 // ── parseLocalDate: date-only strings are local midnight, not UTC ──
