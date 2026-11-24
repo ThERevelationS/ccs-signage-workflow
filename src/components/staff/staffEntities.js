@@ -101,6 +101,15 @@ const bustReadCache = (entity) => {
 const writeEntity = (entity, payload) => {
   bustReadCache(entity);
   return (hasSession() ? invokeFleet(writeFunction(entity), payload) : Promise.reject(NO_SESSION_ERR()))
+    .catch((err) => {
+      // The gateway explains every refusal in its JSON body; the HTTP client's
+      // "Request failed with status code 403" hides it from staff. Surface it.
+      const reason = err?.response?.data?.error;
+      if (typeof reason === "string" && reason.trim() && !/status code/i.test(reason)) {
+        err.message = `${reason} (status code ${err?.response?.status || err?.status || "?"})`;
+      }
+      throw err;
+    })
     .finally(() => bustReadCache(entity));
 };
 
