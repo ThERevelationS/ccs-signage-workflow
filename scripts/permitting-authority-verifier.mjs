@@ -229,6 +229,18 @@ function profileFor(loc, idx) {
     idx.byKey.get(`${loc.state}|${normalizePermitJurisdictionName(loc.name || '')}|`) || null;
 }
 
+// Page text vs stored quote: research stored decoded text ("Planning & Zoning")
+// while raw HTML carries entities ("&amp;") — undecoded, only ~1 in 70 live
+// pages ever matched, so nothing was promoted. Decode entities, drop
+// script/style, and fold smart quotes/dashes on both sides.
+const decodeEntities = (s) => String(s || '')
+  .replace(/&nbsp;|&#160;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"')
+  .replace(/&#39;|&apos;|&rsquo;|&lsquo;/gi, "'").replace(/&ldquo;|&rdquo;/gi, '"')
+  .replace(/&ndash;|&mdash;/gi, '-').replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+const comparableText = (s) => decodeEntities(s).replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"')
+  .replace(/[\u2013\u2014]/g, '-').replace(/\s+/g, ' ').toLowerCase().trim();
+const pageText = (html) => comparableText(String(html || '').replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' '));
+
 async function pass(onlyNames = null) {
   const [idx, localities] = await Promise.all([loadProfiles(), loadLocalities()]);
   const only = onlyNames ? new Set(onlyNames.map((h) => `${String(h.name || '').toLowerCase().trim()}|${String(h.state || '').toUpperCase().trim()}`)) : null;
@@ -327,8 +339,8 @@ async function pass(onlyNames = null) {
                 // so document liveness is the correct residual check.
                 if (/pdf|octet-stream/i.test(ct) || /\.pdf([?#]|$)/i.test(url)) verdict = 'live';
                 else {
-                  const text = (await resp.text()).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').toLowerCase();
-                  if (text.includes(quote.slice(0, 60).toLowerCase().replace(/\s+/g, ' ').trim())) verdict = 'live';
+                  const text = pageText(await resp.text());
+                  if (text.includes(comparableText(quote).slice(0, 60))) verdict = 'live';
                 }
               }
             } catch {}
