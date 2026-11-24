@@ -112,6 +112,25 @@ export function estimatePartsText(productNotes) {
   return { cbCategory, parts };
 }
 
+// Proof-recovered sizes for one estimate line: title-block {w,h} wins;
+// otherwise surface the raw drawn dimensions for the AI to interpret.
+export function proofSegment(entry) {
+  if (!entry || typeof entry !== "object") return "";
+  const w = Number(entry.w);
+  const h = Number(entry.h);
+  if (Number.isFinite(w) && w > 0 && Number.isFinite(h) && h > 0) {
+    let seg = `proof size: ${w}"W x ${h}"H`;
+    if (Number.isFinite(Number(entry.q)) && Number(entry.q) > 0) seg += `, qty ${Number(entry.q)}`;
+    if (Number(entry.s) === 1) seg += ", single-sided";
+    else if (Number(entry.s) === 2) seg += ", double-sided";
+    return seg;
+  }
+  const drawn = (Array.isArray(entry.d) ? entry.d : [])
+    .map(v => String(v || "").trim())
+    .filter(Boolean);
+  return drawn.length ? `dimensions drawn on proof: ${drawn.join("; ").slice(0, 300)}` : "";
+}
+
 export const SIGN_SCAN_JSON_SCHEMA = {
   type: "object",
   properties: {
@@ -134,7 +153,7 @@ export const SIGN_SCAN_JSON_SCHEMA = {
           projection_in: { type: "number" },
           source_line: { type: "string" },
           size_source: { type: "string" },
-          size_basis: { type: "string", enum: ["stated", "material", "none"] },
+          size_basis: { type: "string", enum: ["stated", "material", "proof", "none"] },
           notes: { type: "string" },
         },
       },
@@ -156,6 +175,8 @@ export function buildSignScanPrompt({ estimate_number = "", project_name = "", c
       segs.push(`qty: ${l?.quantity ?? 1}`);
       segs.push(l?.description || "");
       if (parts.length) segs.push(`parts: ${parts.join("; ").slice(0, 800)}`);
+      const proof = proofSegment(l?.proof);
+      if (proof) segs.push(proof);
       return segs.join(" | ");
     })
     .join("\n");
@@ -177,11 +198,13 @@ Rules:
 3. Skip lines that are services or fees rather than signs: permit acquisition, design or artwork, surveys, travel, removal-only labor, deposits, discounts. List their names in skipped_lines.
 4. "scope": new = a new sign; reface = new faces or panels in an existing cabinet or frame; repair = fix, refurbish, restore, or LED retrofit; removal = remove only; relocate = move an existing sign.
 5. Sizes. Use the best source available, in this order:
+   First. A "proof size" on the line is the size from the customer's approved proof. Use it before anything else, and use its single-sided or double-sided for "faces".
+   Next. "dimensions drawn on proof" are measurements written on the proof artwork. When one of them is clearly the overall sign (usually the largest width x height), use it before parts or material sizes.
    a. A size written in the product name or description (for example 24" x 30", 48"W x 44"H, 4' x 8').
    b. A size in a part that is the sign itself or its face, cabinet, or panel (for example "LED Retrofit - 4' x 8' x 6"", "Installation - Double Sided - 4x8", "Aluminum Wall Sign 48" x 168"").
    c. The size of the sheet or panel material the sign face is cut from (for example "ACM - Aluminum Composite 6mm, 4'x8'", "Aluminum .063 - 8' x 4'"), only when a and b give nothing.
    Never use sizes of hardware or stock rolls: studs, posts, post caps, sleeves, stakes, polycarbonate or vinyl rolls (for example "Polycarbonate 0.177" x 52" - Roll"). A third number such as the 6" in 4' x 8' x 6" is depth; leave it out.
-   Convert to inches (width first, then height). Put the exact text the size came from in "size_source", and set "size_basis" to "stated" for a or b, "material" for c, or "none" when no size applies. Never guess a size.
+   Convert to inches (width first, then height). Put the exact text the size came from in "size_source", and set "size_basis" to "proof" for a proof size or dimensions drawn on the proof, "stated" for a or b, "material" for c, or "none" when no size applies. Never guess a size.
 6. illuminated = true only if the text says illuminated, lit, LED, neon, backlit, or EMC/digital. electrical = true when new wiring, power, or an LED retrofit is involved.
 7. "source_line" is the line item name the sign came from. "notes" holds anything permit-relevant in the text (double-sided, landlord, historic, percent of window covered); otherwise empty.`;
 }

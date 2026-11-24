@@ -114,7 +114,7 @@ const sanitizeSize = (v) => {
   return Number.isFinite(n) && n > 0 && n < 2000 ? n : null;
 };
 
-const SIZE_BASIS = new Set(["stated", "material", "none", "staff"]);
+const SIZE_BASIS = new Set(["stated", "material", "proof", "none", "staff"]);
 
 // AI scan output → signs entries. Unknown types → 'other', bad scopes → 'new',
 // count clamped 1..50, sizes must be finite 0<x<2000 else null, faces only
@@ -161,6 +161,32 @@ export function mergeScannedSigns(aiSigns) {
     }
   }
   return out;
+}
+
+// Deterministic backstop after a scan merge: a unit the AI left unsized whose
+// source_line matches a line that has a proof TITLE-BLOCK size (w/h — never
+// the raw `d` dims) gets the trusted proof size. nameToProof maps lowercased,
+// trimmed line names → the sizes entry.
+export function backfillProofSizes(signs, nameToProof) {
+  if (!(nameToProof instanceof Map) || nameToProof.size === 0) return signs;
+  return (Array.isArray(signs) ? signs : []).map(entry => ({
+    ...entry,
+    units: (Array.isArray(entry?.units) ? entry.units : []).map(u => {
+      if (hasSize(u?.width_in) || hasSize(u?.height_in)) return u;
+      const proof = nameToProof.get(String(u?.source_line || "").trim().toLowerCase());
+      const w = Number(proof?.w);
+      const h = Number(proof?.h);
+      if (!proof || !(w > 0) || !(h > 0)) return u;
+      return {
+        ...u,
+        width_in: w,
+        height_in: h,
+        faces: Number(proof.s) === 2 ? 2 : Number(proof.s) === 1 ? 1 : u.faces,
+        size_basis: "proof",
+        size_source: `CoreBridge proof: ${proof.t || `${w}" x ${h}"`}`,
+      };
+    }),
+  }));
 }
 
 // Derive the legacy flat inputs so old drafts and PermitWorkflowDesigner keep working.
