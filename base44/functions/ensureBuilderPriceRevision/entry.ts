@@ -129,8 +129,8 @@ Deno.serve(async (req) => {
     // still describe a real Product attached to this Estimate. Existing audit
     // retries above remain reusable even if the Product is removed later.
     const [builder, estimate] = await Promise.all([
-      base44.entities.BuilderProduct.get(builderProductId).catch(() => null),
-      base44.entities.AllInOneEstimate.get(estimateId).catch(() => null),
+      base44.asServiceRole.entities.BuilderProduct.get(builderProductId).catch(() => null),
+      base44.asServiceRole.entities.AllInOneEstimate.get(estimateId).catch(() => null),
     ]);
     if (!builder?.id) return Response.json({ error: 'Builder Product could not be verified for this pricing revision.' }, { status: 404 });
     if (!estimate?.id) return Response.json({ error: 'Estimate could not be verified for this pricing revision.' }, { status: 404 });

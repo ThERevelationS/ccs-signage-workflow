@@ -1,9 +1,10 @@
 // Vinyl Estimator — tabbed estimator with multiple vinyl workflows + installation.
-// Tabs: Project Info → Vinyl Workflows → Installation → Travel & Crew → Summary
+// Tabs: Vinyl Workflows → Installation → Travel & Crew → Summary
 // Each workflow has its own vinyl + machines + parts + roll layout, so different
 // materials never get nested onto the same physical roll.
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { withStandaloneBuilderRedirect } from "@/components/estimator/aio/StandaloneBuilderRedirect";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   VinylProject, VinylInventory, VinylMachine,
@@ -15,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, Droplets, Loader2, FileText, Layers, HardHat, Calculator, Plus, MapPin, Settings as SettingsIcon, ChevronsUpDown, ChevronsDownUp, BookmarkPlus, ClipboardPaste, UploadCloud, AlertTriangle, TrendingUp } from "lucide-react";
+import { ArrowLeft, Droplets, Loader2, Layers, HardHat, Calculator, Plus, MapPin, Settings as SettingsIcon, ChevronsUpDown, ChevronsDownUp, BookmarkPlus, ClipboardPaste, UploadCloud, AlertTriangle, TrendingUp } from "lucide-react";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeVinylProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
@@ -48,7 +49,8 @@ import { staffEntities } from "@/components/staff/staffEntities";
 const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 const sumOrNull = (...xs) => xs.every(v => Number.isFinite(v)) ? xs.reduce((s, v) => s + v, 0) : null;
 
-export default function VinylEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
+export default withStandaloneBuilderRedirect(VinylEstimator, "vinyl", "VinylProject");
+function VinylEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [search] = useSearchParams();
   // Embedded All-In-One context wins over standalone query parameters.
   const projectId = embeddedProjectId || search.get("id") || search.get("edit");
@@ -64,7 +66,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("project");
+  const [activeTab, setActiveTab] = useState("workflows");
   const persistedProjectIdRef = useRef(projectId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
   const copyAttemptRef = useRef({ signature: "", key: "" });
@@ -133,7 +135,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
             client_name: estimate?.client_name || migrated.client_name,
             customer_id: estimate?.customer_id || migrated.customer_id,
             estimate_number: estimate?.estimate_number || migrated.estimate_number,
-            site_address: migrated.site_address || estimate?.site_address || "",
+            site_address: migrated.site_address?.trim() ? migrated.site_address : (estimate?.site_address || ""),
           });
         } else {
           // Seed first workflow with sensible defaults
@@ -144,6 +146,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
 
           setProject(prev => ({
             ...prev,
+            site_address: estimate?.site_address || prev.site_address || "",
             workflows: [{
               ...prev.workflows[0],
               vinyl_id: defaultVinyl?.id || "",
@@ -310,9 +313,9 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
         : "Save paused: fix the flagged pricing values before saving — unavailable pricing is never written as $0.");
       return;
     }
-    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
+    if (!embedded && (!project.project_name || !(estimateContext?.client_name || project.client_name))) {
       alert("Please fill in Project Name and Client Name.");
-      setActiveTab("project");
+      setActiveTab("workflows");
       return;
     }
     setSaving(true);
@@ -573,8 +576,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="sticky top-[64px] z-30 -mx-2 px-2 py-2 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/60">
-                <TabsList className="grid w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1" style={{ gridTemplateColumns: "repeat(6, minmax(0, 1fr))" }}>
-                  <TabBtn value="project"   icon={FileText}   label="Project" />
+                <TabsList className="grid w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1" style={{ gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}>
                   <TabBtn value="workflows" icon={Layers}     label="Vinyl Workflows" amount={sumOrNull(rollup.materialCost, rollup.machineCost, rollup.laborCost)} warn={workflowsHaveIssues || workflowPricing.some(p => p.issues.length > 0)} />
                   <TabBtn value="install"   icon={HardHat}    label="Installation"    amount={sumOrNull(rollup.equipmentCost, rollup.personnelCost)} warn={installIssue} />
                   <TabBtn value="travel"    icon={MapPin}     label="Travel"          amount={rollup.travelCost} warn={travelIssue} />
@@ -604,39 +606,10 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                 </div>
               )}
 
-              {/* PROJECT TAB */}
-              <TabsContent value="project" className="mt-4 space-y-4">
+              <TabsContent value="workflows" className="mt-4 space-y-4">
                 <Card className="bg-white border-0 shadow-sm">
-                  <CardHeader className="pb-3"><CardTitle className="text-lg">Project Information</CardTitle></CardHeader>
+                  <CardHeader className="pb-3"><CardTitle className="text-lg">Job conditions</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Client Name *</Label>
-                        <Input
-                          value={estimateContext?.client_name || project.client_name || ""}
-                          onChange={(e) => !embedded && updateProject({ client_name: e.target.value })}
-                          readOnly={embedded}
-                          className="mt-1"
-                          placeholder="Enter client name"
-                        />
-                        {embedded && <p className="text-[10px] text-slate-400 mt-1">Inherited from the All-In-One estimate.</p>}
-                      </div>
-                      <div>
-                        <Label>Project Name *</Label>
-                        <Input value={project.project_name} onChange={(e) => updateProject({ project_name: e.target.value })} className="mt-1" />
-                      </div>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Estimate Number</Label>
-                        <Input value={estimateContext?.estimate_number || project.estimate_number || ""} onChange={(e) => !embedded && updateProject({ estimate_number: e.target.value })} readOnly={embedded} placeholder="e.g., VIN-2024-001" className="mt-1" />
-                      </div>
-                      <div>
-                        <Label>Project Link <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
-                        <Input value={project.hyperlink} onChange={(e) => updateProject({ hyperlink: e.target.value })} placeholder="https://..." className="mt-1" />
-                      </div>
-                    </div>
-
                     {/* Interior / Exterior */}
                     <div>
                       <Label className="text-sm font-semibold text-slate-900">Installation Environment</Label>
@@ -681,22 +654,6 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                   </CardContent>
                 </Card>
 
-                <Card className="bg-white border-0 shadow-sm">
-                  <CardHeader className="pb-3"><CardTitle className="text-lg">Notes</CardTitle></CardHeader>
-                  <CardContent>
-                    <Textarea value={project.notes || ""} onChange={(e) => updateProject({ notes: e.target.value })} className="h-32" />
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end">
-                  <Button onClick={() => setActiveTab("workflows")} className="bg-blue-600 hover:bg-blue-700 text-white">
-                    Continue to Vinyl Workflows →
-                  </Button>
-                </div>
-              </TabsContent>
-
-              {/* WORKFLOWS TAB */}
-              <TabsContent value="workflows" className="mt-4 space-y-4">
                 <div className="flex items-center justify-between bg-white rounded-lg border border-slate-200 px-3 py-2 shadow-sm flex-wrap gap-2">
                   <div className="text-sm text-slate-600">
                     Add one workflow per vinyl type. Each workflow lays out on its own roll.
@@ -826,6 +783,10 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
               {/* SUMMARY TAB */}
               <TabsContent value="summary" className="mt-4 space-y-3">
                 <Card className="bg-white border-0 shadow-sm">
+                  <CardHeader className="pb-3"><CardTitle className="text-lg">Notes</CardTitle></CardHeader>
+                  <CardContent><Textarea value={project.notes || ""} onChange={(e) => updateProject({ notes: e.target.value })} className="h-32" /></CardContent>
+                </Card>
+                <Card className="bg-white border-0 shadow-sm">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg">Cost Breakdown</CardTitle>
                   </CardHeader>
@@ -882,8 +843,8 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
               <ModuleActionBar
                 onTemplates={() => setTemplateMode("load")}
                 onSaveAsTemplate={() => setTemplateMode("save")}
-                onSaveAsCopy={handleSaveAsCopy}
-                estimateId={estimateId}
+                onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
+                estimateId={embedded ? undefined : estimateId}
                 saving={saving}
               />
             </div>

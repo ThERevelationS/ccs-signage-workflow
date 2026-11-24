@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
 import { deleteFoundationTemplate, saveFoundationTemplate } from "./foundationTemplateService";
@@ -63,7 +63,7 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
     setLoadFailed(false);
     setError(null);
     loadAllEntityRows({
-      entity: base44.entities.ProjectTemplate,
+      entity: staffEntities.ProjectTemplate,
       query: { module_key: "foundation" },
       sort: "created_date",
       label: "Foundation templates",

@@ -252,7 +252,7 @@ export function normalizeFoundationAssembly(project, { previous = null, createId
   if (typeof createId !== "function") throw new Error("foundation assembly: createId(kind) factory is required");
   if (!isRecord(project)) throw new Error("foundation assembly: project must be a record");
   const ver = project.assembly_schema_version;
-  if (ver !== undefined && ver !== 1) throw new Error(`foundation assembly: unsupported assembly_schema_version ${String(ver)}`);
+  if (ver != null && ver !== 1) throw new Error(`foundation assembly: unsupported assembly_schema_version ${String(ver)}`);
   const used = new Set();
   const seen = new Set();
   for (const k of ARRAYS) {

@@ -26,6 +26,7 @@ Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText
 
 // ---------- stubs (boundary + visual leaves only) ----------
 const STUBS = {
+  '@/components/estimator/aio/StandaloneBuilderRedirect': `export const withStandaloneBuilderRedirect=(Builder)=>Builder;`,
   '@/components/auth/EmailGate': "export const useAuth=()=>({currentUser:{id:'synthetic-staff'}});",
   '@/components/ui/input': `export const Input=(p)=><input {...p}/>;`,
   '@/components/ui/tabs': `export const Tabs=(p)=><div>{p.children}</div>;export const TabsContent=(p)=><div>{p.children}</div>;export const TabsList=(p)=><div>{p.children}</div>;export const TabsTrigger=(p)=><button type="button" onClick={p.onClick}>{p.children}</button>;`,
@@ -232,9 +233,8 @@ await ok('B: Save/SaveExit/Copy/Swap/CtrlS/autosave blocked -> zero I/O, route+r
   const c = await mount({ project: proj, pageProps: { onSaved: () => globalThis.__spies.push(['onSaved']), onClose: () => globalThis.__spies.push(['onClose']) } });
   try {
     const seenBefore = JSON.parse(JSON.stringify(globalThis.__seenProject));
-    const nameInput = c.root.findAll(el => el.type === 'input' && typeof el.props?.onChange === 'function')[0];
-    assert.ok(nameInput, 'editable input present');
-    await act(async () => { nameInput.props.onChange({ target: { value: 'Edited' } }); });
+    const notesInput = c.root.findByProps({ placeholder: 'Notes for the estimate -- the preliminary notice stays attached.' });
+    await act(async () => { notesInput.props.onChange({ target: { value: 'Edited' } }); });
     const locBefore = { pathname: locations.at(-1)?.pathname, search: locations.at(-1)?.search };
     const onSave = toolbarProp(c, 'onSave'); assert.ok(onSave, 'onSave captured');
     let r; await act(async () => { r = await onSave(); });

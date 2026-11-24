@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { MailCheck } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { formatQuoteIssueDate, isQuoteExpired, quoteExpirationDate } from "./quoteLifecycle";
 import { listEstimateRevisions } from "./estimateRevisionService";
 import { loadAllEntityRows } from "./loadAllEntityRows";
@@ -33,7 +33,7 @@ export default function EstimateQuoteDeliveryPanel({ estimate, refreshKey = 0 })
     setAuditReadError("");
     Promise.all([
       loadAllEntityRows({
-        entity: base44.entities.EstimateQuoteDelivery,
+        entity: staffEntities.EstimateQuoteDelivery,
         query: { estimate_id: estimate.id },
         sort: "sent_at",
         label: "Estimate quote deliveries",

@@ -1,4 +1,5 @@
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
+import { canSeeLibraryItem } from "@/components/estimator/products/libraryOwnership";
 import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
 import { addPartPackageToProduct } from "@/components/estimator/parts/partPackageService";
 import { builderMutationHash } from "@/components/estimator/builder/builderMutationRecovery";
@@ -35,6 +36,11 @@ function templateFamilyKey({ templateType, sourceId, meta }) {
 }
 
 async function resolveTemplateVersion({ familyKey, idempotencyKey }) {
+  const entity = staffEntities.PartTemplate;
+  const matches = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { template_family_key: familyKey, idempotency_key: idempotencyKey });
+  if (!Array.isArray(matches)) throw new Error("Part Template identity could not be verified. Retry the save before overwriting anything.");
+  const existing = matches.find((row) => String(row?.idempotency_key || "") === idempotencyKey);
+  if (existing) return Math.max(1, Number(existing.template_version) || 1);
   const rows = await loadAllEntityRows({
     entity: staffEntities.PartTemplate,
     query: { template_family_key: familyKey },
@@ -42,8 +48,6 @@ async function resolveTemplateVersion({ familyKey, idempotencyKey }) {
     label: "Part Template versions",
   });
   if (!Array.isArray(rows)) throw new Error("Part Template version history could not be verified. Retry the save before overwriting anything.");
-  const existing = rows.find((row) => String(row?.idempotency_key || "") === idempotencyKey);
-  if (existing) return Math.max(1, Number(existing.template_version) || 1);
   const versions = rows.map((row) => Number(row?.template_version)).filter((v) => Number.isInteger(v) && v >= 1);
   return versions.length ? Math.max(...versions) + 1 : 1;
 }
@@ -57,6 +61,7 @@ export async function savePartTemplate({ estimateId = "", builderProductId = "",
   }
   const meta = normalizeOptions({ template_name: livePart.client_label || livePart.part_name || "Saved Part", ...options });
   const idempotencyKey = `part_template_save:${builderMutationHash({
+    user_email: String(getSessionUser()?.email || "").trim().toLowerCase(),
     template_type: "part",
     part_id: livePart.id,
     part_updated_date: livePart.updated_date || "",
@@ -122,6 +127,7 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
   const meta = normalizeOptions({ template_name: liveGroup.client_label || liveGroup.group_name || "Saved Part Group", ...options });
   const first = activeParts[0] || {};
   const idempotencyKey = `part_group_template_save:${builderMutationHash({
+    user_email: String(getSessionUser()?.email || "").trim().toLowerCase(),
     template_type: "part_group",
     group_id: liveGroup.id,
     group_updated_date: liveGroup.updated_date || "",
@@ -164,13 +170,12 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
 export async function listPartTemplates({ includeInactive = false } = {}) {
   const [rows, me] = await Promise.all([
     loadAllEntityRows({ entity: staffEntities.PartTemplate, sort: "template_name", label: "Part Library" }),
-    base44.auth.me().catch(() => null),
+    Promise.resolve(getSessionUser()),
   ]);
   return (rows || [])
     .filter((row) => {
       if (!includeInactive && row.is_active === false) return false;
-      if (row.product_group === "global") return true;
-      return !row.created_by_id || (!!me?.id && row.created_by_id === me.id);
+      return canSeeLibraryItem(row, me);
     })
     .sort((a, b) => String(a.template_name || "").localeCompare(String(b.template_name || "")));
 }
@@ -179,11 +184,11 @@ export async function instantiatePartTemplate({ estimateId, targetBuilderProduct
   if (!template?.id) throw new Error("Saved Part is required.");
   const [liveTemplate, me] = await Promise.all([
     staffEntities.PartTemplate.get(template.id),
-    base44.auth.me().catch(() => null),
+    Promise.resolve(getSessionUser()),
   ]);
   if (!liveTemplate) throw new Error("This Saved Part no longer exists. Reopen the Part Library to refresh it.");
   if (liveTemplate.is_active === false) throw new Error("This Saved Part is now inactive and cannot be added. Reopen the Part Library to refresh it.");
-  const accessible = liveTemplate.product_group === "global" || !liveTemplate.created_by_id || (!!me?.id && liveTemplate.created_by_id === me.id);
+  const accessible = canSeeLibraryItem(liveTemplate, me);
   if (!accessible) throw new Error("This Saved Part is no longer available to your account.");
   if (template.updated_date && liveTemplate.updated_date && template.updated_date !== liveTemplate.updated_date) {
     throw new Error("This Saved Part changed after the Part Library opened. Reopen the library and review the latest reusable snapshot before adding it.");

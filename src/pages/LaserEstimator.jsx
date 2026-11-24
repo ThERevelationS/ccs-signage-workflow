@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { withStandaloneBuilderRedirect } from "@/components/estimator/aio/StandaloneBuilderRedirect";
 import { LaserProject, Settings } from "@/api/gatedEntities";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, Plus, Trash2, ArrowLeft, Zap, FileText, ListChecks, Calculator, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
+import { Save, Plus, Trash2, ArrowLeft, Zap, ListChecks, Calculator, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
@@ -24,6 +25,7 @@ import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemp
 import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import { TrendingUp } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { deriveLaserItem } from "@/components/estimator/laser/laserItemDerivation";
 import {
   calcLaserPricing,
   hasIssueFor,
@@ -67,7 +69,8 @@ const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;
 const exportMoney = (v) => (Number.isFinite(v) ? "$" + v.toFixed(2) : "—");
 const exportHours = (v) => (Number.isFinite(v) ? v.toFixed(3) : "—");
 
-export default function LaserEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
+export default withStandaloneBuilderRedirect(LaserEstimator, "laser", "LaserProject");
+function LaserEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const editId = embeddedProjectId || searchParams.get('edit') || searchParams.get('id');
@@ -104,7 +107,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   const [savedTotals, setSavedTotals] = useState({
     total_machine_cost: null, total_labor_cost: null, total_supplies_cost: null,
   });
-  const [activeTab, setActiveTab] = useState("project");
+  const [activeTab, setActiveTab] = useState("items");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
   const copyAttemptRef = useRef({ signature: "", key: "" });
@@ -259,7 +262,7 @@ async function extractLaserDims(file) {
       machine_cost: 0,
       labor_cost: 0
     };
-    setProject((prev) => ({ ...prev, items: [...prev.items, newItem] }));
+    setProject((prev) => ({ ...prev, items: [...prev.items, deriveLaserItem(newItem, 'item_type', globalSettings)] }));
   };
 
   // File attach + dimension extraction (#92): upload the part's vector file,
@@ -294,51 +297,7 @@ async function extractLaserDims(file) {
       ...prev,
       items: prev.items.map((item, i) => {
         if (i !== index) return item;
-        const updated = { ...item, [field]: value };
-
-        // Auto-calculate based on item type
-        if (field === 'item_type' || field === 'material_type' || field === 'material_thickness' ||
-        field === 'length' || field === 'width' || field === 'letter_height' ||
-        field === 'num_letters' || field === 'quantity' || field === 'engrave_area_sqin') {
-
-          const perimFactor = parseFloat(globalSettings.laser_letter_perimeter_factor) || 3.5;
-
-          // Reset total_cut_length_inches first to ensure correct recalculation
-          updated.total_cut_length_inches = 0;
-
-          if (updated.item_type === 'panel' || updated.item_type === 'engrave_and_cut') {
-            const perimeterInches = 2 * (updated.length + updated.width);
-            updated.total_cut_length_inches = perimeterInches * updated.quantity;
-          } 
-          
-          if ((updated.item_type === 'engraving' || updated.item_type === 'engrave_and_cut') && (field === 'length' || field === 'width' || field === 'item_type')) {
-            updated.engrave_area_sqin = updated.length * updated.width;
-          }
-
-          if (updated.item_type === 'lettering') {
-            const perimeterPerLetter = updated.letter_height * perimFactor;
-            updated.total_cut_length_inches = perimeterPerLetter * updated.num_letters * updated.quantity;
-          }
-          // For 'engraving', total_cut_length_inches remains 0.
-
-          // Get cut speed from settings based on thickness
-          // (String() guards: absent material/thickness used to throw here —
-          // now it resolves a nonexistent setting key → the same `||default`
-          // result, and the field is flagged where it's actually consumed.)
-          const thicknessKey = `cut_speed_${String(updated.material_thickness ?? "").replace('/', '_')}`;
-          const baseSpeed = parseFloat(globalSettings[thicknessKey]) || 20;
-
-          // Apply material multiplier
-          const materialMultiplier = parseFloat(globalSettings[`${String(updated.material_type ?? "").toLowerCase()}_cut_multiplier`]) || 1.0;
-          updated.cut_speed_ipm = baseSpeed * materialMultiplier;
-
-          // Get engraving speed from settings
-          const engraveBaseSpeed = parseFloat(globalSettings.laser_engrave_speed_sqipm) || 5;
-          const engraveMultiplier = parseFloat(globalSettings[`${String(updated.material_type ?? "").toLowerCase()}_engrave_multiplier`]) || 1.0;
-          updated.engrave_speed_sqipm = engraveBaseSpeed * engraveMultiplier;
-        }
-
-        return updated;
+        return deriveLaserItem({ ...item, [field]: value }, field, globalSettings);
       })
     }));
   };
@@ -410,7 +369,7 @@ async function extractLaserDims(file) {
       return;
     }
     setSaveError("");
-    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
+    if (!embedded && (!project.project_name || !(estimateContext?.client_name || project.client_name))) {
       alert('Please fill in project name and client name');
       return;
     }
@@ -1583,79 +1542,13 @@ Best regards`;
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="sticky top-[64px] z-30 -mx-2 px-2 py-2 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/60">
-                <TabsList className="grid grid-cols-5 w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1">
-                  <TabBadgeTrigger value="project" icon={FileText} label="Project" color="red" />
+                <TabsList className="grid grid-cols-4 w-full bg-white shadow-md border border-slate-200 h-auto p-1 gap-1">
                   <TabBadgeTrigger value="items" icon={ListChecks} label="Items" amount={(displayTotals.total_machine_cost ?? 0) + (displayTotals.total_labor_cost ?? 0)} count={(project.items || []).length} color="red" />
                   <TabBadgeTrigger value="advanced" icon={SettingsIcon} label="Advanced" color="red" />
                   <TabBadgeTrigger value="summary" icon={Calculator} label="Summary" amount={displayTotalCost ?? 0} color="red" />
                   <TabBadgeTrigger value="pricing" icon={TrendingUp} label="Customer Pricing" accent color="red" />
                 </TabsList>
               </div>
-
-              <TabsContent value="project" className="mt-4 space-y-4">
-            {/* Project Info */}
-            <Card className="bg-white border-0 shadow-sm">
-              <CardHeader className="pb-3"><CardTitle className="text-lg font-semibold text-slate-900">Project Information</CardTitle></CardHeader>
-              <CardContent className="px-2 space-y-3">
-                <div className="grid md:grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="client_name">Client Name *</Label>
-                    <Input
-                      value={estimateContext?.client_name || project.client_name || ''}
-                      onChange={(e) => !embedded && setProject((prev) => ({ ...prev, client_name: e.target.value }))}
-                      readOnly={embedded}
-                      className="mt-1"
-                      placeholder="Enter client name"
-                    />
-                    {embedded && <p className="text-[10px] text-slate-400 mt-1">Inherited from the All-In-One estimate.</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="project_name">Project Name *</Label>
-                    <Input
-                      id="project_name"
-                      value={project.project_name}
-                      onChange={(e) => setProject((prev) => ({ ...prev, project_name: e.target.value }))}
-                      placeholder="Enter project name"
-                      className="mt-1" />
-
-                  </div>
-                </div>
-                <div className="grid md:grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="estimate_number">Estimate Number</Label>
-                    <Input
-                      id="estimate_number"
-                      value={estimateContext?.estimate_number || project.estimate_number || ''}
-                      onChange={(e) => !embedded && setProject((prev) => ({ ...prev, estimate_number: e.target.value }))}
-                      readOnly={embedded}
-                      placeholder="e.g., LASER-2024-001"
-                      className="mt-1" />
-
-                  </div>
-                  <div>
-                    <Label htmlFor="hyperlink">Project Link <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
-                    <Input
-                      id="hyperlink"
-                      value={project.hyperlink}
-                      onChange={(e) => setProject((prev) => ({ ...prev, hyperlink: e.target.value }))}
-                      placeholder="https://..."
-                      className="mt-1" />
-
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="notes">Project Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={project.notes}
-                    onChange={(e) => setProject((prev) => ({ ...prev, notes: e.target.value }))}
-                    placeholder="Any additional notes..." className="bg-transparent px-2 py-2 text-base rounded-md flex min-h-[60px] w-full border border-input shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm h-12" />
-
-
-                </div>
-              </CardContent>
-            </Card>
-              </TabsContent>
 
               <TabsContent value="items" className="mt-4 space-y-4">
             {/* Items */}
@@ -1916,6 +1809,7 @@ Best regards`;
               </TabsContent>
 
               <TabsContent value="summary" className="mt-4 space-y-4">
+                <Card className="bg-white border-0 shadow-sm"><CardHeader><CardTitle>Notes</CardTitle></CardHeader><CardContent><Textarea id="notes" value={project.notes} onChange={(e) => setProject((prev) => ({ ...prev, notes: e.target.value }))} placeholder="Any additional notes..." /></CardContent></Card>
                 <Card className="bg-white border-0 shadow-sm">
                   <CardHeader className="pb-3"><CardTitle className="text-lg font-semibold text-slate-900">Estimate Breakdown</CardTitle></CardHeader>
                   <CardContent className="p-0">
@@ -2038,24 +1932,24 @@ Best regards`;
                   <Button onClick={downloadEstimate} variant="outline" className="w-full">
                     Download Estimate
                   </Button>
-                  <Button onClick={printEstimate} variant="outline" className="w-full">
+                  {!embedded && <Button onClick={printEstimate} variant="outline" className="w-full">
                     Print Estimate
-                  </Button>
+                  </Button>}
                   <Button onClick={emailEstimate} variant="outline" className="w-full">
                     Email Estimate
                   </Button>
                 </div>
 
                 {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
-                <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name) || project.items.length === 0} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 mt-4">
+                <Button onClick={saveProject} disabled={isSaving || (!embedded && (!project.project_name || !(estimateContext?.client_name || project.client_name))) || project.items.length === 0} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 mt-4">
                   {isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" /> {isEditing ? 'Update Estimate' : 'Save Estimate'}</>}
                 </Button>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <ModuleActionBar
                     onTemplates={() => setTemplateMode("load")}
                     onSaveAsTemplate={() => setTemplateMode("save")}
-                    onSaveAsCopy={handleSaveAsCopy}
-                    estimateId={estimateId}
+                    onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
+                    estimateId={embedded ? undefined : estimateId}
                     saving={isSaving}
                   />
                 </div>

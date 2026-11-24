@@ -112,7 +112,9 @@ try {
     }
     const creates = calls.filter(({ name }) => name === 'ensureNewEstimate');
     assert.deepEqual(creates.map(({ payload }) => payload.creation_key), ['split-retry', 'duplicate-retry', 'split-retry', 'duplicate-retry']);
-    assert.equal(calls.filter(({ name }) => name === 'generateDocNumber').length, 1);
+    assert.equal(calls.filter(({ name }) => name === 'generateDocNumber').length, 2);
+    assert.equal(creates[0].payload.estimate.estimate_number, 'EST-SYN-1');
+    assert.equal(creates[2].payload.estimate.estimate_number, creates[0].payload.estimate.estimate_number);
   });
 
   const { default: Products } = await load('src/components/estimator/aio/EstimateProductsList.jsx');
@@ -186,6 +188,22 @@ try {
   });
 
   const { default: Details } = await load('src/components/estimator/aio/Step1EstimateDetails.jsx');
+  await test('new estimate number is read-only and assigned automatically', async () => {
+    let tree;
+    await act(async () => { tree = create(React.createElement(Details, {
+      form: { estimate_number: '', client_name: '' }, patch: () => {},
+      customers: [], taxGroups: [], users: [], termsOptions: [], salesCenters: [],
+    })); });
+    try {
+      const input = tree.root.findAllByType('input').find((node) => node.props.placeholder === 'Assigned automatically');
+      assert.ok(input);
+      assert.equal(input.props.readOnly, true);
+      assert.equal(input.props.onChange, undefined);
+      assert.equal(button(tree, 'Generate'), undefined);
+    } finally {
+      await act(async () => { tree.unmount(); });
+    }
+  });
   await test('recent customer chips reapply the customer and record the selection', async () => {
     let patch;
     let selected;
@@ -268,6 +286,7 @@ try {
     assert.match(detail, /copyingRef\.current \|\| saving \|\| trashing/);
     assert.match(detail, /openRevision\) throw new Error\("Save the open estimate revision before splitting/);
     assert.match(detail, /creationKey: copyCreationKey\("split", lineIds\)/);
+    assert.equal((detail.match(/estimate_number: _estimate_number, \.\.\.data \} = estimate/g) || []).length, 2, 'ordinary save and quote finalization never overwrite an assigned number');
     const panel = readFileSync(resolve(here, '../src/components/estimator/CustomerQuotePanel.jsx'), 'utf8');
     assert.match(panel, /emailEstimate = \{ \.\.\.estimate, quote_total: quoteTotalNow \}/);
   });

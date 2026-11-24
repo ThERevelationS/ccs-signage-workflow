@@ -18,6 +18,7 @@ import PermitJobDocuments from "./PermitJobDocuments";
 import InlineEditField from "./InlineEditField";
 import LocalityPickerDialog from "./LocalityPickerDialog";
 import PermitSetupWizard from "./PermitSetupWizard";
+import { useJobSiteAddress } from "./jobSiteAddress";
 import { getPermitGroupProgress, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META } from "./permitQueue";
 import { summarizePermitGroupAuthorityCoverage, summarizePermitLineOfficeAuthority, legacyOfficeLinkOptions, officeResearchStatusLine } from "@/shared/permittingAddressLocality.js";
 
@@ -85,6 +86,8 @@ export default function PermitClientGroup({
     else { setInternalExpanded(nextExpanded); try { localStorage.setItem(expandKey, nextExpanded ? "1" : "0"); } catch {} }
   };
   const wo = group.work_order;
+  // The picker reads its address once on open, so mount it after the job site resolves.
+  const pickerSite = useJobSiteAddress(wo, showLocalityPicker);
   const hasLines = group.lines.length > 0;
   // The job's applied office — only defined when every line shares one
   // locality, which is what "remove the office from this job" means.
@@ -689,13 +692,12 @@ export default function PermitClientGroup({
         </AlertDialogContent>
       </AlertDialog>
 
-      {showLocalityPicker && (
+      {showLocalityPicker && !pickerSite.loading && (
         <LocalityPickerDialog
           isOpen={showLocalityPicker}
           onClose={() => setShowLocalityPicker(false)}
           localities={localities}
-          initialAddress={[wo?.install_location, wo?.address_line_2, wo?.township_city, wo?.county, wo?.state]
-            .filter(v => String(v || '').trim()).join(', ')}
+          initialAddress={pickerSite.address}
           onApply={(localityId, opts) => {
             onSelectLocalityForWorkOrder(group.work_order_id, localityId, opts);
           }}

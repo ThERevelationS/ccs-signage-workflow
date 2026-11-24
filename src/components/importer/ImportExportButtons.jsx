@@ -25,6 +25,7 @@ import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { loadAllCustomers } from "@/components/estimator/customerSync";
 import { computePricing } from "@/components/estimator/aioPricing";
 import { buildCustomerQuoteRows } from "@/components/estimator/customerQuote";
+import CopyFromEstimateDialog from "@/components/estimator/aio/CopyFromEstimateDialog";
 import {
   exportEstimateJson,
   exportEstimatesBackupJson,
@@ -42,7 +43,6 @@ import {
   appendLineItemsToEstimate,
   templateImportableSections,
   appendTemplateSectionsToEstimate,
-  copyProductBomToProduct,
 } from "@/components/estimator/importEstimates";
 
 const btn = "h-8 px-3 inline-flex items-center gap-1.5 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50";
@@ -355,127 +355,16 @@ export function ImportTemplateSectionsButton({ estimate, onApplied, className = 
 
 export function CopyBomButton({ estimateId, targetBuilderProductId, expectedEstimateUpdatedAt = "", onCopied, className = btn }) {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [estimates, setEstimates] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [sourceEstimate, setSourceEstimate] = useState(null);
-  const [search, setSearch] = useState("");
-  const [loadError, setLoadError] = useState("");
-
-  const openPicker = async () => {
-    setOpen(true);
-    setLoading(true);
-    setLoadError("");
-    setSourceEstimate(null);
-    setProducts([]);
-    try {
-      const rows = await loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, sort: "-created_date", label: "Estimates for BOM copy" });
-      setEstimates((rows || []).filter((e) => e.id && e.id !== estimateId && e.deleted !== true).slice(0, 200));
-    } catch (e) {
-      setLoadError(e?.message || "Estimates could not be loaded.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const pickEstimate = async (est) => {
-    setSourceEstimate(est);
-    setLoading(true);
-    setLoadError("");
-    try {
-      const rows = await loadAllEntityRows({ entity: staffEntities.BuilderProduct, query: { estimate_id: est.id }, sort: "created_date", label: "Source products" });
-      setProducts(rows || []);
-      if (!(rows || []).length) setLoadError("This estimate has no Products with a BOM to copy.");
-    } catch (e) {
-      setLoadError(e?.message || "Products could not be loaded.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const copy = async (product) => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      const res = await copyProductBomToProduct({
-        estimateId,
-        sourceBuilderProductId: product.id,
-        targetBuilderProductId,
-        expectedEstimateUpdatedAt,
-      });
-      onCopied?.(res);
-      setOpen(false);
-      window.alert(`Copied ${res.packages} BOM package(s) from "${product.client_label || product.product_name || product.name || "Product"}" to this Product.`);
-    } catch (e) {
-      window.alert(e?.message || "The BOM could not be copied.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const term = search.trim().toLowerCase();
-  const visibleEstimates = term
-    ? estimates.filter((e) => [e.estimate_number, e.project_name, e.client_name].filter(Boolean).some((v) => String(v).toLowerCase().includes(term)))
-    : estimates;
-
   return (
     <>
       <button type="button" className={className} disabled={!estimateId || !targetBuilderProductId}
         title="Copy all Parts/Part Groups (the BOM) from a Product on another estimate into this Product"
-        onClick={openPicker}>
+        onClick={() => setOpen(true)}>
         <Copy className="w-3.5 h-3.5" /> Copy BOM from estimate
       </button>
-      <Dialog open={open} onOpenChange={(v) => !v && setOpen(false)}>
-        <DialogContent className="max-w-[560px]">
-          <DialogHeader><DialogTitle className="text-[15px]">Copy BOM from Another Estimate</DialogTitle></DialogHeader>
-          {!sourceEstimate ? (
-            <>
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search estimates by number, project, or customer"
-                className="w-full h-[32px] px-2 border border-gray-300 rounded-sm text-[12px] focus:outline-none focus:border-red-400" />
-              {loading ? (
-                <div className="py-6 text-center text-[12px] text-gray-400"><Loader2 className="w-4 h-4 animate-spin inline mr-2" />Loading…</div>
-              ) : loadError ? (
-                <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{loadError}</div>
-              ) : (
-                <div className="divide-y divide-gray-200 max-h-[320px] overflow-y-auto mt-2">
-                  {visibleEstimates.slice(0, 50).map((e) => (
-                    <button key={e.id} type="button" onClick={() => pickEstimate(e)} className="w-full flex items-center gap-2 py-2 text-left hover:bg-gray-50 px-1 rounded">
-                      <div className="flex-1">
-                        <div className="text-[12px] font-semibold text-gray-800">{e.project_name || e.estimate_number || "Estimate"}</div>
-                        <div className="text-[11px] text-gray-500">#{e.estimate_number || "—"} · {e.client_name || "no customer"}</div>
-                      </div>
-                    </button>
-                  ))}
-                  {!visibleEstimates.length && <p className="text-[12px] text-gray-500 py-4">No other estimates found.</p>}
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="text-[12px] text-gray-600">Source: <b>{sourceEstimate.project_name || sourceEstimate.estimate_number}</b> — pick the Product whose BOM to copy.</div>
-              {loading ? (
-                <div className="py-6 text-center text-[12px] text-gray-400"><Loader2 className="w-4 h-4 animate-spin inline mr-2" />Loading products…</div>
-              ) : loadError ? (
-                <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{loadError}</div>
-              ) : (
-                <div className="divide-y divide-gray-200 max-h-[320px] overflow-y-auto mt-2">
-                  {products.map((p) => (
-                    <div key={p.id} className="flex items-center gap-2 py-2">
-                      <div className="flex-1">
-                        <div className="text-[12px] font-semibold text-gray-800">{p.client_label || p.product_name || p.name || "Product"}</div>
-                        <div className="text-[11px] text-gray-500">{p.module_key || p.product_category || ""}</div>
-                      </div>
-                      <button type="button" disabled={busy} onClick={() => copy(p)} className={modalPrimary}>{busy ? "Copying…" : "Copy BOM"}</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <button type="button" onClick={() => { setSourceEstimate(null); setProducts([]); setLoadError(""); }} className={`${modalBtn} mt-2`}>← Back to estimates</button>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <CopyFromEstimateDialog open={open} mode="bom" estimate={{ id: estimateId }}
+        targetBuilderProductId={targetBuilderProductId} expectedEstimateUpdatedAt={expectedEstimateUpdatedAt}
+        onClose={() => setOpen(false)} onCopied={(result) => onCopied?.(result.copied[0] || result)} />
     </>
   );
 }

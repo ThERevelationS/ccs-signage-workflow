@@ -303,6 +303,10 @@ export default function FaceRecognition({ onVerify, onRecognized, onQrScan, isEn
         return;
       }
       const descriptor = detection.descriptor;
+      if (!descriptor || !descriptor.length) {
+        setScanStatus("No clear face - look at the camera.");
+        return;
+      }
       const prev = capturedRef.current;
       if (prev.length >= ENROLL_TARGET) return;
       const duplicate = prev.some(d => descriptorDistance(d, descriptor) < ENROLL_MIN_POSE_DISTANCE);

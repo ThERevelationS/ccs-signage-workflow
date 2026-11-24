@@ -1,10 +1,9 @@
-import { base44 } from "@/api/base44Client";
 import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
 import { instantiateProductSnapshot } from "@/components/estimator/products/quickProductService";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice, manualCustomerPriceState } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
-import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
+import { assertNoPendingLinesForCopy, builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
@@ -35,31 +34,45 @@ function manualProductPriceOperationKey({ estimateId, builderProductId, lineId, 
   })}`;
 }
 
-export async function cloneProductInEstimate({ estimateId, line, expectedEstimateUpdatedAt = "" }) {
+export async function cloneProductInEstimate({ estimateId, sourceEstimateId = estimateId, line, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line?.builder_product_id) throw new Error("This Product does not have a persistent Product record to clone.");
+  const crossEstimate = sourceEstimateId !== estimateId;
   const [estimate, builder, parts, groups] = await Promise.all([
-    staffEntities.AllInOneEstimate.get(estimateId),
+    staffEntities.AllInOneEstimate.get(sourceEstimateId),
     staffEntities.BuilderProduct.get(line.builder_product_id),
     loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Product clone Builder Parts" }),
     loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Product clone Part Groups" }),
   ]);
   if (!estimate || !builder || !Array.isArray(parts) || !Array.isArray(groups)) throw new Error("The Product could not be fully loaded for cloning.");
+  if (crossEstimate && estimate.deleted === true) throw new Error("The source estimate is no longer available.");
   const currentLine = (estimate.line_items || []).find((item) =>
     item.builder_product_id === builder.id || (line.line_id && item.line_id === line.line_id)
   );
   if (!currentLine) throw new Error("This Product is no longer part of the estimate. Reload before cloning it.");
+  if (crossEstimate) {
+    if (currentLine.builder_product_id !== builder.id || (builder.estimate_id && builder.estimate_id !== sourceEstimateId)) {
+      throw new Error("This Product no longer belongs to the source estimate. Reload before copying it.");
+    }
+    assertNoPendingLinesForCopy([currentLine], "copying this Product");
+    if (currentLine.module_key !== "custom" && (!builder.source_entity || !builder.source_project_id)) {
+      throw new Error("This Product's source project cannot be verified. Reload or repair it before copying.");
+    }
+    if (currentLine.module_key !== "custom" && currentLine.project_id && currentLine.project_id !== builder.source_project_id) {
+      throw new Error("This Product's source project link changed. Reload before copying.");
+    }
+  }
   if (parts.some((part) => part?.builder_product_id !== builder.id) || groups.some((group) => group?.builder_product_id !== builder.id)) {
     throw new Error("This Product's Parts or Part Groups changed ownership. Reload before cloning it.");
   }
 
   let sourceProject = null;
   if (builder.source_entity && builder.source_project_id && currentLine.module_key !== "custom") {
-    sourceProject = await base44.entities[builder.source_entity].get(builder.source_project_id);
+    sourceProject = await staffEntities[builder.source_entity].get(builder.source_project_id);
     if (!sourceProject) throw new Error("The source Builder record could not be verified for this Product clone.");
   }
 
   const originalName = currentLine.client_product_name || builder.client_product_name || currentLine.project_name || "Product";
-  const copyName = `${originalName} — Copy`;
+  const copyName = crossEstimate ? originalName : `${originalName} — Copy`;
   const activeParts = parts.filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
   const activeGroups = groups.filter((group) => group.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
   const frozenTotal = num(builder.frozen_cost, num(currentLine.total_snapshot));
@@ -110,7 +123,7 @@ export async function cloneProductInEstimate({ estimateId, line, expectedEstimat
     productSnapshot: clonePayload,
     expectedEstimateUpdatedAt,
     sourceId: builder.id,
-    sourceType: "product_clone",
+    sourceType: crossEstimate ? "estimate_section_copy" : "product_clone",
   });
 }
 
@@ -170,7 +183,8 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
   // exact browser request, so verify the requested line/Builder targets before
   // treating a stale retry as already completed.
   if (builder && patch.customer_price_snapshot !== undefined && operationKey) {
-    const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builder.id }, sort: "revision_number", label: "Product price revisions" });
+    const entity = staffEntities.BuilderPriceRevision;
+    const revisions = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { builder_product_id: builder.id, idempotency_key: operationKey });
     if (!Array.isArray(revisions)) throw new Error("Product price history could not be verified before changing Product settings.");
     const completedRevision = revisions.find((row) => String(row.idempotency_key || "") === operationKey);
     if (completedRevision) {

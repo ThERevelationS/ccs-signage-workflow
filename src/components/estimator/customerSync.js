@@ -174,7 +174,7 @@ export const upsertCustomerFromEstimate = async (form, customers = [], { changed
     }
     return existing;
   }
-  const response = await base44.functions.invoke("ensureEstimateCustomer", {
+  const response = await base44.functions.invoke("ensureEstimateCustomerV2", {
     company_name: name,
     fields,
     session_token: sessionToken,
@@ -492,7 +492,7 @@ export const backfillCustomersFromWorkOrders = async (customers, { sessionToken 
   const knownIds = new Set(merged.map((customer) => customer.id).filter(Boolean));
   for (const candidate of toCreate) {
     const { company_name, customer_status: _customerStatus, ...fields } = candidate;
-    const response = await base44.functions.invoke("ensureEstimateCustomer", {
+    const response = await base44.functions.invoke("ensureEstimateCustomerV2", {
       company_name,
       fields,
       update_existing: false,

@@ -297,7 +297,7 @@ function LocalityPickerSession({
     // actions and must not register rows in Scan activity.
     const invoke=(name,payload)=>base44.functions.invoke(name,payload);
     try {
-      const lookup=payload=>invoke('resolvePermittingAddress',payload,`Looking up ${address.trim()}`);
+      const lookup=payload=>invoke('resolvePermittingAddressV2',payload,`Looking up ${address.trim()}`);
       let data;
       // Patient retry: the app shares one function budget, so 429s come in
       // bursts. Wait out a burst (up to ~22s) before giving up on the user.
@@ -325,7 +325,7 @@ function LocalityPickerSession({
         try {
           const hint = await geocodeInBrowser(address);
           if (hint) {
-            const retry = await invoke('resolvePermittingAddress', {
+            const retry = await invoke('resolvePermittingAddressV2', {
               address: normalizeAddress(address), session_token: sessionToken, census_hint: hint,
             },`Looking up ${address.trim()}`);
             if (retry?.data?.success !== false) data = retry.data;
@@ -354,7 +354,7 @@ function LocalityPickerSession({
         try{
           const hint=await geocodeInBrowser(address);
           if(hint){
-            const retry=await invoke('resolvePermittingAddress',{address:normalizeAddress(address),session_token:sessionToken,census_hint:hint},`Looking up ${address.trim()}`);
+            const retry=await invoke('resolvePermittingAddressV2',{address:normalizeAddress(address),session_token:sessionToken,census_hint:hint},`Looking up ${address.trim()}`);
             const d=retry?.data;
             if(d&&d.success!==false){
               setResult(d);setError("");serviceFails.current=0;
@@ -653,7 +653,7 @@ function LocalityPickerSession({
       }
       onClose();
     }}>
-      <DialogContent className="flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0">
+      <DialogContent aria-describedby={undefined} className="flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0">
         <DialogHeader className="border-b bg-white px-5 py-3.5">
           <DialogTitle className="flex items-center gap-2 text-base">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-100"><MapPin className="h-4 w-4 text-violet-600" /></span>
@@ -759,7 +759,7 @@ function LocalityPickerSession({
                   const results = [];
                   for (const line of lines) {
                     try {
-                      const res = await base44.functions.invoke("resolvePermittingAddress", { address: line });
+                      const res = await base44.functions.invoke("resolvePermittingAddressV2", { address: line });
                       const data = res?.data || res || {};
                       const sug = data.suggested_locality || null;
                       const loc = sug?.name || data.locality_name || data.locality?.name || data.candidates?.[0]?.locality_name || data.candidates?.[0]?.name || "";

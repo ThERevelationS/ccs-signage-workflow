@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { History, Star } from "lucide-react";
-import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
@@ -52,8 +51,8 @@ export default function EstimatorAuditPanel() {
       });
       try {
         const [revisions, activities, adminRows] = await Promise.all([
-          type === "activity" || type === "admin" ? Promise.resolve([]) : feed("Estimate revisions", base44.entities.EstimateRevision.filter({}, "-updated_date", 150)),
-          type === "revision" || type === "admin" ? Promise.resolve([]) : feed("Opportunity activity", base44.entities.OpportunityActivity.filter({}, "-created_date", 150)),
+          type === "activity" || type === "admin" ? Promise.resolve([]) : feed("Estimate revisions", staffEntities.EstimateRevision.filter({}, "-updated_date", 150)),
+          type === "revision" || type === "admin" ? Promise.resolve([]) : feed("Opportunity activity", staffEntities.OpportunityActivity.filter({}, "-created_date", 150)),
           // AdminAuditLog is not in the base44Client read-proxy set — it must
           // go through staffEntities (staffDataRead ADMIN_READABLE, admin role
           // re-checked server-side; the panel itself mounts only for admins).

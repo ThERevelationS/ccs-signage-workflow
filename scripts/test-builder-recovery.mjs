@@ -7,17 +7,26 @@ import { dirname, resolve } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 const out = resolve(here, '.tmp-builder-recovery.mjs');
 const stub = resolve(here, '.tmp-builder-recovery-sdk.mjs');
-writeFileSync(stub, 'export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) }) }; export const isRetryableFunction = () => false;');
+writeFileSync(stub, 'export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) }), functions: { invoke: (...args) => globalThis.__builderTestInvoke(...args) } }; export const isRetryableFunction = () => false; export const getSessionToken = () => globalThis.__builderTestToken || ""; export const getSessionUser = () => null;');
 buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/builder/builderMutationRecovery.js')],
   bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
   define: { 'import.meta.env': '{}' },
-  alias: { '@/api/base44Client': stub },
+  alias: { '@/api/base44Client': stub, '@/components/auth/EmailGate': stub },
 });
 globalThis.window = { location: { href: 'http://test.local' }, addEventListener() {}, removeEventListener() {}, history: { replaceState() {} }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} } };
 globalThis.document = { title: '', createElement: () => ({}), querySelector: () => null };
 globalThis.localStorage = window.localStorage;
-const { pendingBuilderMutation, builderMutationHash, pendingBuilderMutationAge, pendingBuilderMutationIsStale, STALE_PENDING_BUILDER_MUTATION_MS } = await import(pathToFileURL(out).href);
+const { ensureBuilderPriceRevision, pendingBuilderMutation, builderMutationHash, pendingBuilderMutationAge, pendingBuilderMutationIsStale, STALE_PENDING_BUILDER_MUTATION_MS } = await import(pathToFileURL(out).href);
+
+globalThis.__builderTestToken = 'session-token';
+let revisionCall;
+globalThis.__builderTestInvoke = async (...args) => { revisionCall = args; return { data: { revision: { id: 'rev-1' } } }; };
+await ensureBuilderPriceRevision('key', { builder_product_id: 'builder' });
+assert.equal(revisionCall[0], 'ensureBuilderPriceRevisionV2');
+assert.equal(revisionCall[1].session_token, 'session-token');
+globalThis.__builderTestToken = '';
+await assert.rejects(ensureBuilderPriceRevision('key', {}), /Sign in again/);
 
 // pendingBuilderMutation: only a pending object WITH a key blocks edits.
 assert.equal(pendingBuilderMutation({ line_id: 'x' }), null, 'no pending -> null');
@@ -54,7 +63,7 @@ buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/builder/partSync.js')],
   bundle: true, format: 'esm', outfile: out2, logLevel: 'silent',
   define: { 'import.meta.env': '{}' },
-  alias: { '@/api/base44Client': stub },
+  alias: { '@/api/base44Client': stub, '@/components/auth/EmailGate': stub },
 });
 const { pricingSnapshot } = await import(pathToFileURL(out2).href);
 

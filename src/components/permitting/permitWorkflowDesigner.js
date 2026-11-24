@@ -16,6 +16,8 @@ import { captureElectricalOfficeResponses } from "./electricalOfficeResponseHand
 import { captureWorkflowSources, WORKFLOW_SOURCE_FIELDS } from "./workflowSourceEvidence.mjs";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { withRateLimitRetry } from "@/lib/loadAllEntityRows";
+import { mapAiError, totalUnitCount } from "./permitSigns";
+import { buildPermitPlanPrompt, officeEvidenceFor, profileDocumentBriefs, rulesOnFileJson } from "./permitPlanPrompt";
 
 const ELECTRICAL_RESEARCH_ROLES = [
   { role: "electrical_permit", label: "Permit issuance" },
@@ -205,6 +207,7 @@ const WORKFLOW_JSON_SCHEMA = {
           permit_type: { type: "string", description: "Permit type (e.g. 'Sign Permit', 'Electrical Permit', 'Variance')" },
           action: { type: "string", description: "The action to take (e.g. 'Submit sign permit application with site plan')" },
           required_documents: { type: "array", items: { type: "string" }, description: "Required drawings/documents" },
+          signs: { type: "array", items: { type: "number" }, description: "Sign numbers (#) this step covers" },
           required_forms: { type: "array", items: { type: "string" }, description: "Required forms from source docs" },
           submission_link: { type: "string", description: "Online submission URL if known, empty if not" },
           target_days_from_start: { type: "number", description: "Target days from project start" },
@@ -249,74 +252,55 @@ const WORKFLOW_JSON_SCHEMA = {
   required: ["steps", "gaps", "summary"],
 };
 
-function buildCompositionPrompt(input, rules, sourceDocs, jurisdiction) {
-  const approvedBriefs = rules.approved.map(ruleToCitationBrief);
-  const pendingBriefs = rules.pending.map(ruleToCitationBrief);
-  const formBriefs = sourceDocs.forms.map(sourceDocBrief);
-  const feeBriefs = sourceDocs.feeSchedules.map(sourceDocBrief);
-  const codeBriefs = sourceDocs.codeDocs.map(sourceDocBrief);
-
-  return `You are a sign-permitting workflow designer for a sign company. Generate a step-by-step permit workflow for the following project.
-
-STRICT RULES:
-1. Base every step on the provided approved rules and source documents. Cite the source for every material fact.
-2. Use approved rules as the primary basis. Label steps from approved rules as "approved_rule".
-3. Use pending-review (extracted) rules only as guidance, labeled "pending_review". Never treat them as operational.
-4. Draft/proposed/historical sources are NEVER operational. Do not use them as the basis for any step.
-5. If you cannot determine a requirement from the provided sources, surface it as a gap with basis "staff_confirmation_needed". Never invent requirements, fees, deadlines, or dimensions.
-6. Each step must cite at least one source document or rule (source_document_id + section_or_page + excerpt).
-7. Multiple permit/office lines are expected (zoning/sign, building, electrical, right-of-way, variance, design review, separate municipality/county lines).
-
-PROJECT INPUTS:
-- Project address: ${input.address || "(not provided)"}
-- Customer: ${input.customer || "(not provided)"}
-- Sign type(s): ${input.signTypes || "(not specified)"}
-- Dimensions: ${input.dimensions || "(not specified)"}
-- Illuminated: ${input.illuminated ? "Yes" : "No"}
-- Electrical work: ${input.electricalWork ? "Yes" : "No"}
-- Freestanding: ${input.freestanding ? "Yes" : "No"}
-- EMC/Digital: ${input.emcDigital ? "Yes" : "No"}
-- Temporary vs Permanent: ${input.temporaryVsPermanent || "(not specified)"}
-- New sign vs Face replacement vs Repair: ${input.newVsReplacement || "(not specified)"}
-- Zoning/Site context: ${input.zoningContext || "(not provided)"}
-- Customer exemption status: ${input.exemptionStatus || "(none claimed)"}
-
-JURISDICTION: ${jurisdiction?.jurisdiction_name || "(unresolved — staff must confirm)"}${jurisdiction?.state ? ", " + jurisdiction.state : ""}
-
-APPROVED RULES (operational, cite as verified):
-${JSON.stringify(approvedBriefs, null, 2) || "(none — all steps will need staff confirmation)"}
-
-PENDING-REVIEW RULES (extracted, not yet staff-approved — label as pending_review):
-${JSON.stringify(pendingBriefs, null, 2) || "(none)"}
-
-SOURCE DOCUMENTS — Forms/Checklists:
-${JSON.stringify(formBriefs, null, 2) || "(none found)"}
-
-SOURCE DOCUMENTS — Fee Schedules:
-${JSON.stringify(feeBriefs, null, 2) || "(none found — do not invent fees)"}
-
-SOURCE DOCUMENTS — Code/Ordinance:
-${JSON.stringify(codeBriefs, null, 2) || "(none found)"}
-
-Generate the workflow now. Remember: every step needs a citation; gaps must be surfaced honestly.`;
-}
-
 /**
  * Compose a workflow draft using the platform's native AI (InvokeLLM).
  * Returns a structured draft with steps and gaps.
+ * `options` carries the wizard's per-job context: { offices, signs, installDate, county }.
+ * `profile` is the locality's linked JurisdictionProfile (documents, office
+ * research, size/height/setback rules) or null when absent.
  */
-export async function composeWorkflowDraft(input, rules, sourceDocs, jurisdiction) {
-  const prompt = buildCompositionPrompt(input, rules, sourceDocs, jurisdiction);
-  const res = await base44.integrations.Core.InvokeLLM({
-    prompt,
-    add_context_from_internet: false,
-    response_json_schema: WORKFLOW_JSON_SCHEMA,
+export async function composeWorkflowDraft(input, rules, sourceDocs, jurisdiction, options = {}, profile = null) {
+  const offices = officeEvidenceFor(options.offices, profile);
+  const docBriefs = profileDocumentBriefs(profile);
+  const sourceBriefs = [...sourceDocs.forms, ...sourceDocs.feeSchedules, ...sourceDocs.codeDocs].map(sourceDocBrief);
+  const signs = Array.isArray(options.signs) ? options.signs : [];
+  const prompt = buildPermitPlanPrompt({
+    input,
+    jurisdiction,
+    offices,
+    signs,
+    installDate: options.installDate || "",
+    county: options.county || "",
+    documents: docBriefs,
+    rulesOnFileJson: rulesOnFileJson(profile),
+    approvedBriefs: rules.approved.map(ruleToCitationBrief),
+    pendingBriefs: rules.pending.map(ruleToCitationBrief),
+    sourceBriefs,
   });
+  let res;
+  try {
+    res = await base44.integrations.Core.InvokeLLM({
+      model: "claude-sonnet-5",
+      prompt,
+      add_context_from_internet: false,
+      response_json_schema: WORKFLOW_JSON_SCHEMA,
+    });
+  } catch (e) {
+    throw mapAiError(e);
+  }
   const draft = typeof res === "object" ? res : null;
   if (!draft || !Array.isArray(draft.steps)) {
     throw new Error("AI did not return a valid workflow draft");
   }
+  // Ids/URLs the AI can legitimately cite — a citation naming one of these is
+  // real support for pending_review, not an invented source.
+  const docIds = new Set([
+    ...docBriefs.map(d => String(d.id)).filter(Boolean),
+    ...(sourceDocs.all || []).map(d => String(d.id)).filter(Boolean),
+  ]);
+  const evidenceUrls = offices.flatMap(o => (o.evidence || []).map(e => e.url).filter(Boolean));
   return {
+    model: "claude-sonnet-5",
     jurisdiction: {
       jurisdiction_name: jurisdiction?.jurisdiction_name || "",
       state: jurisdiction?.state || "",
@@ -325,7 +309,7 @@ export async function composeWorkflowDraft(input, rules, sourceDocs, jurisdictio
       locality_name: jurisdiction?.locality_name || "",
       offices_need_check: jurisdiction?.offices_need_check === true,
     },
-    steps: reviewWorkflowSteps(draft.steps, rules),
+    steps: reviewWorkflowSteps(draft.steps, rules, { docIds, evidenceUrls, unitCount: totalUnitCount(signs) }),
     source_evidence: captureWorkflowSources(draft.steps, sourceDocs.all, jurisdiction?.jurisdiction_id),
     gaps: Array.isArray(draft.gaps) ? draft.gaps : [],
     summary: draft.summary || "",
@@ -337,6 +321,7 @@ export async function composeWorkflowDraft(input, rules, sourceDocs, jurisdictio
       electrical_work: Boolean(input.electricalWork),
       freestanding: Boolean(input.freestanding),
       emc_digital: Boolean(input.emcDigital),
+      signs,
     },
     rule_counts: {
       approved: rules.approved.length,
@@ -349,12 +334,14 @@ export async function composeWorkflowDraft(input, rules, sourceDocs, jurisdictio
 // ── Full pipeline ──
 
 /**
- * Run the full designer pipeline: resolve jurisdiction → load rules → load source docs → compose.
+ * Run the full designer pipeline: resolve jurisdiction → load rules → load source docs
+ * (+ the locality's linked JurisdictionProfile when options.profileId) → compose.
  * @param {object} input - Form inputs (address, signTypes, illuminated, etc.)
  * @param {object} [preselectedJurisdiction] - If opened from a jurisdiction panel, skip resolution.
+ * @param {object} [options] - Per-job context: { offices, signs, profileId, installDate, county }.
  * @returns {Promise<object>} The workflow draft.
  */
-export async function runDesignerPipeline(input, preselectedJurisdiction = null, sessionToken = "") {
+export async function runDesignerPipeline(input, preselectedJurisdiction = null, sessionToken = "", options = {}) {
   // 1. Resolve jurisdiction (strict identity — no cross-jurisdiction promotion)
   let jurisdiction = preselectedJurisdiction;
   let unresolvedHint = null;
@@ -377,27 +364,45 @@ export async function runDesignerPipeline(input, preselectedJurisdiction = null,
     };
   }
 
-  // 2. Load rules and source docs in parallel
-  const [rules, sourceDocs] = await Promise.all([
+  // 2. Load rules, source docs, and the linked research profile in parallel
+  const [rules, sourceDocs, profile] = await Promise.all([
     loadJurisdictionRules(jurisdiction.jurisdiction_name, jurisdiction.jurisdiction_id),
     loadJurisdictionSourceDocs(jurisdiction.jurisdiction_name, jurisdiction.jurisdiction_id),
+    options.profile !== undefined
+      ? Promise.resolve(options.profile)
+      : options.profileId
+        ? withRateLimitRetry(() => staffEntities.JurisdictionProfile.get(options.profileId)).catch(() => null)
+        : Promise.resolve(null),
   ]);
 
   // 3. Compose workflow via native AI
-  const draft = await composeWorkflowDraft(input, rules, sourceDocs, jurisdiction);
+  const draft = await composeWorkflowDraft(input, rules, sourceDocs, jurisdiction, options, profile);
   return draft;
 }
 // AI labels are proposals, not source approval. Preserve the existing evidence hierarchy.
-export function reviewWorkflowSteps(steps, rules) {
+// extra = { docIds: Set of loaded profile/PermittingSourceDocument ids,
+//           evidenceUrls: chosen offices' research URLs, unitCount: number of signs }
+export function reviewWorkflowSteps(steps, rules, extra = {}) {
   const approved = new Set(rules.approved.map(r => r.id));
   const pending = new Set(rules.pending.map(r => r.id));
+  const docIds = extra.docIds instanceof Set ? extra.docIds : new Set();
+  const evidenceUrls = (Array.isArray(extra.evidenceUrls) ? extra.evidenceUrls : []).map(u => String(u)).filter(Boolean);
+  const unitCount = Math.floor(Number(extra.unitCount)) || 0;
   return steps.map((step, step_index) => {
     const citations = Array.isArray(step.citations) ? step.citations : [];
     const known = citations.length > 0 && citations.every(c => approved.has(c.rule_id) || pending.has(c.rule_id));
     const allApproved = known && citations.every(c => approved.has(c.rule_id));
+    // A citation naming a loaded document, or quoting a chosen office's
+    // evidence URL, is real support for pending_review — keep it.
+    const docBacked = citations.some(c =>
+      (c?.source_document_id && docIds.has(String(c.source_document_id)))
+      || evidenceUrls.some(u => String(c?.excerpt || "").includes(u)));
     const basis = step.basis === 'approved_rule' && allApproved ? 'approved_rule'
-      : known && step.basis !== 'staff_confirmation_needed' ? 'pending_review' : 'staff_confirmation_needed';
-    return {...step, step_index, citations, basis, gap_reason: basis === 'staff_confirmation_needed'
+      : docBacked || (known && step.basis !== 'staff_confirmation_needed') ? 'pending_review' : 'staff_confirmation_needed';
+    const signs = Array.isArray(step.signs)
+      ? [...new Set(step.signs.map(n => Math.floor(Number(n))).filter(n => Number.isInteger(n) && n >= 1 && n <= unitCount))].sort((a, b) => a - b)
+      : [];
+    return {...step, signs, step_index, citations, basis, gap_reason: basis === 'staff_confirmation_needed'
       ? step.gap_reason || 'The proposed requirement is not backed by a recognized approved or pending rule. Confirm its source and applicability.' : step.gap_reason};
   });
 }

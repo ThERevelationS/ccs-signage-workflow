@@ -10,7 +10,9 @@ let passed = 0, failed = 0;
 const ok = async (n, fn) => { try { await fn(); passed++; console.log('ok', n); } catch (e) { failed++; console.error('FAIL', n, '-', e.message); } };
 
 const STUBS = {
-  '@/api/base44Client': `export const base44={entities:{ProjectTemplate:{get:(id)=>globalThis.__tplGet(id)}}};`,
+  '@/api/base44Client': `export const base44={entities:{ProjectTemplate:{get:(id)=>globalThis.__tplGet(id)}}}; export const isRetryableFunction=()=>false;`,
+  '@/components/auth/EmailGate': `export const getSessionToken=()=>""; export const getSessionUser=()=>null;`,
+  '@/components/staff/staffEntities': `export const staffEntities={ProjectTemplate:{get:(id)=>globalThis.__tplGet(id)}};`,
   '@/components/ui/dialog': `export const Dialog=(p)=>p?.children??null;export const DialogContent=(p)=>p?.children??null;export const DialogHeader=(p)=>p?.children??null;export const DialogTitle=(p)=>p?.children??null;`,
   'lucide-react': `export const Trash2=()=>null;export const AlertTriangle=()=>null;export const X=()=>null;`,
   '@/components/estimator/products/reusableSaveIdempotency': `export const ensureReusableRecord=(a)=>(globalThis.__tplSave||((x)=>({id:'t1',...x.data})))(a);`,
@@ -110,6 +112,15 @@ await ok('future version / non-record rejected without mutation', async () => {
   assert.throws(() => prepareFoundationTemplatePatch({ assembly_schema_version: 2, items: [] }, { createId: nid }), /unsupported/);
   assert.throws(() => prepareFoundationTemplatePatch(null, { createId: nid }), /record/);
   assert.throws(() => createFoundationTemplateSnapshot('x'), /record/);
+});
+
+await ok('null assembly version is accepted as legacy for snapshots and patches', async () => {
+  assert.equal(createFoundationTemplateSnapshot({ ...rich(), assembly_schema_version: null }, { createId: nid }).assembly_schema_version, 1);
+  const patch = prepareFoundationTemplatePatch({ assembly_schema_version: null, items: [{ id: 'legacy' }] }, { createId: nid });
+  assert.equal(patch.items.length, 1);
+  for (const version of [0, 2, '1', false]) {
+    assert.throws(() => prepareFoundationTemplatePatch({ assembly_schema_version: version }, { createId: nid }), /unsupported/);
+  }
 });
 
 await ok('allowlist is shared and exact', async () => {

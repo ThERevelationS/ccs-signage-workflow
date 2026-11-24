@@ -86,7 +86,7 @@ async function updateCustomerFieldsIfUnchanged(CustomerUser: any, loaded: any, f
 
     let result;
     try {
-      result = await CustomerService.updateMany(
+      result = await CustomerUser.updateMany(
         { id: loaded.id, updated_date: version },
         { $set: fields },
       );
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
     const fields = cleanFields(body?.fields || {});
     const updateExisting = body?.update_existing !== false;
     const creationKey = `estimate_customer:${normalizedName}`;
-    const CustomerUser = base44.entities.Customer;
+    const CustomerUser = base44.asServiceRole.entities.Customer;
     const CustomerService = base44.asServiceRole.entities.Customer;
 
     // Never retrofit creation receipts onto historical rows. If the live catalog

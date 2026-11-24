@@ -3,6 +3,10 @@
   "type": "object",
   "description": "Permanent reusable estimator Part Library. Stores either one complete BuilderPart snapshot or a Part Group plus all child BuilderPart snapshots. Templates are distinct from Master Inventory: inventory remains the central raw resource/cost library, while PartTemplate preserves reusable estimate/component configuration and frozen pricing context. Instantiating a template always creates new independent Product Parts so future Builder recalculation cannot overwrite the saved component.",
   "properties": {
+    "owner_email": {
+      "type": "string",
+      "description": "Lower-cased email of the staff member who saved this item. Stamped server-side by estimatorProjectWrite; owners and admins may edit it, and 'my' items are shown only to their owner."
+    },
     "template_name": {
       "type": "string"
     },

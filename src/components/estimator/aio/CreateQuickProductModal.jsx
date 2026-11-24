@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PackagePlus, Save } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
+import { canSeeLibraryItem } from "@/components/estimator/products/libraryOwnership";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
 import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricing";
@@ -26,10 +28,10 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
     setSaving(false);
     setError("");
     Promise.all([
-      loadAllEntityRows({ entity: base44.entities.QuickProductCategory, sort: "category_name", label: "Quick Product categories" }).catch(() => { setCatsFailed(true); return []; }),
-      base44.auth.me().catch(() => null),
+      loadAllEntityRows({ entity: staffEntities.QuickProductCategory, sort: "category_name", label: "Quick Product categories" }).catch(() => { setCatsFailed(true); return []; }),
+      Promise.resolve(getSessionUser()),
     ]).then(([rows, me]) => setAvailableCategories((rows || [])
-      .filter((row) => row.product_group === "global" || !row.created_by_id || (!!me?.id && row.created_by_id === me.id))
+      .filter((row) => canSeeLibraryItem(row, me))
       .sort((a, b) => String(a.category_name || "").localeCompare(String(b.category_name || "")))))
       .catch(() => setAvailableCategories([]));
   }, [open, line?.line_id, line?.builder_product_id]);
@@ -91,11 +93,11 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
               <div className="text-[10px] font-bold tracking-wide text-gray-500 mb-1.5">AVAILABILITY</div>
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => setProductGroup("my")} className={`rounded border px-3 py-2 text-left ${productGroup === "my" ? "border-lime-400 bg-lime-50" : "border-gray-200 bg-white"}`}>
-                  <div className="text-[11px] font-bold text-gray-900">My Quick Product</div>
+                  <div className="text-[11px] font-bold text-gray-900">Only visible to me</div>
                   <div className="text-[9px] text-gray-500 mt-0.5">Personal reusable template.</div>
                 </button>
                 <button type="button" onClick={() => setProductGroup("global")} className={`rounded border px-3 py-2 text-left ${productGroup === "global" ? "border-lime-400 bg-lime-50" : "border-gray-200 bg-white"}`}>
-                  <div className="text-[11px] font-bold text-gray-900">Global Quick Product</div>
+                  <div className="text-[11px] font-bold text-gray-900">Visible to everyone</div>
                   <div className="text-[9px] text-gray-500 mt-0.5">Shared company template.</div>
                 </button>
               </div>

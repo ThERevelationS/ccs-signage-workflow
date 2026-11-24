@@ -1,4 +1,5 @@
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
+import { canSeeLibraryItem } from "@/components/estimator/products/libraryOwnership";
 import { snapshotHash } from "@/components/estimator/builder/builderService";
 import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
@@ -47,6 +48,7 @@ export async function saveProductAsQuickProduct({
   const normalizedGroup = productGroup === "global" ? "global" : "my";
   const normalizedCategories = (categories || []).map((item) => String(item).trim()).filter(Boolean);
   const idempotencyKey = `quick_product_save:${builderMutationHash({
+    user_email: String(getSessionUser()?.email || "").trim().toLowerCase(),
     estimate_id: estimateId,
     builder_product_id: builder.id,
     builder_updated_date: builder.updated_date || "",
@@ -183,6 +185,7 @@ async function completedQuickInsertResult(estimate, line, flags = {}) {
 }
 
 function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, operationKey, sourceType = "quick_product" }) {
+  const productCopy = sourceType === "product_clone" || sourceType === "estimate_section_copy";
   const productName = productPayload.product_name || "Quick Product";
   const templateLine = cloneSnapshot(productPayload.product_snapshot?.line || {});
   const templateBuilder = stripEntitySystemFields(productPayload.product_snapshot?.builder_product || {});
@@ -210,6 +213,7 @@ function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, op
     if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "client_name")) sourceExpectedData.client_name = estimate.client_name || sourceExpectedData.client_name;
     if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "customer_id")) sourceExpectedData.customer_id = estimate.customer_id || sourceExpectedData.customer_id;
     if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "estimate_number")) sourceExpectedData.estimate_number = estimate.estimate_number || sourceExpectedData.estimate_number;
+    if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "estimate_id")) sourceExpectedData.estimate_id = estimate.id;
     sourceExpectedData.notes = String(sourceExpectedData.notes || "");
     sourceRecoveryToken = `[SEP-QUICK-RECOVERY:${operationKey}]`;
     sourceTaggedData = {
@@ -357,11 +361,11 @@ function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, op
     finalPriceState,
     builderCreateData,
     finalLineBase,
-    revisionAction: sourceType === "product_clone" ? "cloned_with_product" : "created_from_quick_product",
-    revisionNotes: sourceType === "product_clone"
+    revisionAction: productCopy ? "cloned_with_product" : "created_from_quick_product",
+    revisionNotes: productCopy
       ? `Cloned Product “${productName}”. Frozen pricing and Part/Group snapshots were preserved.`
       : `Created from Quick Product “${productName}”. Frozen Product/Part pricing was preserved.`,
-    revisionPriceSnapshotAfter: { ...priceSnapshot, total: frozenTotal, source: sourceType === "product_clone" ? "product_clone" : "quick_product" },
+    revisionPriceSnapshotAfter: { ...priceSnapshot, total: frozenTotal, source: productCopy ? sourceType : "quick_product" },
   };
 }
 
@@ -550,7 +554,8 @@ function quickBuilderOwnershipPatch(blueprint, estimateId, lineId) {
 
 async function ensureQuickInsertBuilder({ estimateId, lineId, blueprint }) {
   const readMatches = async () => {
-    const rows = await staffEntities.BuilderProduct.filter({ estimate_id: estimateId, estimate_line_id: lineId });
+    const entity = staffEntities.BuilderProduct;
+    const rows = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { estimate_id: estimateId, estimate_line_id: lineId });
     if (!Array.isArray(rows)) throw new Error("Builder Products could not be verified while recovering Quick Product insertion.");
     return rows;
   };
@@ -621,7 +626,7 @@ function removeRecoveryToken(notes, token, expectedOriginal) {
 
 async function ensureQuickInsertSource({ builder, blueprint }) {
   if (!blueprint.sourceEntity || !blueprint.sourceExpectedData) return { builder, sourceProject: null };
-  const entity = base44.entities[blueprint.sourceEntity];
+  const entity = staffEntities[blueprint.sourceEntity];
   if (!entity?.get || !entity?.create || !entity?.update || !entity?.filter) {
     throw new Error("The Quick Product Builder source entity is unavailable for recovery.");
   }
@@ -637,8 +642,9 @@ async function ensureQuickInsertSource({ builder, blueprint }) {
     const filter = {};
     if (blueprint.sourceTaggedData?.estimate_number) filter.estimate_number = blueprint.sourceTaggedData.estimate_number;
     if (blueprint.sourceTaggedData?.project_name) filter.project_name = blueprint.sourceTaggedData.project_name;
+    if (!Object.keys(filter).length) throw new Error("Quick Product source recovery requires an estimate number or project name.");
     const readTagged = async () => {
-      const candidates = await entity.filter(filter);
+      const candidates = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, filter);
       if (!Array.isArray(candidates)) throw new Error("Quick Product source projects could not be verified during recovery.");
       return candidates.filter((row) => String(row?.notes || "").includes(blueprint.sourceRecoveryToken));
     };
@@ -1016,11 +1022,11 @@ export async function instantiateQuickProduct({ estimateId, quickProduct, expect
 
   const [liveQuickProduct, me] = await Promise.all([
     staffEntities.QuickProduct.get(quickProduct.id),
-    base44.auth.me().catch(() => null),
+    Promise.resolve(getSessionUser()),
   ]);
   if (!liveQuickProduct) throw new Error("This Quick Product no longer exists. Reopen Add Product to refresh the library.");
   if (liveQuickProduct.is_active === false) throw new Error("This Quick Product is now inactive and cannot be added. Reopen Add Product to refresh the library.");
-  const accessible = liveQuickProduct.product_group === "global" || !liveQuickProduct.created_by_id || (!!me?.id && liveQuickProduct.created_by_id === me.id);
+  const accessible = canSeeLibraryItem(liveQuickProduct, me);
   if (!accessible) throw new Error("This Quick Product is no longer available to your account.");
   if (quickProduct.updated_date && liveQuickProduct.updated_date && quickProduct.updated_date !== liveQuickProduct.updated_date) {
     throw new Error("This Quick Product changed after the Add Product window loaded. Reopen Add Product and review the latest reusable Product before adding it.");
@@ -1074,15 +1080,12 @@ export async function instantiateProductSnapshot({ estimateId, productSnapshot, 
 export async function listQuickProducts() {
   const [rows, me] = await Promise.all([
     loadAllEntityRows({ entity: staffEntities.QuickProduct, sort: "product_name", label: "Quick Product library" }),
-    base44.auth.me().catch(() => null),
+    Promise.resolve(getSessionUser()),
   ]);
   return (rows || [])
     .filter((row) => {
       if (row.is_active === false) return false;
-      if (row.product_group === "global") return true;
-      // Built-in created_by_id is the ownership boundary for "My Quick Products".
-      // Keep unowned rows visible for compatibility with any future imported legacy data.
-      return !row.created_by_id || (!!me?.id && row.created_by_id === me.id);
+      return canSeeLibraryItem(row, me);
     })
     .sort((a, b) => String(a.product_name || "").localeCompare(String(b.product_name || "")));
 }

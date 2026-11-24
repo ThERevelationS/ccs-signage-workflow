@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useJobSiteAddress, workOrderSiteAddress } from "./jobSiteAddress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -79,7 +80,7 @@ export default function PermitWorkflowDesigner({
   onOpenSourceDocument,
 }) {
   const [form, setForm] = useState({
-    address: [workOrder?.install_location, workOrder?.address_line_2, workOrder?.township_city, workOrder?.county, workOrder?.state].filter(Boolean).join(", ")
+    address: workOrderSiteAddress(workOrder)
       || (preselectedJurisdiction?.jurisdiction_name ? `${preselectedJurisdiction.jurisdiction_name}, ${preselectedJurisdiction.state || ""}` : ""),
     customer: workOrder?.client_name || "",
     signTypes: "",
@@ -94,6 +95,14 @@ export default function PermitWorkflowDesigner({
     exemptionStatus: "",
   });
   const { sessionToken } = useAuth() || {};
+  // No install street on the WO: use the estimate's install site, replacing
+  // only the empty/jurisdiction-name placeholder (never staff typing).
+  const jobSite = useJobSiteAddress(workOrder, isOpen);
+  const placeholderAddressRef = useRef(form.address);
+  useEffect(() => {
+    if (jobSite.source !== "estimate") return;
+    setForm(prev => (prev.address === placeholderAddressRef.current ? { ...prev, address: jobSite.address } : prev));
+  }, [jobSite.source, jobSite.address]);
   const [pickedJurisdiction, setPickedJurisdiction] = useState(null);
   const [townSearch, setTownSearch] = useState('');
   const [townMatches, setTownMatches] = useState([]);

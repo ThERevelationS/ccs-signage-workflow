@@ -1,10 +1,10 @@
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 export async function saveFoundationTemplate({ idempotencyKey, data }) {
   return ensureReusableRecord({
-    entity: base44.entities.ProjectTemplate,
+    entity: staffEntities.ProjectTemplate,
     idempotencyKey,
     data,
     label: "Foundation template",
@@ -35,7 +35,7 @@ export async function deleteFoundationTemplate(templateId) {
 
   let current;
   try {
-    current = await base44.entities.ProjectTemplate.get(id);
+    current = await staffEntities.ProjectTemplate.get(id);
   } catch (e) {
     if (isNotFound(e)) return true;
     throw e;
@@ -44,10 +44,9 @@ export async function deleteFoundationTemplate(templateId) {
     throw new Error("Foundation template record could not be verified; delete aborted.");
   }
   await deleteEntityIfUnchanged({
-    entity: base44.entities.ProjectTemplate,
+    entity: staffEntities.ProjectTemplate,
     record: current,
     label: "Foundation template",
   });
   return true;
 }
-

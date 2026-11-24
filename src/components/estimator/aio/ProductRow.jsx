@@ -11,7 +11,7 @@ import { copyProductToClipboard } from "@/components/estimator/products/clipboar
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
 import { addCatalogPartToProduct } from "@/components/estimator/parts/customProductService";
 import { pendingBuilderMutationIsStale } from "@/components/estimator/builder/builderMutationRecovery";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const Field = ({ label, className = "", ...props }) => (
@@ -151,7 +151,7 @@ export default function ProductRow({
   const loadCostTrend = async () => {
     if (costTrend !== null || !line.builder_product_id) return;
     try {
-      const rows = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: line.builder_product_id }, sort: "revision_number", label: "Product cost trend" });
+      const rows = await loadAllEntityRows({ entity: staffEntities.BuilderPriceRevision, query: { builder_product_id: line.builder_product_id }, sort: "revision_number", label: "Product cost trend" });
       setCostTrend((rows || []).map((row) => Number(row.new_total_cost ?? row.total_cost ?? row.new_customer_price ?? 0)).filter((v) => Number.isFinite(v)));
     } catch {
       setCostTrend([]);
@@ -196,7 +196,7 @@ export default function ProductRow({
                                 : pendingPriceAcceptance?.kind === "builder_product_remove"
                                   ? "Resume Product Remove"
                                   : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
-                        ? pendingPriceAcceptance?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
+                        ? ["product_clone", "estimate_section_copy"].includes(pendingPriceAcceptance?.source_type) ? "Resume Product Clone" : "Resume Quick Product"
                         : "Resume Price Update";
   const isCustom = line.module_key === "custom";
   const StatusIcon = meta.icon;
@@ -354,7 +354,7 @@ export default function ProductRow({
                                             : pendingPriceAcceptance?.kind === "builder_product_remove"
                                               ? "Resume the previously started Product removal from its saved recovery marker."
                                               : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
-                                    ? pendingPriceAcceptance?.source_type === "product_clone"
+                                    ? ["product_clone", "estimate_section_copy"].includes(pendingPriceAcceptance?.source_type)
                                       ? "Resume the previously started Product clone from its saved recovery marker."
                                       : "Resume the previously started Quick Product insertion from its saved recovery marker."
                                     : "Resume the previously started Update Price operation from its saved recovery marker."}

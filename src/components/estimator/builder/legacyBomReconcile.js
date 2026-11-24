@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -424,7 +424,7 @@ export async function verifyLegacyBomReconciliation() {
 }
 
 export async function runLegacyBomReconcile() {
-  const me = await base44.auth.me().catch(() => null);
+  const me = getSessionUser();
   if (me?.role !== "admin") return { ran: false, reason: "admin_only" };
 
   const rows = await migrationRows();

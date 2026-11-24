@@ -3,6 +3,10 @@
   "type": "object",
   "description": "Category (or subcategory) used to organize Quick Products. Categories belong to a product group ('my' = this user's products, 'global' = shared). A category with parent_category set is a subcategory of that category name.",
   "properties": {
+    "owner_email": {
+      "type": "string",
+      "description": "Lower-cased email of the staff member who saved this item. Stamped server-side by estimatorProjectWrite; owners and admins may edit it, and 'my' items are shown only to their owner."
+    },
     "category_name": {
       "type": "string"
     },

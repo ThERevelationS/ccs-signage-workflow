@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { pricingSnapshot } from "@/components/estimator/builder/partSync";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
@@ -180,7 +180,7 @@ const SOURCES = [
 
 async function list(entity) {
   return loadAllEntityRows({
-    entity: base44.entities[entity],
+    entity: staffEntities[entity],
     sort: "created_date",
     label: `${entity} inventory`,
   });

@@ -45,9 +45,10 @@ function geocodingRejection(raw:unknown){
 // read + one create, and only on the !applyAllowed path.
 const ACTIVE_QUEUE_STATUSES=new Set(['not_started','source_discovery','research_in_flight','partial_gaps']);
 const normCountyName=(v:unknown)=>String(v||'').toLowerCase().replace(/\s*county$/,'').trim();
-async function kickOfficeResearch(base44:any,matched:any,profiles:any[]){
+async function kickOfficeResearch(base44:any,matched:any,_profiles:any[]){
  try{
-  const profile=(profiles||[]).find((p:any)=>p.id===matched.jurisdiction_profile_id)||null;
+  // The catalog keeps profiles slim; office_research is read for this one row.
+  const profile=matched.jurisdiction_profile_id?await base44.asServiceRole.entities.JurisdictionProfile.get(matched.jurisdiction_profile_id).catch(()=>null):null;
   const hasRoles=((profile?.office_research?.roles||[])as any[]).length>0;
   if(hasRoles&&(matched.offices||[]).length>0)return{state:'verification_pending'};
   if(hasRoles)return{state:'backfill_pending'};
@@ -60,26 +61,19 @@ async function kickOfficeResearch(base44:any,matched:any,profiles:any[]){
   // pretending research started. The queue row below still records the demand
   // for the moment a reviewer clears the hold.
   const held=!!profile&&(profile.auto_refresh===false||!!profile?.discovery_scan_state?.blocked);
-  // Immediate research — the picker is open NOW, so launch the engine this
-  // instant rather than waiting for fleet rotation. Fire-and-forget with a
-  // short head-start so the request transmits; the queue row below is the
-  // durable fallback if the invoke dies before landing.
-  if(profile&&!held){
-   try{
-    const kick=base44.functions.invoke('refreshJurisdiction',{jurisdiction_id:profile.id,defer_archive:true,automatic_research:true}).catch(()=>null);
-    await Promise.race([kick,new Promise(r=>setTimeout(r,2000))]);
-   }catch{}
-  }
+  // No immediate refreshJurisdiction kick: that engine spends integration
+  // credits (InvokeLLM + UploadFile) on every lookup. The queue row below is
+  // picked up by the zero-cost local office researchers.
   if(!already){
    const typeMap:Record<string,string>={city:'city',village:'city',municipality:'city',county:'county',township:'township'};
    const jurisdictionType=typeMap[String(profile?.type||matched.jurisdiction_type||'city').toLowerCase()]||'city';
    await base44.asServiceRole.entities.SourceCollectionQueue.create({jurisdiction_name:matched.name,state:matched.state,jurisdiction_type:jurisdictionType,parent_county_name:county,status:'not_started',dispatch_rank:0,missing_next:'Office research — auto-queued by an address lookup that needed verified offices.'}).catch(()=>null);
   }
-  return{state:held?'research_held':(profile?'research_started':(already?'already_queued':'queued'))};
+  return{state:held?'research_held':(already?'already_queued':'queued')};
  }catch{return{state:'unknown'};}
 }
 function addressResponse(data:any,init:any={}){
- const response=Response.json({...data,lookup_revision:ADDRESS_LOOKUP_REVISION},init);
+ const response=Response.json({...data,lookup_revision:ADDRESS_LOOKUP_REVISION,address_runtime:'slim-profiles-1'},init);
  response.headers.set('X-CCS-Address-Revision',ADDRESS_LOOKUP_REVISION);
  return response;
 }
@@ -88,6 +82,19 @@ function addressResponse(data:any,init:any={}){
 const catalogCache=new Map<string,{ts:number,data:{localities:any[],profiles:any[]}}>();
 const catalogInflight=new Map<string,Promise<any>>();
 const CATALOG_TTL_MS=5*60*1000;
+// JurisdictionProfile rows carry large office_research payloads; the full OH
+// set (~5k rows) exhausts the function isolate. Matching only needs identity
+// fields, so read page by page and keep a slim copy of each row.
+async function loadSlimProfiles(entity:any,stateFilter:any){
+ const out:any[]=[],PAGE=500,FIELDS=['id','name','state','type','parent_county','auto_refresh','discovery_scan_state'];
+ for(let skip=0;skip<50000;skip+=PAGE){
+  const page=stateFilter?await entity.filter(stateFilter,'created_date',PAGE,skip,FIELDS):await entity.list('created_date',PAGE,skip,FIELDS);
+  if(!Array.isArray(page))throw new Error('Location county identities could not be read.');
+  for(const p of page)out.push({id:p.id,name:p.name,state:p.state,type:p.type,parent_county:p.parent_county?.name?{name:p.parent_county.name}:null,auto_refresh:p.auto_refresh,discovery_scan_state:p.discovery_scan_state?.blocked?{blocked:true}:null});
+  if(page.length<PAGE)return out;
+ }
+ throw new Error('Location county identities exceed the 50,000-record safety limit.');
+}
 async function loadCatalogs(base44:any,stateFilter:any){
  const key=stateFilter?.state||'all';
  const hit=catalogCache.get(key);
@@ -96,7 +103,7 @@ async function loadCatalogs(base44:any,stateFilter:any){
  const p=(async()=>{
   const [localities,profiles,rules]=await Promise.all([
    loadAllEntityRows({entity:base44.asServiceRole.entities.PermitLocality,query:stateFilter,sort:'created_date',label:'Location matching catalog'}),
-   loadAllEntityRows({entity:base44.asServiceRole.entities.JurisdictionProfile,query:stateFilter,sort:'created_date',label:'Location county identities'}),
+   loadSlimProfiles(base44.asServiceRole.entities.JurisdictionProfile,stateFilter),
    loadAllEntityRows({entity:base44.asServiceRole.entities.PermitResolutionRule,query:{active:true},sort:'created_date',label:'Resolution rules'}).catch(()=>[])]);
   catalogCache.set(key,{ts:Date.now(),data:{localities,profiles,rules}});
   return {localities,profiles,rules};

@@ -134,7 +134,10 @@ export default function WorkspaceSettingsCenter() {
           <section className="py-3">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Time Clock</h4>
             <Row label="Tracker & clock controls" hint="Display style, goals, milestones, sounds, privacy blur, and badge/face options — saved through your Time Clock preferences">
-              <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => document.getElementById("time-tracker-settings")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+              <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => {
+                window.dispatchEvent(new CustomEvent("ccs:openTimeTracker"));
+                document.getElementById("time-tracker-settings")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}>
                 Jump to Time Tracker
               </Button>
             </Row>

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { useAuth } from "@/components/auth/EmailGate";
+import { getSessionToken, getSessionUser, useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
 import { Users, Search, Phone, Mail, RefreshCw, X, MapPin, FileText, Briefcase, Loader2, MessageSquare, Printer } from "lucide-react";
 import { backfillCustomersFromWorkOrders, loadAllCustomers } from "@/components/estimator/customerSync";
@@ -331,7 +331,7 @@ export default function EstimatorCustomers() {
     if (reMarkBusy) return;
     setReMarkBusy(true);
     try {
-      const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+      const sessionToken = getSessionToken();
       const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "bulk_remarkup", tier_number: tier });
       const d = res?.data || res;
       window.alert(d?.success ? `${d.flagged} estimate(s) flagged for re-markup.` : (d?.error || "Re-markup failed."));
@@ -344,7 +344,7 @@ export default function EstimatorCustomers() {
         const [res, tierRows, user] = await Promise.all([
           loadAllCustomers().catch((e) => { setLoadError(e?.message || "Customer list could not be loaded. Try again."); return []; }),
           loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "Customer markup tiers" }).catch(() => { setTiersFailed(true); return []; }),
-          base44.auth.me().catch(() => null),
+          Promise.resolve(getSessionUser()),
         ]);
         setCustomers(res || []);
         setTiers(tierRows || []);
@@ -436,7 +436,7 @@ export default function EstimatorCustomers() {
       let created = 0, skipped = preview.skip, failed = 0;
       for (const { companyName, fields } of preview.rows) {
         try {
-          const res = await base44.functions.invoke("ensureEstimateCustomer", { company_name: companyName, fields, session_token: sessionToken });
+          const res = await base44.functions.invoke("ensureEstimateCustomerV2", { company_name: companyName, fields, session_token: sessionToken });
           const data = res?.data || res;
           if (data?.error) throw new Error(data.error);
           created++;

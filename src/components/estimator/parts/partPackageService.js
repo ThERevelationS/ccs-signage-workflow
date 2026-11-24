@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
@@ -107,7 +106,9 @@ export async function addPartPackageToProduct({
   // If the final Estimate write succeeded but its response was lost, the durable
   // marker is already gone. Reuse the idempotent revision + deterministic keys
   // so the same browser action resolves as completed instead of inserting again.
-  const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builder.id }, sort: "revision_number", label: "Saved Part insertion price revisions" });
+  const revisionEntity = staffEntities.BuilderPriceRevision;
+  const revisions = await (typeof revisionEntity.filterFresh === "function" ? revisionEntity.filterFresh : revisionEntity.filter).call(revisionEntity, { builder_product_id: builder.id, idempotency_key: operationKey });
+  if (!Array.isArray(revisions)) throw new Error("Saved Part insertion price revisions could not be verified.");
   const completedRevision = (revisions || []).find((revision) => String(revision.idempotency_key || "") === operationKey);
   if (completedRevision) {
     const [completedParts, completedGroups] = await Promise.all([

@@ -11,7 +11,7 @@ import { isEstimateStatusTransitionAllowed, statusTransitionMap, allEstimateStat
 import { staffEntities } from "@/components/staff/staffEntities";
 import { fetchEstimateQueueBundle, loadFullEstimateRow } from "@/components/queues/queueFeedClient";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
-import { useAuth } from "@/components/auth/EmailGate";
+import { getSessionToken, getSessionUser, useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
 import { ExportEstimatesButton } from "@/components/importer/ImportExportButtons";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
@@ -151,7 +151,7 @@ export default function EstimatorQueues() {
     try {
       const bundle = JSON.parse(await file.text());
       if (!bundle?.estimate?.project_name) throw new Error("Not an estimate export — expected { estimate, products, parts }.");
-      const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+      const sessionToken = getSessionToken();
       const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "import_estimate", bundle });
       const d = res?.data || res;
       if (!d?.success || !d?.estimate_id) throw new Error(d?.error || "Import failed.");
@@ -160,7 +160,7 @@ export default function EstimatorQueues() {
     } catch (e) { window.alert(e?.message || "Import failed."); }
     finally { if (importEstRef.current) importEstRef.current.value = ""; }
   };
-  useEffect(() => { base44.auth.me().then(setMe).catch(() => {}); }, []);
+  useEffect(() => { Promise.resolve(getSessionUser()).then(setMe).catch(() => {}); }, []);
   // Company timezone (#488): QuoteDefaults.display_timezone drives the date
   // displays; blank falls back to the browser's zone. The row rides the
   // composed queueFeed bundle (M-03) — this helper is the single point the
@@ -410,7 +410,7 @@ export default function EstimatorQueues() {
     }
   };
 
-  const queueSessionToken = () => localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+  const queueSessionToken = () => getSessionToken();
 
   // Inline quick actions: duplicate / archive / trash straight from the queue
   // row. All reuse the same CAS-safe helpers as EstimateDetail — nothing here
@@ -508,7 +508,7 @@ export default function EstimatorQueues() {
       // rethrows, so the catch below reports "not moved" instead of silently
       // skipping the guard.
       const openRevision = (await loadAllEntityRows({
-        entity: base44.entities.EstimateRevision,
+        entity: staffEntities.EstimateRevision,
         query: { estimate_id: e.id, revision_status: "open" },
         sort: "-revision_number",
         limit: 50,
@@ -648,7 +648,7 @@ export default function EstimatorQueues() {
     if (backupBusy || me?.role !== "admin") return;
     setBackupBusy(true);
     try {
-      const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+      const sessionToken = getSessionToken();
       const res = await base44.functions.invoke("opportunityWorkspaceAction", { action: "full_backup", session_token: sessionToken });
       const d = res?.data || res;
       if (!d?.success) throw new Error(d?.error || "Backup export failed.");
@@ -705,7 +705,7 @@ export default function EstimatorQueues() {
             const projectId = window.prompt("Module project id?", "");
             if (!projectId) return;
             try {
-              const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+              const sessionToken = getSessionToken();
               const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "estimate_from_module", module_key: moduleKey.trim(), project_id: projectId.trim() });
               const d = res?.data || res;
               if (!d?.success || !d?.estimate_id) throw new Error(d?.error || "Wrap failed.");

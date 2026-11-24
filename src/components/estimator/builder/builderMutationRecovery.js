@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { getSessionToken } from "@/components/auth/EmailGate";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
@@ -116,21 +117,12 @@ function validatePendingBuilderMutation(pending, { estimateId, builder, line }) 
   }
 }
 
-function currentSignShopSessionToken() {
-  try {
-    if (typeof window === "undefined") return "";
-    return String(window.localStorage?.getItem("sss_session_token") || "").trim();
-  } catch {
-    return "";
-  }
-}
-
 export async function ensureBuilderPriceRevision(idempotencyKey, revision) {
-  const sessionToken = currentSignShopSessionToken();
+  const sessionToken = String(getSessionToken() || "").trim();
   if (!sessionToken) {
     throw new Error("Your signed sign-shop session is no longer available. Sign in again before changing Builder pricing.");
   }
-  const response = await base44.functions.invoke("ensureBuilderPriceRevision", {
+  const response = await base44.functions.invoke("ensureBuilderPriceRevisionV2", {
     idempotency_key: idempotencyKey,
     revision,
     session_token: sessionToken,

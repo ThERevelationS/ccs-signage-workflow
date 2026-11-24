@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { getModule, getModuleLabel, MODULE_TOTAL_FIELD } from "@/components/estimator/moduleRegistry";
 import { acceptBuilderPartPrices, applyBuilderPartPriceAcceptancePlan, loadVerifiedBuilderPartSyncInputs, syncBuilderParts } from "./partSync";
 import { acceptedCustomerUnitPrice, hasNumericValue, liveCustomerUnitPrice, manualCustomerPriceState, sourceProjectEconomics } from "../customerPricing";
@@ -14,6 +13,24 @@ const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
 
 const nowIso = () => new Date().toISOString();
+
+function isEstimateLineSyncConflict(error) {
+  const message = error?.message || "";
+  return /changed in another session \(line_items\)/.test(message)
+    && /No Estimate fields were overwritten/.test(message);
+}
+
+async function retryEstimateLineSync(run, reload) {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      return await run();
+    } catch (error) {
+      if (attempt === 3 || !isEstimateLineSyncConflict(error)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
+      if (reload) await reload();
+    }
+  }
+}
 
 export const makeStableId = (prefix = "id") => {
   const uuid = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -533,13 +550,26 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
   };
 }
 
-export async function ensureEstimateBuilderProducts(estimate, { strictReconciliation = false, onWarning = null } = {}) {
+export async function ensureEstimateBuilderProducts(estimate, options) {
+  let current = estimate;
+  return retryEstimateLineSync(
+    () => ensureEstimateBuilderProductsOnce(current, options),
+    async () => { current = await staffEntities.AllInOneEstimate.get(current.id); },
+  );
+}
+
+async function ensureEstimateBuilderProductsOnce(estimate, { strictReconciliation = false, onWarning = null, onlyLineIds = null } = {}) {
   if (!estimate?.id) return estimate;
   const original = estimate.line_items || [];
   const lineItems = [];
+  const scopedLineIds = onlyLineIds == null ? null : new Set(onlyLineIds);
   let changed = false;
 
   for (const line of original) {
+    if (scopedLineIds && !scopedLineIds.has(line?.line_id)) {
+      lineItems.push(line);
+      continue;
+    }
     try {
       if (line?.price_acceptance_pending?.kind === "builder_product_remove") {
         // Product removal may already have deleted its owned source and/or Builder.
@@ -598,7 +628,11 @@ export async function ensureEstimateBuilderProducts(estimate, { strictReconcilia
   return { ...estimate, line_items: lineItems };
 }
 
-export async function recordBuilderSave({ estimateId, line, sourceProject, liveTotal, internalCost, customerPrice, expectedPendingKey }) {
+export async function recordBuilderSave(args) {
+  return retryEstimateLineSync(() => recordBuilderSaveOnce(args));
+}
+
+async function recordBuilderSaveOnce({ estimateId, line, sourceProject, liveTotal, internalCost, customerPrice, expectedPendingKey }) {
   if (!estimateId || !line) return line;
   if (!sourceProject || typeof sourceProject !== "object") {
     throw new Error("The saved Builder source could not be verified. Product pricing and Parts were not synchronized.");
@@ -969,7 +1003,7 @@ export async function deleteBuilderProductCascade(builderProductId) {
   const [parts, groups, revisions] = await Promise.all([
     loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
     loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Part Groups" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Builder price revisions" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Builder price revisions" }),
   ]);
   if (!Array.isArray(parts) || !Array.isArray(groups) || !Array.isArray(revisions)) {
     throw new Error("Builder Product cascade could not verify all owned records before deletion.");
@@ -998,7 +1032,7 @@ export async function deleteBuilderProductCascade(builderProductId) {
   }
   for (const row of revisions) {
     await deleteBuilderEntityIfUnchanged({
-      entity: base44.entities.BuilderPriceRevision,
+      entity: staffEntities.BuilderPriceRevision,
       record: row,
       guardFields: { builder_product_id: builderProductId },
       label: "Builder price revision cascade delete",

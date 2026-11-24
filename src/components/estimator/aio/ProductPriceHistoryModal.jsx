@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { History, ArrowRight, PackageSearch } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -32,7 +32,7 @@ export default function ProductPriceHistoryModal({ open, line, onClose }) {
     setLoading(true);
     setError("");
     loadAllEntityRows({
-      entity: base44.entities.BuilderPriceRevision,
+      entity: staffEntities.BuilderPriceRevision,
       query: { builder_product_id: line.builder_product_id },
       sort: "revision_number",
       label: "Product price history",

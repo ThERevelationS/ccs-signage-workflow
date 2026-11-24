@@ -22,7 +22,6 @@ import CreatePartGroupModal from "./CreatePartGroupModal";
 import BuilderPartEditWarningModal from "./BuilderPartEditWarningModal";
 import DetachedPartOverrideModal from "./DetachedPartOverrideModal";
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
-import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { detachBuilderPartOverride, updateDetachedPartOverride } from "@/components/estimator/builder/partSync";
 import { CopyBomButton } from "@/components/importer/ImportExportButtons";
@@ -36,7 +35,7 @@ import MovePartGroupModal from "./MovePartGroupModal";
 import SavePartTemplateModal from "@/components/estimator/parts/SavePartTemplateModal";
 import PartLibraryPickerModal from "@/components/estimator/parts/PartLibraryPickerModal";
 import VendorCostBadge from "@/components/estimator/VendorCostBadge";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadBuilderPartsAndGroups } from "./builderPartsBatchLoader";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -306,7 +305,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
     if (!readOnly) {
       let current;
       try {
-        current = await base44.entities.BuilderPartGroup.get(group.id);
+        current = await staffEntities.BuilderPartGroup.get(group.id);
       } catch (error) {
         // Transient pre-read failure — the optimistic toggle would diverge
         // from persisted is_collapsed, so revert it and surface the error.
@@ -319,7 +318,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
       let updated;
       try {
         updated = await replaceBuilderEntityFieldsIfUnchanged({
-          entity: base44.entities.BuilderPartGroup,
+          entity: staffEntities.BuilderPartGroup,
           id: group.id,
           expectedUpdatedAt: current.updated_date || "",
           expectedFields: expectedBuilderEntityFields(current, collapsePatch),
@@ -604,10 +603,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
       }
       setLoading(true);
       try {
-        const [partRows, groupRows] = await Promise.all([
-          loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Parts" }),
-          loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Groups" }),
-        ]);
+        const { parts: partRows, groups: groupRows } = await loadBuilderPartsAndGroups(builderProductId);
         if (!active) return;
         const activeParts = (partRows || [])
           .filter((part) => part.is_active !== false)
@@ -763,7 +759,8 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           <div className="mt-3 flex items-center justify-center gap-2">
             <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add Part</button>
             <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[30px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Add Saved Part</button>
-            <CopyBomButton estimateId={estimateId} targetBuilderProductId={builderProductId} expectedEstimateUpdatedAt={expectedEstimateUpdatedAt} />
+            <CopyBomButton estimateId={estimateId} targetBuilderProductId={builderProductId} expectedEstimateUpdatedAt={expectedEstimateUpdatedAt}
+              onCopied={async () => { setRefreshNonce((value) => value + 1); await onProductRefresh?.(); }} />
           </div>
         )}
         <MasterPartPickerModal
@@ -889,7 +886,8 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               <>
                 <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add Part</button>
                 <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[28px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Add Saved Part</button>
-                <CopyBomButton estimateId={estimateId} targetBuilderProductId={builderProductId} expectedEstimateUpdatedAt={expectedEstimateUpdatedAt} />
+                <CopyBomButton estimateId={estimateId} targetBuilderProductId={builderProductId} expectedEstimateUpdatedAt={expectedEstimateUpdatedAt}
+                  onCopied={async () => { setRefreshNonce((value) => value + 1); await onProductRefresh?.(); }} />
               </>
             )}
             {!readOnly && <button

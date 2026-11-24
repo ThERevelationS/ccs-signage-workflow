@@ -45,7 +45,20 @@ const DUPLICATE_EXCLUDE = new Set([
 // Issued numbers are cached per creation key: a duplicate retried after a lost
 // response must present the same estimate_number or the server's identity
 // check would treat the retry as a different create and reject it.
-const duplicateNumberByCreationKey = new Map();
+const copyNumberByCreationKey = new Map();
+
+async function copyEstimateNumber(creationKey, sessionToken) {
+  if (!copyNumberByCreationKey.has(creationKey)) {
+    const pending = generateDocNumber({ doc_type: "estimate", session_token: sessionToken }).then((res) => {
+      const number = String(res?.data?.number || res?.number || "").trim();
+      if (!number) throw new Error("A new estimate number could not be issued.");
+      return number;
+    });
+    copyNumberByCreationKey.set(creationKey, pending);
+    pending.catch(() => { if (copyNumberByCreationKey.get(creationKey) === pending) copyNumberByCreationKey.delete(creationKey); });
+  }
+  return copyNumberByCreationKey.get(creationKey);
+}
 
 export function buildDuplicateEstimate(source = {}, { keepEstimateNumber = false, skipPendingGuard = false } = {}) {
   const clone = {};
@@ -94,6 +107,7 @@ export async function splitEstimate({ source, lineItemIds, sessionToken, creatio
   if (!source?.id) throw new Error("The source estimate is not loaded.");
   if (!Array.isArray(lineItemIds) || lineItemIds.length === 0) throw new Error("Select at least one line item to split.");
   const estimate = buildSplitEstimate(source, { lineItemIds });
+  estimate.estimate_number = await copyEstimateNumber(creationKey, sessionToken);
   const created = await ensureNewEstimate({
     creationKey,
     estimate,
@@ -107,13 +121,7 @@ export async function duplicateEstimate({ source, sessionToken, creationKey = ne
   if (!source?.id) throw new Error("The source estimate is not loaded.");
   const estimate = buildDuplicateEstimate(source, { keepEstimateNumber });
   if (!keepEstimateNumber) {
-    if (!duplicateNumberByCreationKey.has(creationKey)) {
-      const res = await generateDocNumber({ doc_type: "estimate", session_token: sessionToken });
-      const number = String(res?.data?.number || res?.number || "").trim();
-      if (!number) throw new Error("A new estimate number could not be issued.");
-      duplicateNumberByCreationKey.set(creationKey, number);
-    }
-    estimate.estimate_number = duplicateNumberByCreationKey.get(creationKey);
+    estimate.estimate_number = await copyEstimateNumber(creationKey, sessionToken);
   }
   const created = await ensureNewEstimate({
     creationKey,

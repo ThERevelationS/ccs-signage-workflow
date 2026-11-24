@@ -23,12 +23,11 @@ import {
 const num = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
 const str = (value) => String(value ?? "").trim();
 
-// Platform-user conversion (EstimateDetail) reads through base44.entities;
-// staff-session flows (EstimatorQueues bulk) must go through the staffEntity
-// gateways — caller picks, defaults keep the original component's clients.
+// Staff sessions cannot satisfy entity RLS, so the defaults read through the
+// staffEntity gateways; callers may still pass their own clients.
 const defaultEntities = () => ({
-  Estimate: base44.entities.AllInOneEstimate,
-  WorkOrder: base44.entities.WorkOrder,
+  Estimate: staffEntities.AllInOneEstimate,
+  WorkOrder: staffEntities.WorkOrder,
 });
 
 // Per-module WO task templates: each estimate section contributes its
@@ -222,7 +221,7 @@ export async function prepareEstimateConversion({
                                   : pendingPrice.pending?.kind === "builder_product_remove"
                                     ? "Resume Product Remove"
                                     : pendingPrice.pending?.kind === "builder_quick_product_insert"
-                                      ? pendingPrice.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
+                        ? ["product_clone", "estimate_section_copy"].includes(pendingPrice.pending?.source_type) ? "Resume Product Clone" : "Resume Quick Product"
                                       : "Resume Price Update";
     throw new Error(`"${name}" has a Builder mutation recovery pending. Use ${resumeLabel} before converting this estimate to a Work Order.`);
   }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { withStandaloneBuilderRedirect } from "@/components/estimator/aio/StandaloneBuilderRedirect";
 import { MaintenanceProject, MaintenanceActionRate, Settings } from "@/api/gatedEntities";
 import { useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, ArrowLeft, Wrench, FileText, ListChecks, HardHat, Calculator, MapPin, Package, ClipboardCheck, TrendingUp } from "lucide-react";
+import { Plus, ArrowLeft, Wrench, ListChecks, HardHat, Calculator, MapPin, Package, ClipboardCheck, TrendingUp } from "lucide-react";
 import ServiceItemRow from "@/components/signMaintenance/ServiceItemRow";
 import EquipmentSelector from "@/components/channelLetterInstall/EquipmentSelector";
 import LadderSelector from "@/components/channelLetterInstall/LadderSelector";
@@ -62,7 +63,8 @@ const blankProject = () => ({
   notes: "",
 });
 
-export default function MaintenanceEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
+export default withStandaloneBuilderRedirect(MaintenanceEstimator, "maintenance", "MaintenanceProject");
+function MaintenanceEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
   const editId = embeddedProjectId || searchParams.get("edit") || searchParams.get("id");
   const estimateId = embeddedEstimateId || searchParams.get("estimateId");
@@ -78,7 +80,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [activeTab, setActiveTab] = useState(embedded ? "items" : "project");
+  const [activeTab, setActiveTab] = useState("items");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
   const copyAttemptRef = useRef({ signature: "", key: "" });
@@ -120,7 +122,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
           client_name: estimate?.client_name || existing.client_name,
           customer_id: estimate?.customer_id || existing.customer_id,
           estimate_number: estimate?.estimate_number || existing.estimate_number,
-          site_address: existing.site_address || estimate?.site_address || "",
+          site_address: existing.site_address?.trim() ? existing.site_address : (estimate?.site_address || ""),
           items: existing.items || [],
         });
         setIsEditing(true);
@@ -215,9 +217,9 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
     return () => window.removeEventListener("beforeunload", warn);
   }, [saving]);
   const saveProject = async () => {
-    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
+    if (!embedded && (!project.project_name || !(estimateContext?.client_name || project.client_name))) {
       alert("Please fill in Project Name and Client Name.");
-      setActiveTab("project");
+      setActiveTab("items");
       return;
     }
     // Pricing-availability gate: an estimate with unavailable pricing is never
@@ -423,8 +425,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="sticky top-[64px] z-30 -mx-2 px-2 py-2 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/60">
-                <TabsList className="grid w-full grid-cols-5 bg-white shadow-md border border-slate-200 h-auto p-1 gap-1">
-                  <TabsTrigger value="project" className="py-2 text-xs"><FileText className="w-3.5 h-3.5 mr-1" />{embedded ? "Options" : "Project"}</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-4 bg-white shadow-md border border-slate-200 h-auto p-1 gap-1">
                   <TabsTrigger value="items" className="py-2 text-xs">
                     <ListChecks className="w-3.5 h-3.5 mr-1" />Service Items
                     {recalculated.items?.length > 0 && <span className="ml-1 text-[10px] bg-slate-100 px-1.5 rounded-full">{recalculated.items.length}</span>}
@@ -435,54 +436,23 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                 </TabsList>
               </div>
 
-              {/* PROJECT TAB */}
-              <TabsContent value="project" className="mt-4 space-y-4">
+              <TabsContent value="items" className="mt-4 space-y-3">
                 <Card className="bg-white border-0 shadow-sm">
-                  <CardHeader className="pb-3"><CardTitle className="text-lg">{embedded ? "Section Options" : "Project Information"}</CardTitle></CardHeader>
+                  <CardHeader className="pb-3"><CardTitle className="text-lg">Job conditions</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
-                    {!embedded && (
-                      <>
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div>
-                            <Label>Client Name *</Label>
-                            <Input
-                              value={project.client_name || ''}
-                              onChange={(e) => updateProject({ client_name: e.target.value })}
-                              className="mt-1"
-                              placeholder="Enter client name"
-                            />
-                          </div>
-                          <div>
-                            <Label>Project Name *</Label>
-                            <Input value={project.project_name} onChange={(e) => updateProject({ project_name: e.target.value })} placeholder="e.g. Main St Sign — Annual Service" className="mt-1" />
-                          </div>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div>
-                            <Label>Estimate Number *</Label>
-                            <Input value={project.estimate_number} onChange={(e) => updateProject({ estimate_number: e.target.value })} placeholder="e.g. SVC-2026-001" className="mt-1" />
-                          </div>
-                          <div>
-                            <Label>Project Link <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
-                            <Input value={project.hyperlink} onChange={(e) => updateProject({ hyperlink: e.target.value })} placeholder="https://…" className="mt-1" />
-                          </div>
-                          <div>
-                            <Label>Service interval</Label>
-                            <Select value={String(project.service_interval_months ?? 0)} onValueChange={(v) => updateProject({ service_interval_months: Number(v) })}>
-                              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="0">One-time service</SelectItem>
-                                <SelectItem value="3">Repeat every 3 months</SelectItem>
-                                <SelectItem value="6">Repeat every 6 months</SelectItem>
-                                <SelectItem value="12">Repeat every 12 months</SelectItem>
-                                <SelectItem value="24">Repeat every 24 months</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </>
-                    )}
-
+                    <div>
+                      <Label>Service interval</Label>
+                      <Select value={String(project.service_interval_months ?? 0)} onValueChange={(v) => updateProject({ service_interval_months: Number(v) })}>
+                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">One-time service</SelectItem>
+                          <SelectItem value="3">Repeat every 3 months</SelectItem>
+                          <SelectItem value="6">Repeat every 6 months</SelectItem>
+                          <SelectItem value="12">Repeat every 12 months</SelectItem>
+                          <SelectItem value="24">Repeat every 24 months</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div>
                       <Label className="text-sm font-semibold text-slate-900">Service Environment</Label>
                       <p className="text-xs text-slate-500 mt-1 mb-2">Interior or exterior service call — drives some labor multipliers.</p>
@@ -517,22 +487,6 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                   </CardContent>
                 </Card>
 
-                {!embedded && (
-                <Card className="bg-white border-0 shadow-sm">
-                  <CardHeader className="pb-3"><CardTitle className="text-lg">Notes</CardTitle></CardHeader>
-                  <CardContent>
-                    <Textarea value={project.notes} onChange={(e) => updateProject({ notes: e.target.value })} placeholder="Service notes, customer history, special considerations…" className="h-32" />
-                  </CardContent>
-                </Card>
-                )}
-
-                <div className="flex justify-end">
-                  <Button onClick={() => setActiveTab("items")} className="bg-cyan-600 hover:bg-cyan-700 text-white">Continue to Service Items →</Button>
-                </div>
-              </TabsContent>
-
-              {/* SERVICE ITEMS TAB */}
-              <TabsContent value="items" className="mt-4 space-y-3">
                 <div className="flex items-center justify-end gap-2 bg-white rounded-lg border border-slate-200 px-3 py-2 shadow-sm">
                   <Button onClick={addItem} size="sm" className="bg-cyan-600 hover:bg-cyan-700 text-white">
                     <Plus className="w-4 h-4 mr-1" /> Add Service Item
@@ -635,6 +589,10 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
               {/* SUMMARY TAB */}
               <TabsContent value="summary" className="mt-4 space-y-3">
                 <Card className="bg-white border-0 shadow-sm">
+                  <CardHeader className="pb-3"><CardTitle className="text-lg">Notes</CardTitle></CardHeader>
+                  <CardContent><Textarea value={project.notes} onChange={(e) => updateProject({ notes: e.target.value })} placeholder="Service notes, customer history, special considerations…" className="h-32" /></CardContent>
+                </Card>
+                <Card className="bg-white border-0 shadow-sm">
                   <CardHeader className="pb-3"><CardTitle className="text-lg">Cost Breakdown</CardTitle></CardHeader>
                   <CardContent>
                     {pricingUnavailable && (
@@ -717,8 +675,8 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                   <ModuleActionBar
                     onTemplates={() => setTemplateMode("load")}
                     onSaveAsTemplate={() => setTemplateMode("save")}
-                    onSaveAsCopy={handleSaveAsCopy}
-                    estimateId={estimateId}
+                    onSaveAsCopy={embedded ? undefined : handleSaveAsCopy}
+                    estimateId={embedded ? undefined : estimateId}
                     saving={saving}
                   />
                 </div>

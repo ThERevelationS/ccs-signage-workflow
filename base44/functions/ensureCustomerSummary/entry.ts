@@ -250,8 +250,11 @@ Deno.serve(async (req) => {
     // at a real source project the authenticated caller can read. Never trust a
     // caller-supplied project name/client identity for an immutable relationship.
     const sourceEntityName = MODULE_PROJECT_ENTITIES[module];
-    const SourceProject = base44.entities[sourceEntityName];
-    const sourceProject = await SourceProject?.get(projectId).catch(() => null);
+    const SourceProject = base44.asServiceRole.entities[sourceEntityName];
+    const sourceProject = await SourceProject?.get(projectId).catch((error: any) => {
+      if (isNotFoundError(error)) return null;
+      throw error;
+    });
     if (!sourceProject?.id) {
       return Response.json({ error: 'The source estimator project could not be verified before updating the Customer Summary.' }, { status: 404 });
     }

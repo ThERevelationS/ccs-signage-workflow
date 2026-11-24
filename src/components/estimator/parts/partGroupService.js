@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
@@ -268,11 +267,12 @@ export async function clonePartGroupInProduct({ builderProductId, groupId, expec
     expected_part_versions: expectedPartVersions || {},
   })}`;
 
+  const revisionEntity = staffEntities.BuilderPriceRevision;
   const [group, allParts, allGroups, revisions] = await Promise.all([
     staffEntities.BuilderPartGroup.get(groupId),
     loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
     loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Part Groups" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Builder price revisions" }),
+    (typeof revisionEntity.filterFresh === "function" ? revisionEntity.filterFresh : revisionEntity.filter).call(revisionEntity, { builder_product_id: builderProductId, idempotency_key: operationKey }),
   ]);
   if (!Array.isArray(allParts) || !Array.isArray(allGroups) || !Array.isArray(revisions)) {
     throw new Error("Part Group clone prerequisites could not be fully verified.");
@@ -662,21 +662,22 @@ export async function moveIndependentPartGroup({ sourceBuilderProductId, targetB
     return resumeIndependentPartGroupMove({ estimateId: estimate.id, lineId: sourceLine.line_id || "" });
   }
 
+  const sourceRevisionKey = `${operationKey}:source`;
+  const targetRevisionKey = `${operationKey}:target`;
+  const revisionEntity = staffEntities.BuilderPriceRevision;
   const [group, sourceParts, sourceGroups, targetParts, targetGroups, sourceRevisions, targetRevisions] = await Promise.all([
     staffEntities.BuilderPartGroup.get(groupId),
     loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: sourceBuilder.id }, sort: "sort_order", label: "Source Builder Parts" }),
     loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: sourceBuilder.id }, sort: "sort_order", label: "Source Builder Part Groups" }),
     loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: targetBuilder.id }, sort: "sort_order", label: "Target Builder Parts" }),
     loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: targetBuilder.id }, sort: "sort_order", label: "Target Builder Part Groups" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: sourceBuilder.id }, sort: "revision_number", label: "Source Builder price revisions" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: targetBuilder.id }, sort: "revision_number", label: "Target Builder price revisions" }),
+    (typeof revisionEntity.filterFresh === "function" ? revisionEntity.filterFresh : revisionEntity.filter).call(revisionEntity, { builder_product_id: sourceBuilder.id, idempotency_key: sourceRevisionKey }),
+    (typeof revisionEntity.filterFresh === "function" ? revisionEntity.filterFresh : revisionEntity.filter).call(revisionEntity, { builder_product_id: targetBuilder.id, idempotency_key: targetRevisionKey }),
   ]);
   if (![sourceParts, sourceGroups, targetParts, targetGroups, sourceRevisions, targetRevisions].every(Array.isArray)) {
     throw new Error("Part Group move prerequisites could not be fully verified.");
   }
 
-  const sourceRevisionKey = `${operationKey}:source`;
-  const targetRevisionKey = `${operationKey}:target`;
   const completedSource = sourceRevisions.find((row) => row.idempotency_key === sourceRevisionKey);
   const completedTarget = targetRevisions.find((row) => row.idempotency_key === targetRevisionKey);
   if (completedSource || completedTarget) {

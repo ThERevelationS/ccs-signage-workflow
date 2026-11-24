@@ -47,6 +47,14 @@ const legacyProject = () => ({
   ],
 });
 
+await ok('null assembly version migrates to 1; other unsupported values fail', async () => {
+  const { project } = normalizeFoundationAssembly({ ...legacyProject(), assembly_schema_version: null }, { createId: factory });
+  assert.equal(project.assembly_schema_version, 1);
+  for (const version of [0, 2, '1', false]) {
+    assert.throws(() => normalizeFoundationAssembly({ ...legacyProject(), assembly_schema_version: version }, { createId: factory }), /unsupported/);
+  }
+});
+
 await ok('legacy migration: canon IDs + derived indices, input frozen, real geometry preserved', async () => {
   counter = 0;
   const src = legacyProject();

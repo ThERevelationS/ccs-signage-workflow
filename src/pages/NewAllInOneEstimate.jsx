@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { generateDocNumber } from "@/functions/generateDocNumber";
 import { useAuth } from "@/components/auth/EmailGate";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
@@ -9,6 +9,7 @@ import { loadAllCustomers, upsertCustomerFromEstimate, syncEstimateToPipeline } 
 import { loadQuoteDefaults, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
 import { addRecentCustomerId, loadRecentCustomerIds, resolveRecentCustomers, saveRecentCustomerIds } from "@/components/estimator/recentCustomerHistory";
 import { ensureNewEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
+import { numberForEstimateAttempt } from "@/components/estimator/estimateNumberAssignment";
 import { ensureEstimateCustomerLocation } from "@/components/estimator/customerLocationService";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
@@ -93,8 +94,7 @@ export default function NewAllInOneEstimate() {
   const [saving, setSaving] = useState(false);
   const [saveSiteAsLocation, setSaveSiteAsLocation] = useState(false);
   const savingRef = useRef(false);
-  const createAttemptRef = useRef({ signature: "", key: "" });
-  const [generating, setGenerating] = useState(false);
+  const createAttemptRef = useRef({ signature: "", key: "", estimateNumber: "" });
   const [error, setError] = useState("");
   const [dupSources, setDupSources] = useState([]);
   const [dupQuery, setDupQuery] = useState("");
@@ -158,18 +158,6 @@ export default function NewAllInOneEstimate() {
     setDupOpen(false);
   };
 
-  const handleGenerate = async () => {
-    setGenerating(true);
-    try {
-      const res = await base44.functions.invoke("generateDocNumber", { doc_type: "estimate", session_token: sessionToken });
-      if (res?.data?.number) patch({ estimate_number: res.data.number });
-    } catch (e) {
-      setError(e.message || "Could not generate an estimate number.");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
   const handleSave = async () => {
     if (savingRef.current) return;
     setError("");
@@ -191,6 +179,7 @@ export default function NewAllInOneEstimate() {
         createAttemptRef.current = {
           signature: createSignature,
           key: newEstimateCreationKey(),
+          estimateNumber: "",
         };
       }
 
@@ -203,6 +192,9 @@ export default function NewAllInOneEstimate() {
         );
       }
 
+      await numberForEstimateAttempt(createAttemptRef.current, () =>
+        generateDocNumber({ doc_type: "estimate", session_token: sessionToken })
+      );
       const quoteDefaults = await loadQuoteDefaults();
       const estimate = await ensureNewEstimate({
         creationKey: createAttemptRef.current.key,
@@ -210,6 +202,7 @@ export default function NewAllInOneEstimate() {
         estimate: {
           ...quoteDefaultsPayload(quoteDefaults || {}),
           ...form,
+          estimate_number: createAttemptRef.current.estimateNumber,
           client_name: clientName,
           project_name: description,
           customer_id: customer?.id || null,
@@ -370,8 +363,6 @@ export default function NewAllInOneEstimate() {
             users={users}
             termsOptions={TERMS_OPTIONS}
             salesCenters={SALES_CENTERS}
-            onGenerateNumber={handleGenerate}
-            generating={generating}
             enteredBy={currentUser?.full_name || currentUser?.email}
             onCustomerCreated={(c) => setCustomers((prev) => [c, ...prev])}
             saveSiteAsLocation={saveSiteAsLocation}

@@ -1,8 +1,6 @@
-import { base44 } from "@/api/base44Client";
 import { getModule } from "@/components/estimator/moduleRegistry";
 import { builderMutationHash, pendingBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -47,12 +45,29 @@ function plannedStep(row, extra = {}) {
   return row?.id ? { id: row.id, expected_updated_date: rowVersion(row), ...extra } : null;
 }
 
+async function getOrNull(entity, id) {
+  try {
+    return await entity.get(id);
+  } catch (error) {
+    if ((error?.status ?? error?.response?.status) === 404) return null;
+    throw error;
+  }
+}
+
+async function freshChildRows(entityName, builderProductId) {
+  const sort = entityName === "BuilderPriceRevision" ? "revision_number" : "sort_order";
+  const rows = await staffEntities[entityName].filterFresh({ builder_product_id: builderProductId }, sort, 500);
+  if (!Array.isArray(rows)) throw new Error("Builder child records could not be verified.");
+  if (rows.length >= 500) throw new Error("Too many Builder child records to verify safely.");
+  return rows;
+}
+
 async function loadRemovalPlan(line) {
   const builderProductId = String(line?.builder_product_id || "").trim();
   const mod = getModule(line?.module_key);
   let source = null;
   if (line?.owned && mod?.entity && line?.project_id) {
-    source = await base44.entities[mod.entity].get(line.project_id);
+    source = await getOrNull(staffEntities[mod.entity], line.project_id);
   }
 
   let builder = null;
@@ -61,10 +76,10 @@ async function loadRemovalPlan(line) {
   let revisions = [];
   if (builderProductId) {
     [builder, parts, groups, revisions] = await Promise.all([
-      staffEntities.BuilderProduct.get(builderProductId),
-      loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Builder Parts" }),
-      loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Part Groups" }),
-      loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Product removal price revisions" }),
+      getOrNull(staffEntities.BuilderProduct, builderProductId),
+      freshChildRows("BuilderPart", builderProductId),
+      freshChildRows("BuilderPartGroup", builderProductId),
+      freshChildRows("BuilderPriceRevision", builderProductId),
     ]);
     if (![parts, groups, revisions].every(Array.isArray)) {
       throw new Error("Product removal could not verify all Builder child records before starting.");
@@ -106,9 +121,9 @@ function assertExpectedRecord(record, step, label, builderProductId = "") {
 async function preflightChildren(plan, builderProductId) {
   if (!builderProductId) return;
   const [parts, groups, revisions] = await Promise.all([
-    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Builder Parts" }),
-    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Part Groups" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Product removal price revisions" }),
+    freshChildRows("BuilderPart", builderProductId),
+    freshChildRows("BuilderPartGroup", builderProductId),
+    freshChildRows("BuilderPriceRevision", builderProductId),
   ]);
   if (![parts, groups, revisions].every(Array.isArray)) throw new Error("Builder child records could not be verified while Product removal was pending.");
 
@@ -127,15 +142,15 @@ async function preflightChildren(plan, builderProductId) {
 
 async function verifyRemovalPlan(plan) {
   if (plan.source) {
-    const entity = base44.entities[plan.source.entity];
+    const entity = staffEntities[plan.source.entity];
     if (!entity?.get || !entity?.deleteMany) throw new Error("The owned Builder source entity needed for Product removal is unavailable.");
-    const source = await entity.get(plan.source.id);
+    const source = await getOrNull(entity, plan.source.id);
     assertExpectedRecord(source, plan.source, "Owned Builder source");
   }
 
   const builderProductId = plan.builder?.id || "";
   if (builderProductId) {
-    const builder = await staffEntities.BuilderProduct.get(builderProductId);
+    const builder = await getOrNull(staffEntities.BuilderProduct, builderProductId);
     assertExpectedRecord(builder, plan.builder, "Builder Product");
     await preflightChildren(plan, builderProductId);
   }
@@ -143,7 +158,7 @@ async function verifyRemovalPlan(plan) {
 
 async function deleteVerified(entity, step, label, builderProductId = "") {
   if (!step?.id) return;
-  const record = await entity.get(step.id);
+  const record = await getOrNull(entity, step.id);
   if (!record) return;
   assertExpectedRecord(record, step, label, builderProductId);
   await deleteEntityIfUnchanged({
@@ -158,14 +173,14 @@ async function applyRemovalPlan(plan) {
   await verifyRemovalPlan(plan);
 
   if (plan.source) {
-    const entity = base44.entities[plan.source.entity];
+    const entity = staffEntities[plan.source.entity];
     await deleteVerified(entity, plan.source, "Owned Builder source");
   }
 
   const builderProductId = plan.builder?.id || "";
   for (const step of plan.parts || []) await deleteVerified(staffEntities.BuilderPart, step, "Builder Part", builderProductId);
   for (const step of plan.groups || []) await deleteVerified(staffEntities.BuilderPartGroup, step, "Part Group", builderProductId);
-  for (const step of plan.revisions || []) await deleteVerified(base44.entities.BuilderPriceRevision, step, "pricing revision", builderProductId);
+  for (const step of plan.revisions || []) await deleteVerified(staffEntities.BuilderPriceRevision, step, "pricing revision", builderProductId);
 
   if (builderProductId) {
     // Catch a child record created after the initial full preflight before the

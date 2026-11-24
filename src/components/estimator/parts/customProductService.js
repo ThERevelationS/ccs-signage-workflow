@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { ensureBuilderProductForLine } from "@/components/estimator/builder/builderService";
 import { applyBuilderPartPriceAcceptancePlan, pricingSnapshot } from "@/components/estimator/builder/partSync";
 import { inventoryRowName, inventoryUnitCost, loadMasterPartCatalog } from "./partCatalog";
@@ -99,7 +98,7 @@ function assertLoadedPartVersion(part, expectedPartUpdatedAt = "") {
 
 async function verifyCatalogItem(catalogItem) {
   if (!catalogItem?.entity || !catalogItem?.inventoryId) throw new Error("Select a Master Inventory Part.");
-  const row = await base44.entities[catalogItem.entity].get(catalogItem.inventoryId);
+  const row = await staffEntities[catalogItem.entity].get(catalogItem.inventoryId);
   if (!row) throw new Error("This Master Inventory Part no longer exists. Reopen the picker to refresh the catalog.");
   const expected = String(catalogItem.row?.updated_date || "").trim();
   const current = String(row.updated_date || "").trim();
@@ -609,7 +608,9 @@ export async function removeManualProductPart(partId, { builderProductId = "", e
   }
 
   if (!part) {
-    const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builder.id }, sort: "revision_number", label: "Builder price revisions" });
+    const entity = staffEntities.BuilderPriceRevision;
+    const revisions = await (typeof entity.filterFresh === "function" ? entity.filterFresh : entity.filter).call(entity, { builder_product_id: builder.id, idempotency_key: operationKey });
+    if (!Array.isArray(revisions)) throw new Error("Builder price revisions could not be verified before removing this Part.");
     const completed = (revisions || []).find((revision) => String(revision.idempotency_key || "") === operationKey);
     if (completed) return { removed: true, alreadyCompleted: true };
     throw new Error("This Part is already missing. Reload the Product before continuing so its totals can be verified.");

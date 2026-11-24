@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { User } from "@/api/gatedEntities";
+import { getSessionUser } from "@/components/auth/EmailGate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,7 +90,7 @@ export default function MasterInventory() {
 
   // Load current user once
   useEffect(() => {
-    User.me()
+    Promise.resolve(getSessionUser())
       .then((u) => {
         setUser(u);
         setUserLoaded(true);
