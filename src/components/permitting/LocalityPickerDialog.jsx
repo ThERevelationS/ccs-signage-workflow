@@ -653,7 +653,7 @@ function LocalityPickerSession({
       }
       onClose();
     }}>
-      <DialogContent className="flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0">
+      <DialogContent aria-describedby={undefined} className="flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0">
         <DialogHeader className="border-b bg-white px-5 py-3.5">
           <DialogTitle className="flex items-center gap-2 text-base">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-100"><MapPin className="h-4 w-4 text-violet-600" /></span>

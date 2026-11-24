@@ -157,6 +157,9 @@ const PlanSteps = ({ steps, dropped, onToggle }) => (
   </div>
 );
 
+// places_autocomplete returns { text, main, secondary }; older shapes used description/label.
+const suggestionText = (s) => (typeof s === "string" ? s : s?.text || s?.description || s?.label || [s?.main, s?.secondary].filter(Boolean).join(", ") || "");
+
 export default function PermitSetupWizard({
   isOpen, onClose, workOrder, existingLines = [], localities = [],
   onApply, onPendingApply, onRemoveLocality, onDeleteLines, initialStep,
@@ -201,6 +204,9 @@ export default function PermitSetupWizard({
   const [done, setDone] = useState(false);
   const searchSeq = useRef(0);
   const suggestionReq = useRef(0);
+  // Suggestions only for addresses staff type — a prefilled or picked address
+  // never opens the dropdown (or spends a Places request).
+  const typedRef = useRef(false);
   const initializedAppliedLocalityRef = useRef(false);
   const editPrefillLocalityRef = useRef("");
 
@@ -243,7 +249,7 @@ export default function PermitSetupWizard({
   // Address autocomplete — same places_autocomplete the picker uses.
   useEffect(() => {
     const q = address.trim();
-    if (!sessionToken || q.length < 4 || resolving) { setSuggestions([]); return; }
+    if (!typedRef.current || !sessionToken || q.length < 4 || resolving) { setSuggestions([]); return; }
     const reqId = ++suggestionReq.current;
     const t = setTimeout(async () => {
       try {
@@ -555,7 +561,7 @@ export default function PermitSetupWizard({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="clay-card border-none max-w-2xl max-h-[88vh] overflow-y-auto">
+      <DialogContent aria-describedby={undefined} className="clay-card border-none max-w-2xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <MapPin className="w-4 h-4 text-purple-600" />
@@ -588,16 +594,18 @@ export default function PermitSetupWizard({
           <div className="space-y-3">
             <div className="relative">
               <Label className="text-sm">Job site address</Label>
-              <Input value={address} onChange={e => setAddress(e.target.value)}
+              <Input value={address} onChange={e => { typedRef.current = true; setAddress(e.target.value); }}
+                onBlur={() => setTimeout(() => setSuggestions([]), 150)}
                 placeholder="123 Main St, Cincinnati, OH" className="h-9 text-sm mt-1"
-                onKeyDown={e => { if (e.key === "Enter" && canNext) runResolve(); }} />
-              {suggestions.length > 0 && (
+                onKeyDown={e => { if (e.key === "Escape") setSuggestions([]); if (e.key === "Enter" && canNext) { typedRef.current = false; setSuggestions([]); runResolve(); } }} />
+              {suggestions.some(x => suggestionText(x)) && (
                 <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg divide-y text-sm">
-                  {suggestions.map((s, i) => (
+                  {suggestions.filter(x => suggestionText(x)).map((s, i) => (
                     <button key={i} type="button"
                       className="w-full text-left px-3 py-1.5 hover:bg-purple-50 text-xs"
-                      onClick={() => { const picked = typeof s === "string" ? s : s.description || s.label || ""; setAddress(picked); setSuggestions([]); runResolve(picked); }}>
-                      {typeof s === "string" ? s : s.description || s.label}
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => { const picked = suggestionText(s); typedRef.current = false; setAddress(picked); setSuggestions([]); runResolve(picked); }}>
+                      {suggestionText(s)}
                     </button>
                   ))}
                 </div>
@@ -613,7 +621,7 @@ export default function PermitSetupWizard({
             {recent.length > 0 && !suggestions.length && (
               <div className="flex flex-wrap gap-1.5">
                 {recent.map(r => (
-                  <button key={r} type="button" onClick={() => { setAddress(r); runResolve(r); }}
+                  <button key={r} type="button" onClick={() => { typedRef.current = false; setAddress(r); runResolve(r); }}
                     className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-[10px] text-gray-600 hover:border-purple-300 hover:bg-purple-50 truncate max-w-[220px]">
                     {r}
                   </button>
