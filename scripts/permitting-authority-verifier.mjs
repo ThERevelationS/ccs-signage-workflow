@@ -21,7 +21,7 @@
 // Usage: node scripts/permitting-authority-verifier.mjs [--once]
 //        [--slice i --slices n] [--delay-ms 900]
 // Emits auth_verify_* stages to .live-events.jsonl.
-import { openSync, writeFileSync, readFileSync } from 'node:fs';
+import { openSync, writeFileSync, readFileSync, appendFileSync } from 'node:fs';
 import { normalizePermitJurisdictionName } from '../src/components/permitting/jurisdictionPermitBridge.js';
 import { mirrorRead, mirrorApply } from './lib/entity-mirror.mjs';
 import { idleWait } from './lib/event-tail.mjs';
@@ -30,6 +30,7 @@ import { permitCreds } from './lib/permit-creds.mjs';
 import { ohioCertifiedDept, kyElectricalRoster } from './lib/rosters/certified-depts.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
+import { buildIdentityIndex, withUnionResearch } from './lib/profile-identity.mjs';
 
 const APP = '68dfcc5e57bbbc35387da97c';
 const FN = `https://base44.app/api/apps/${APP}/functions`;
@@ -75,6 +76,33 @@ async function call(fn, body, retried = false, serverRetry = 0) {
 
 const evFd = openSync(EVENTS, 'a');
 const emit = (e) => { try { writeFileSync(evFd, JSON.stringify({ t: Date.now(), worker: `authverif${SLICE}`, ...e }) + '\n', { flag: 'a' }); } catch {} };
+
+// ── verification ledger (OPERATIONS_MASTERPLAN §1E) ─────────────────────
+// verification-ledger.json is rewritten at the end of every pass: the
+// fleet's position for the dashboard/status, the gap-reason breakdown, and
+// the held (needs_review) list Brett clears by hand.
+const LEDGER_FILE = '.audit-work/verification-ledger.json';
+const OFFICE_STATE_FILE = '.audit-work/verify-office-state.json';
+const PROMOTIONS_LOG = '.audit-work/verify-promotions.jsonl';
+const REVIEW_ATTEMPTS = 3; // failed evaluations before an office is held
+// ...spread over ≥12h — an attempt counts only once per ATTEMPT_SPACING so
+// restart-bunched passes re-judging the SAME research can't hold an office
+// while new research is still flowing in.
+const ATTEMPT_SPACING_MS = 6 * 3600e3;
+const GAP_CATEGORY = {
+  no_official_source: 'unofficial_source',
+  no_responsibility_quote: 'no_quote',
+  quote_off_topic: 'no_quote',
+  county_not_unincorporated: 'county_scope',
+  non_permit_office: 'non_permit_body',
+  research_denied: 'no_role_match',
+  role_office_mismatch: 'no_role_match',
+  unknown_role: 'no_role_match',
+  no_research_entry: 'no_research',
+  research_unknown: 'no_research',
+};
+const gapCat = (reason) => GAP_CATEGORY[reason] || 'other';
+const readJSON = (f, d) => { try { return JSON.parse(readFileSync(f, 'utf8')); } catch { return d; } };
 
 // ── evidence guards (mirroring verifyEvidence's checks, adapted for
 //    research-extracted roles rather than staff-selected page quotes) ──
@@ -223,7 +251,7 @@ async function loadProfiles() {
     const k = `${p?.state}|${normalizePermitJurisdictionName(p?.name || '')}|${normalizePermitJurisdictionName(p?.county_name || '')}`;
     if (p?.name && !byKey.has(k)) byKey.set(k, p);
   }
-  return { rows, byId, byKey };
+  return { rows, byId, byKey, identity: buildIdentityIndex(rows) };
 }
 async function loadLocalities() {
   return (await mirrorRead('localities', 20 * 60 * 1000, async () => null)) || [];
@@ -266,6 +294,23 @@ async function pass(onlyNames = null) {
   if (first.size) localities.sort((a, b) => Number(first.has(`${String(b.name || '').toLowerCase().trim()}|${String(b.state || '').toUpperCase().trim()}`)) - Number(first.has(`${String(a.name || '').toLowerCase().trim()}|${String(a.state || '').toUpperCase().trim()}`)));
   emit({ stage: 'auth_verify_pass', detail: `${localities.length} localities · ${idx.rows.length} profiles${first.size ? ` · ${first.size} verify-first` : ''}` });
   let promoted = 0, gapped = 0, wrote = 0, scanned = 0;
+  const passStart = Date.now();
+  // Office-state ledger: per-office failure state persists across passes so
+  // attempt counts and the held-review list survive restarts.
+  const officeState = readJSON(OFFICE_STATE_FILE, { offices: {} });
+  const st = officeState.offices;
+  const recordOffice = (loc, o, outcome) => {
+    const k = `${loc.id}:${o.id || o.name}`;
+    const prev = st[k] || { attempts: 0 };
+    const earns = outcome.countAttempt && Date.now() - (prev.last_attempt_at || 0) >= ATTEMPT_SPACING_MS;
+    st[k] = {
+      locality_id: loc.id, jurisdiction: `${loc.name}, ${loc.state}`, office_id: o.id || null, office_name: o.name,
+      status: outcome.status, reasons: outcome.reasons || [], missing_roles: outcome.missing || [],
+      attempts: outcome.status === 'staff_verified' ? 0 : (earns ? (prev.attempts || 0) + 1 : (prev.attempts || 0)),
+      last_attempt_at: earns ? Date.now() : (prev.last_attempt_at || 0),
+      last_at: new Date().toISOString(),
+    };
+  };
   const hash = (s) => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0);
   for (const loc of localities) {
     if (only && !only.has(`${String(loc.name || '').toLowerCase().trim()}|${String(loc.state || '').toUpperCase().trim()}`)) continue;
@@ -274,15 +319,20 @@ async function pass(onlyNames = null) {
     const candidates = offices.filter((o) => o?.authority_verification_status === 'needs_verification' && Array.isArray(o?.authority_roles) && o.authority_roles.length);
     if (!candidates.length) continue;
     const profile = profileFor(loc, idx);
-    if (!profile) continue; // no repository identity — the sweep/research pipeline owns that gap
+    if (!profile) { for (const o of candidates) recordOffice(loc, o, { status: 'needs_verification', reasons: ['no_profile'], missing: o.authority_roles }); continue; } // no repository identity — the sweep/research pipeline owns that gap
+    // Research union: the linked profile's roles PLUS every identity-equal
+    // profile's (historical dupes carry research too), deduped role+url+quote.
+    const researchProfile = withUnionResearch(idx.identity, profile);
     let changed = false;
     const okList = [];
     const next = offices.map((o) => ({ ...o }));
     for (const o of next) {
       if (o?.authority_verification_status !== 'needs_verification' || !Array.isArray(o?.authority_roles) || !o.authority_roles.length) continue;
       scanned += 1;
-      const hits = researchForOffice(profile, o.name, loc, o.authority_roles);
-      if (!hits.length) continue; // research hasn't reached this office yet — normal WIP, not a gap
+      const hits = researchForOffice(researchProfile, o.name, loc, o.authority_roles);
+      // Research hasn't reached this office yet — WIP, not a gap. Recorded
+      // as no_research but no attempt is burned (nothing evaluated).
+      if (!hits.length) { recordOffice(loc, o, { status: 'needs_verification', reasons: ['no_research'], missing: o.authority_roles }); continue; }
       // Repair model: the seed bridge claimed every researched role including
       // 'unknown'/'not_applicable_candidate' entries. Keep only roles carrying
       // a potentially_applicable entry that passes the evidence guards;
@@ -386,6 +436,7 @@ async function pass(onlyNames = null) {
         else { delete o.auto_verification_gaps; delete o.unproven_roles; }
         o.contact_notes = `${clean(o.contact_notes)} [evidence-pipeline: ${proven.join('+')} verified ${new Date().toISOString().slice(0, 10)} from official sources on ${profile.name}${profile.state ? `, ${profile.state}` : ''}${trimmed.length ? `; trimmed ${trimmed.length} unproven` : ''}]`.trim();
         promoted += 1; changed = true;
+        recordOffice(loc, o, { status: 'staff_verified' });
         // emit only after the write confirms — phantom oks lied last pass
         okList.push({ office: o.name, roles: proven, trimmed: trimmed.length });
       } else {
@@ -394,6 +445,10 @@ async function pass(onlyNames = null) {
         o.unproven_roles = trimmed.map((g) => g.split(':')[0]).filter((v, i, a) => a.indexOf(v) === i);
         if (JSON.stringify(o.auto_verification_gaps) !== before) changed = true;
         gapped += 1;
+        // Evaluated and held — the failure earns an attempt; REVIEW_ATTEMPTS
+        // of these move the office to the human-review list in the ledger.
+        const missing = trimmed.map((g) => g.split(':')[0]).filter((v, i, a) => a.indexOf(v) === i);
+        recordOffice(loc, o, { status: 'needs_verification', reasons: trimmed.map((g) => gapCat(g.split(':').slice(1).join(':'))), missing, countAttempt: true });
       }
     }
     if (changed && !DRY) {
@@ -409,6 +464,7 @@ async function pass(onlyNames = null) {
         wrote += 1;
         mirrorApply('localities', { ...loc, offices: merged });
         for (const k of okList) {
+          try { appendFileSync(PROMOTIONS_LOG, JSON.stringify({ at: Date.now(), locality_id: loc.id, jurisdiction: `${loc.name}, ${loc.state}`, office: k.office, roles: k.roles }) + '\n'); } catch {}
           emit({ stage: 'auth_verify_ok', jurisdiction: `${loc.name}, ${loc.state}`, address: `${loc.name}, ${loc.state}`, detail: `${k.office} → ${k.roles.join('+')}${k.trimmed ? ` (trimmed ${k.trimmed})` : ''}` });
         }
       } catch (e) {
@@ -422,7 +478,71 @@ async function pass(onlyNames = null) {
   // AND some for zoning), its queued work orders get their permit lines here —
   // the same create shape the Permitting page uses — then the queue clears.
   if (!DRY && SLICE === 0) await consumePendingApplies(localities);
+  writeVerificationLedger(localities, officeState, passStart);
   emit({ stage: 'auth_verify_done', detail: `scanned ${scanned} offices · promoted ${promoted} · gapped ${gapped} · wrote ${wrote}` });
+}
+
+// Ledger tallies cover the WHOLE mirror — the fleet's position, not just
+// what this pass scanned. Gap reasons aggregate the primary failure per
+// failing office; held offices (>=REVIEW_ATTEMPTS failed evaluations)
+// surface on the dashboard instead of looping forever.
+function writeVerificationLedger(localities, officeState, passStart) {
+  try {
+    const st = officeState.offices || {};
+    const jur = { all_verified: 0, some_verified: 0, none_verified: 0, no_offices: 0 };
+    const offices = { total: 0, staff_verified: 0, needs_verification: 0, needs_review: 0 };
+    const gapReasons = {}, missingRoles = {};
+    for (const l of localities) {
+      const offs = (Array.isArray(l.offices) ? l.offices : []).filter((o) => Array.isArray(o?.authority_roles) && o.authority_roles.length);
+      if (!offs.length) { jur.no_offices++; continue; }
+      const v = offs.filter((o) => o.authority_verification_status === 'staff_verified').length;
+      if (v === offs.length) jur.all_verified++; else if (v) jur.some_verified++; else jur.none_verified++;
+      for (const o of offs) {
+        offices.total++;
+        const ok = o.authority_verification_status === 'staff_verified';
+        if (ok) { offices.staff_verified++; continue; }
+        const rec = st[`${l.id}:${o.id || o.name}`];
+        if ((rec?.attempts || 0) >= REVIEW_ATTEMPTS) { offices.needs_review++; continue; }
+        offices.needs_verification++;
+      }
+    }
+    // Failing-office breakdown from the per-office state written this pass
+    // AND prior passes — a held office's reason stays attached.
+    const held = [];
+    for (const [k, rec] of Object.entries(st)) {
+      if (!rec || rec.status !== 'needs_verification') continue;
+      const primary = (rec.reasons || [])[0] || 'other';
+      gapReasons[primary] = (gapReasons[primary] || 0) + 1;
+      for (const r of rec.missing_roles || []) missingRoles[r] = (missingRoles[r] || 0) + 1;
+      if ((rec.attempts || 0) >= REVIEW_ATTEMPTS) held.push({ locality_id: rec.locality_id, jurisdiction: rec.jurisdiction, office: rec.office_name, reasons: rec.reasons, missing_roles: rec.missing_roles, attempts: rec.attempts, last_at: rec.last_at });
+    }
+    held.sort((a, b) => b.attempts - a.attempts || String(a.jurisdiction).localeCompare(b.jurisdiction));
+    const hour = Date.now() - 3600e3, day = Date.now() - 86400e3;
+    let promos = [];
+    try { promos = readFileSync(PROMOTIONS_LOG, 'utf8').trim().split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch {}
+    const h = promos.filter((p) => p.at >= hour).length, d = promos.filter((p) => p.at >= day).length;
+    const perHour = d / 24;
+    const remaining = offices.needs_verification;
+    let held_relinks = [];
+    try { held_relinks = readFileSync('.audit-work/relink-needs-review.jsonl', 'utf8').trim().split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch {}
+    const ledger = {
+      at: new Date().toISOString(),
+      pass_ms: Date.now() - passStart,
+      jurisdictions: jur,
+      offices,
+      gap_reasons: gapReasons,
+      missing_roles: Object.fromEntries(Object.entries(missingRoles).sort((a, b) => b[1] - a[1]).slice(0, 15)),
+      promotions: { last_hour: h, last_24h: d, last_at: promos.length ? new Date(Math.max(...promos.map((p) => p.at))).toISOString() : null },
+      eta: { needs_verification: remaining, promotions_per_hour: Math.round(perHour * 100) / 100, hours: perHour > 0 ? Math.round(remaining / perHour) : null },
+      held_relinks: held_relinks.slice(-50),
+      needs_review: held.slice(0, 200),
+      needs_review_total: held.length,
+    };
+    writeFileSync(LEDGER_FILE, JSON.stringify(ledger, null, 1));
+    writeFileSync(OFFICE_STATE_FILE, JSON.stringify(officeState));
+  } catch (e) {
+    emit({ stage: 'verify_ledger_error', ok: false, detail: String(e?.message || e).slice(0, 160) });
+  }
 }
 
 const applyReadyOffices = (offices) => {

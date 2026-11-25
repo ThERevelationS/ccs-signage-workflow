@@ -55,6 +55,10 @@ function catalog() {
     { name: 'seed-scan', group: 'verification', script: 'scripts/permitting-office-seed-scan.mjs', events: ['sweep-seed', 'seed-scan'] },
     { name: 'authority-verifier', group: 'verification', script: 'scripts/permitting-authority-verifier.mjs', args: ['--delay-ms', '600'], events: ['authverif0', 'authority-verifier'] },
     { name: 'queue-hygiene', group: 'verification', script: 'scripts/permitting-queue-hygiene.mjs', events: ['queuehyg', 'queue-hygiene'] },
+    // One-shot profile relink — re-arms every 6h so newly-historical links
+    // get re-pointed without a human (§1E). --apply is safe: it re-validates
+    // every entry against the current mirror and holds ambiguous ones.
+    { name: 'profile-relink', group: 'verification', script: 'scripts/permitting-profile-relink.mjs', args: ['--apply'], events: ['profile-relink'], once: true, every_ms: 6 * 3600e3 },
   ];
   for (let i = 0; i < 16; i++) w.push({ name: `local-res-${i}`, group: 'verification', script: 'scripts/permitting-local-researcher.mjs', args: ['--slice', String(i), '--slices', '16'], events: [`local-res-${i}`], researcher: true });
   for (let i = 0; i < 4; i++) w.push({ name: `office-sweep-${i}`, group: 'expansion', script: 'scripts/permitting-office-sweep.mjs', args: ['--slice', String(i), '--slices', '4', '--delay-ms', '800'], events: [`sweep${i}`], researcher: true, once: true });
@@ -142,7 +146,7 @@ function spawnWorker(spec) {
     if (!r || r.stoppedByUs || shuttingDown) return;
     // One-shot workers (office sweep) exit 0 when their pass completes —
     // that's "done", not a crash; a nonzero exit still restarts them.
-    if (spec.once && code === 0) { r.finished = true; r.proc = null; return; }
+    if (spec.once && code === 0) { r.finished = true; r.finishedAt = Date.now(); r.proc = null; return; }
     // restart-on-crash — backoff doubles per failure, resets after 5min healthy
     r.restarts.push(Date.now()); r.restarts = r.restarts.slice(-20);
     r.proc = null;
@@ -219,14 +223,32 @@ let shuttingDown = false;
 let guard = { level: 0, streak: 0, since: null, allowed: RES_TOTAL, avgRss: 0, lastAdjust: 0, windowStart: 0 };
 const guardActions = [];
 
+let vpCache = { at: 0, data: undefined };
+function verificationProgress() {
+  if (vpCache.data !== undefined && Date.now() - vpCache.at < 30000) return vpCache.data;
+  vpCache = { at: Date.now(), data: readJSON(path.join(AUDIT, 'verification-ledger.json'), null) };
+  return vpCache.data;
+}
 function reconcile() {
   control = { ...DEFAULT_CONTROL, ...readJSON(CONTROL_FILE, control) };
+  // §1E gate — expansion stays locked while anything workable or held is
+  // left: needs_verification == 0 AND needs_review == 0 AND no held relinks.
+  // One-way unlock; requires a ledger no older than 30min so a dead
+  // verifier's last write can never unlock expansion.
+  const vp = verificationProgress();
+  const vpFresh = vp?.at && Date.now() - new Date(vp.at).getTime() < 30 * 60e3;
+  if (control.expansion_locked && vpFresh && vp.offices && vp.offices.needs_verification === 0 && !(vp.offices.needs_review || 0) && !(vp.held_relinks || []).length) {
+    emit({ stage: 'expansion_unlocked', detail: 'verification ledger clean — expansion lock cleared' });
+    control = writeControl({ expansion_locked: false }, 'verification-gate');
+  }
   const want = new Set(activeSetFor(control));
   let spawned = 0;
   for (const spec of CATALOG) {
     const r = procs.get(spec.name);
     const alive = Boolean(r?.proc && !r.proc.killed && r.proc.exitCode === null);
     if (want.has(spec.name)) {
+      // Recurring one-shots (profile-relink every 6h) re-arm after the interval.
+      if (spec.once && r?.finished && spec.every_ms && Date.now() - (r.finishedAt || 0) >= spec.every_ms) r.finished = false;
       // Stagger starts — a cold boot of ~22 node workers at once spikes RAM
       // hard enough to trip the guard (observed on this box).
       if (!alive && !r?.restartTimer && !(spec.once && r?.finished) && spawned < 2) { spawnWorker(spec); spawned++; }
@@ -350,7 +372,8 @@ function statusJSON() {
     const recentRestarts = (r?.restarts || []).filter((t) => now - t < 10 * 60 * 1000).length;
     return { name: spec.name, group: spec.group, pid: alive ? r.proc.pid : null, alive, rss_mb: alive && rss.get(r.proc.pid) ? Math.round(rss.get(r.proc.pid) / 1048576) : null, restarts: (r?.restarts || []).length, recent_restarts: recentRestarts, crash_looping: recentRestarts >= 5, last_heartbeat: hb, last_event: lastEvent };
   });
-  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: guard.allowed, total: RES_TOTAL, window_start: guard.windowStart, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()) }, updated_at: control.updated_at || null, workers };
+  const vp = verificationProgress();
+  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: guard.allowed, total: RES_TOTAL, window_start: guard.windowStart, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()) }, updated_at: control.updated_at || null, workers, verification_progress: vp ? { at: vp.at, jurisdictions: vp.jurisdictions, offices: vp.offices, gap_reasons: vp.gap_reasons, missing_roles: vp.missing_roles, promotions: vp.promotions, eta: vp.eta, held_relinks: (vp.held_relinks || []).length, needs_review_total: vp.needs_review_total || 0 } : null };
 }
 
 // ── stop: pause → flusher drains → kill trees ────────────────────────────

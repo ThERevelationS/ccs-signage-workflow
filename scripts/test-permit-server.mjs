@@ -31,7 +31,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 {
   const run = { state: 'running', verification: true, expansion: false, expansion_locked: true };
   const active = activeSetFor(run);
-  assert.equal(active.length, 22); // dash + flusher + mirror + 16 local-res + seed + verifier + hygiene
+  assert.equal(active.length, 23); // dash + flusher + mirror + 16 local-res + seed + verifier + hygiene + profile-relink
   assert.ok(active.includes('write-flusher') && active.includes('local-res-15') && active.includes('dashboard'));
   assert.ok(!active.includes('office-sweep-0') && !active.includes('forever-runner'));
   // paused keeps the same process set — workers self-idle, none are killed
@@ -42,7 +42,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const locked = activeSetFor({ ...run, expansion: true, expansion_locked: true });
   assert.ok(!locked.includes('office-sweep-0'));
   const open = activeSetFor({ ...run, expansion: true, expansion_locked: false });
-  assert.equal(open.length, 28);
+  assert.equal(open.length, 29);
   assert.ok(open.includes('office-sweep-3') && open.includes('parcel-resolver') && open.includes('forever-runner'));
   // verification OFF drops its whole group, keeps core
   const off = activeSetFor({ ...run, verification: false });
@@ -61,7 +61,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   assert.ok(l1.includes('local-res-3') && l1.includes('office-sweep-1') && l1.includes('forever-runner') && l1.includes('parcel-resolver'));
   assert.ok(!l1.includes('write-flusher') && !l1.includes('mirror-sync') && !l1.includes('authority-verifier') && !l1.includes('dashboard') && !l1.includes('seed-scan'));
   const l2 = guardPausedNames(2);
-  assert.equal(l2.length, 26); // everything except flusher + dashboard
+  assert.equal(l2.length, 27); // everything except flusher + dashboard
   assert.ok(!l2.includes('write-flusher') && !l2.includes('dashboard'));
   // step-up is immediate at any depth
   assert.equal(guardNextLevel(0, 3 * GB, 0).level, 1);
