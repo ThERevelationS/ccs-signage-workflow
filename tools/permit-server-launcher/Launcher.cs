@@ -50,7 +50,8 @@ static class Launcher {
     return sb.ToString();
   }
 
-  static void StartController() {
+  static DateTime lastRelaunch = DateTime.MinValue;
+  static void StartController(bool quiet = false) {
     var psi = new ProcessStartInfo {
       FileName = "node",
       Arguments = "scripts/permit-server.mjs",
@@ -61,7 +62,7 @@ static class Launcher {
     };
     psi.EnvironmentVariables["PERMIT_AUTO_LOGIN"] = "1";
     try { Process.Start(psi); } catch (Exception e) {
-      MessageBox.Show("Could not start the permit server:\r\n" + e.Message, "CCS Permit Server",
+      if (!quiet) MessageBox.Show("Could not start the permit server:\r\n" + e.Message, "CCS Permit Server",
         MessageBoxButtons.OK, MessageBoxIcon.Error);
     }
   }
@@ -144,7 +145,13 @@ static class Launcher {
       tray = new NotifyIcon { Icon = MakeIcon(), Text = "CCS Permit Server", ContextMenuStrip = menu, Visible = true };
       tray.DoubleClick += (s, e) => { try { Process.Start(Dash); } catch { } };
       statusTimer = new System.Windows.Forms.Timer { Interval = 15000 };
-      statusTimer.Tick += (s, e) => RefreshMenu();
+      statusTimer.Tick += (s, e) => {
+        RefreshMenu();
+        // Watchdog: the controller has no supervisor — a silent crash used
+        // to leave the fleet dead until the tray was reopened. Relaunch at
+        // most every 90s so a crash-loop doesn't spawn-spam.
+        if (!ServerUp() && DateTime.Now - lastRelaunch > TimeSpan.FromSeconds(90)) { lastRelaunch = DateTime.Now; StartController(true); }
+      };
       statusTimer.Start();
       RefreshMenu();
       Application.Run();
