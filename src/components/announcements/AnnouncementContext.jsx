@@ -6,6 +6,7 @@ import { fetchActiveAnnouncementFeed, acknowledgeAnnouncement } from "./announce
 import { isPlatformRateLimit } from "@/api/requestGovernor.mjs";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { usePolling } from "@/lib/usePolling";
+import { claimPollLeadership, broadcastPollResult, onPollResult } from "@/lib/pollLeader";
 
 const AnnouncementContext = createContext(null);
 
@@ -67,6 +68,10 @@ export const playSoundEffect = (soundType, customUrl = null) => {
   }
 };
 
+// Cross-tab leader election key — one tab per browser runs the ambient
+// announcement poll + subscribe; siblings consume the broadcast rows.
+const LEADER_KEY = "announcement-feed";
+
 const DEVICE_KEY_STORAGE = "ccs_announcement_viewer";
 
 function deviceViewerKey() {
@@ -106,6 +111,19 @@ export function AnnouncementProvider({ children, currentPageName }) {
     ? `user:${String(currentUser.email).toLowerCase()}`
     : deviceKeyRef.current;
 
+  // Scheduled/expired broadcasts never reach the banner even if the server
+  // feed path is unavailable and stale rows linger in storage.
+  const applyRows = useCallback((rows) => {
+    const now = Date.now();
+    setAllActive((rows || []).filter((ann) => {
+      const exp = Date.parse(ann?.expires_at || "");
+      if (Number.isFinite(exp) && exp <= now) return false;
+      const sched = Date.parse(ann?.scheduled_for || "");
+      if (Number.isFinite(sched) && sched > now) return false;
+      return true;
+    }));
+  }, []);
+
   const fetchActive = useCallback(async () => {
     try {
       let rows;
@@ -123,24 +141,31 @@ export function AnnouncementProvider({ children, currentPageName }) {
           label: "Active announcements",
         });
       }
-      // Scheduled/expired broadcasts never reach the banner even if the
-      // server feed path is unavailable and stale rows linger in storage.
-      const now = Date.now();
-      setAllActive((rows || []).filter((ann) => {
-        const exp = Date.parse(ann?.expires_at || "");
-        if (Number.isFinite(exp) && exp <= now) return false;
-        const sched = Date.parse(ann?.scheduled_for || "");
-        if (Number.isFinite(sched) && sched > now) return false;
-        return true;
-      }));
+      applyRows(rows);
+      // Follower tabs hydrate from the leader's broadcast instead of polling.
+      broadcastPollResult(LEADER_KEY, rows);
     } catch {}
+  }, [applyRows]);
+
+  // Leadership is re-evaluated every 30s so a closed leader hands off within
+  // ~1 lease. Followers never fire the poll or the subscribe read themselves.
+  const [isLeader, setIsLeader] = useState(() => claimPollLeadership(LEADER_KEY, 120000));
+  useEffect(() => {
+    const t = setInterval(() => setIsLeader(claimPollLeadership(LEADER_KEY, 120000)), 30000);
+    return () => clearInterval(t);
   }, []);
+
+  // Follower tabs hydrate from the leader's broadcast.
+  useEffect(() => onPollResult(LEADER_KEY, (rows) => {
+    if (Array.isArray(rows)) applyRows(rows);
+  }), [applyRows]);
 
   // 5-minute ambient poll — first fire waits out the mount burst so the
   // banner load doesn't pay a 429 + retry stack on every page open.
-  usePolling(fetchActive, 300000, { initialDelayMs: 70000 });
+  usePolling(fetchActive, 300000, { initialDelayMs: 70000, enabled: isLeader });
 
   useEffect(() => {
+    if (!isLeader) return undefined;
     let unsubscribe = null;
     try {
       unsubscribe = base44.entities.Announcement.subscribe(() => {
@@ -155,7 +180,7 @@ export function AnnouncementProvider({ children, currentPageName }) {
       if (typeof unsubscribe === "function") unsubscribe();
       if (subscribeDebounceRef.current) clearTimeout(subscribeDebounceRef.current);
     };
-  }, [fetchActive]);
+  }, [fetchActive, isLeader]);
 
   useEffect(() => {
     const checkForAnnouncements = () => {
