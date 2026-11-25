@@ -152,7 +152,11 @@ function spawnWorker(spec) {
   proc.on('exit', (code, sig) => {
     const r = procs.get(spec.name);
     emit({ stage: 'worker_exit', ok: code === 0, detail: `${spec.name} exited code=${code} sig=${sig}${r?.stoppedByUs ? ' (stopped by controller)' : ''}` });
-    if (!r || r.stoppedByUs || shuttingDown) return;
+    if (!r) return;
+    // Culled/stopped workers keep a dead proc handle (taskkill never sets
+    // Node's killed flag) — clear it or spawnWorker's already-running guard
+    // treats them as alive and they can never re-enter the active set.
+    if (r.stoppedByUs || shuttingDown) { r.proc = null; return; }
     // One-shot workers (office sweep) exit 0 when their pass completes —
     // that's "done", not a crash; a nonzero exit still restarts them.
     if (spec.once && code === 0) { r.finished = true; r.finishedAt = Date.now(); r.proc = null; return; }
