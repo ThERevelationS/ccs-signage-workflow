@@ -10,7 +10,7 @@ const tmp = mkdtempSync(path.join(tmpdir(), 'permit-server-test-'));
 process.env.PERMIT_AUDIT_DIR = tmp; // must land before the lib imports
 
 const { readControl, waitWhilePaused, heartbeat, heartbeatFile, DEFAULT_CONTROL, HEARTBEAT_DIR } = await import('./lib/server-control.mjs');
-const { activeSetFor, guardLevelFor, guardPausedNames, guardNextLevel, researcherStep, researcherWindow, researcherAllowance, memoryAllowance, admitResearcher, cullOrder, reserveBytesOf, fleetBudgetBytesOf, nextBackoff, lockStale, rotateIfBig } = await import('./permit-server.mjs');
+const { activeSetFor, guardPausedNames, isEmergency, pressureDeficit, downScaleCount, spawnMarginsOk, maySpawnResearcher, researcherCap, nextSliceIndex, memoryAllowance, admitResearcher, cullOrder, reserveBytesOf, fleetBudgetBytesOf, nextBackoff, lockStale, rotateIfBig } = await import('./permit-server.mjs');
 
 const ctl = path.join(tmp, 'server-control.json');
 const writeCtl = (o) => writeFileSync(ctl, JSON.stringify({ ...DEFAULT_CONTROL, ...o, updated_at: new Date().toISOString() }));
@@ -47,125 +47,130 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   // verification OFF drops its whole group, keeps core
   const off = activeSetFor({ ...run, verification: false });
   assert.ok(!off.includes('local-res-0') && !off.includes('authority-verifier') && off.includes('write-flusher'));
-  // researcherAllowed culls slices outside the adaptive window — they leave
+  // researcherAllowed culls slices outside the wanted set — they leave
   // the active set entirely so reconcile stops (not pauses) them.
-  const win = researcherWindow(0, 5);
-  const culled = activeSetFor(run, undefined, win.names);
+  const wanted = ['local-res-3', 'local-res-4', 'local-res-5', 'local-res-6', 'local-res-7'];
+  const culled = activeSetFor(run, undefined, wanted);
   const culledRes = culled.filter((n) => /^local-res-/.test(n));
-  assert.deepEqual(culledRes.sort(), [...win.names].sort());
+  assert.deepEqual(culledRes.sort(), [...wanted].sort());
   assert.equal(culledRes.length, 5);
   assert.equal(culled.length, 23 - 16 + 5); // window replaces the full slice set
   assert.ok(culled.includes('authority-verifier') && culled.includes('write-flusher'));
-  // empty window (guard L1+) → no researcher processes at all
+  // empty wanted set → no researcher processes at all
   assert.equal(activeSetFor(run, undefined, []).filter((n) => /^local-res-/.test(n)).length, 0);
   // null → legacy behavior, all slices
   assert.equal(activeSetFor(run, undefined, null).filter((n) => /^local-res-/.test(n)).length, 16);
 }
 
-// ── resource guard thresholds + stepped hysteresis ───────────────────────
+// ── emergency + pause set ────────────────────────────────────────────────
 {
   const GB = 1024 ** 3;
-  assert.equal(guardLevelFor(9 * GB), 0);
-  assert.equal(guardLevelFor(4 * GB), 0);   // ≥3.5GB → clear
-  assert.equal(guardLevelFor(3 * GB), 1);   // <3.5GB → researchers pause
-  assert.equal(guardLevelFor(1.2 * GB), 2); // <1.5GB → all but flusher
-  assert.equal(guardLevelFor(NaN), 0);
-  // L1 pauses NOTHING — researchers are culled from the spawn set instead
-  // (a paused slice still holds ~500MB; stopping it releases the pressure).
-  assert.deepEqual(guardPausedNames(1), []);
+  // emergency: free <1.5GB OR commit headroom <1.5GB — either one trips it
+  assert.equal(isEmergency(9 * GB, null), false);
+  assert.equal(isEmergency(1.2 * GB, null), true);
+  assert.equal(isEmergency(9 * GB, 1.4 * GB), true);   // commit exhaustion
+  assert.equal(isEmergency(9 * GB, 2 * GB), false);
+  // the pause set: non-researcher workers only — flusher + dashboard exempt,
+  // researchers are culled from the spawn set, never paused
   const l2 = guardPausedNames(2);
-  // L2 pauses non-researcher workers only: flusher + dashboard exempt,
-  // researchers stopped not paused.
   assert.equal(l2.length, 5); // mirror-sync + seed-scan + verifier + hygiene + profile-relink
   assert.ok(!l2.includes('write-flusher') && !l2.includes('dashboard') && !l2.includes('local-res-3') && !l2.includes('office-sweep-1'));
   assert.ok(l2.includes('mirror-sync') && l2.includes('authority-verifier'));
-  // step-up is immediate at any depth
-  assert.equal(guardNextLevel(0, 3 * GB, 0).level, 1);
-  assert.equal(guardNextLevel(1, 1.2 * GB, 0).level, 2);
-  assert.equal(guardNextLevel(0, 1.2 * GB, 0).level, 2);
-  // holding at the current level resets the recovery streak
-  assert.deepEqual(guardNextLevel(2, 1.4 * GB, 3).level, 2);
-  assert.equal(guardNextLevel(2, 1.4 * GB, 3).streak, 0);
-  // step-down 2→1 needs >3.5GB for 4 ticks (60s)
-  assert.equal(guardNextLevel(2, 4 * GB, 0).level, 2);
-  assert.equal(guardNextLevel(2, 4 * GB, 0).streak, 1);
-  assert.equal(guardNextLevel(2, 4 * GB, 3).level, 1); // 4th sustained tick releases to L1
-  // …but not while free sits in the L1 band
-  assert.equal(guardNextLevel(2, 2 * GB, 3).level, 2);
-  // step-down 1→0 needs >5GB for 8 ticks (120s)
-  assert.equal(guardNextLevel(1, 5.5 * GB, 6).level, 1);
-  assert.equal(guardNextLevel(1, 5.5 * GB, 7).level, 0);
-  assert.equal(guardNextLevel(1, 4.5 * GB, 7).level, 1); // 4.5GB isn't >5GB — held
-  // sequential full release: 2→1 at 60s, then 1→0 at 120s
-  assert.equal(guardNextLevel(2, 6 * GB, 3).level, 1);
-  assert.equal(guardNextLevel(1, 6 * GB, 7).level, 0);
-  // re-trip mid-recovery resets the streak
-  assert.equal(guardNextLevel(2, 1.2 * GB, 2).level, 2);
-  assert.equal(guardNextLevel(2, 1.2 * GB, 2).streak, 0);
 }
 
-// ── adaptive researcher window ───────────────────────────────────────────
+// ── scale-down: pressure deficit + cull count ────────────────────────────
+{
+  const GB = 1024 ** 3, MB = 1024 ** 2;
+  const base = { freeBytes: 8 * GB, reserveBytes: 4 * GB, commitHeadroomBytes: 10 * GB, fleetRssBytes: 4 * GB, budgetBytes: 12 * GB };
+  assert.ok(pressureDeficit(base) < 0);                                          // all margins clean
+  assert.equal(pressureDeficit({ ...base, freeBytes: 3 * GB }), 1 * GB);         // free under reserve
+  assert.equal(pressureDeficit({ ...base, commitHeadroomBytes: 2 * GB }), 1 * GB); // headroom <3GB
+  assert.equal(pressureDeficit({ ...base, commitHeadroomBytes: null }), -4 * GB); // missing headroom ignored for cull → max(−4, −∞, −8)
+  assert.equal(pressureDeficit({ ...base, fleetRssBytes: 13 * GB }), 1 * GB);    // over budget
+  // the worst margin wins
+  assert.equal(pressureDeficit({ ...base, freeBytes: 3.5 * GB, fleetRssBytes: 14 * GB }), 2 * GB);
+  // cull count: ceil(deficit / avgRss), 0 at/under zero deficit
+  assert.equal(downScaleCount(1.1 * GB, 500 * MB), 3);   // 2.2 → 3
+  assert.equal(downScaleCount(1 * GB, 512 * MB), 2);     // exact fit → no over-cull
+  assert.equal(downScaleCount(0.4 * GB, 500 * MB), 1);   // small dip → 1, not all
+  assert.equal(downScaleCount(0, 500 * MB), 0);
+  assert.equal(downScaleCount(-2 * GB, 500 * MB), 0);
+  assert.equal(downScaleCount(1 * GB, NaN), 3);          // unmeasured → 500MB default: 1024/500 → 3
+  // emergency → deficit is reserve − free ≥ ~2.5GB → ~5+ culls per tick,
+  // draining fast without waiting
+  assert.ok(downScaleCount(pressureDeficit({ ...base, freeBytes: 1.2 * GB }), 500 * MB) >= 5);
+}
+
+// ── scale-up gate: margins + pacing + settle ─────────────────────────────
+{
+  const GB = 1024 ** 3, MB = 1024 ** 2;
+  const margins = { freeBytes: 8 * GB, reserveBytes: 4 * GB, commitHeadroomBytes: 10 * GB, fleetRssBytes: 4 * GB, budgetBytes: 12 * GB, avgRssBytes: 500 * MB };
+  // spawnMarginsOk: free − rss ≥ reserve + 1GB cushion
+  assert.equal(spawnMarginsOk(margins), true);                            // 8−0.5 ≥ 5
+  assert.equal(spawnMarginsOk({ ...margins, freeBytes: 5.4 * GB }), false); // 5.4−0.5 < 5
+  assert.equal(spawnMarginsOk({ ...margins, freeBytes: 5.5 * GB }), true);  // 5.5−0.5 = 5
+  // commit headroom − rss ≥ 4GB; a missing reading fails closed
+  assert.equal(spawnMarginsOk({ ...margins, commitHeadroomBytes: 4.4 * GB }), false); // 4.4−0.5 < 4
+  assert.equal(spawnMarginsOk({ ...margins, commitHeadroomBytes: 4.5 * GB }), true);
+  assert.equal(spawnMarginsOk({ ...margins, commitHeadroomBytes: null }), false);
+  // fleet + rss ≤ budget
+  assert.equal(spawnMarginsOk({ ...margins, fleetRssBytes: 11.6 * GB }), false); // 11.6+0.5 > 12
+  assert.equal(spawnMarginsOk({ ...margins, fleetRssBytes: 11.5 * GB }), true);
+  // pacing: at most one spawn per 10s
+  const ok = { ...margins, now: 100000, lastSpawnAt: null, lastSpawnAliveMs: null };
+  assert.equal(maySpawnResearcher(ok), true);
+  assert.equal(maySpawnResearcher({ ...ok, lastSpawnAt: 95000 }), false);   // 5s ago
+  assert.equal(maySpawnResearcher({ ...ok, lastSpawnAt: 90000 }), true);    // 10s ago
+  // settle: previous spawn alive <10s blocks (RSS not measured yet)
+  assert.equal(maySpawnResearcher({ ...ok, lastSpawnAliveMs: 4000 }), false);
+  assert.equal(maySpawnResearcher({ ...ok, lastSpawnAliveMs: 11000 }), true);
+  // no flapping: between reserve and reserve+1GB nothing culls AND nothing
+  // spawns — the oscillating band is a dead zone both ways
+  const band = { ...margins, freeBytes: 4.4 * GB };
+  assert.ok(pressureDeficit({ freeBytes: band.freeBytes, reserveBytes: 4 * GB, commitHeadroomBytes: 10 * GB, fleetRssBytes: 4 * GB, budgetBytes: 12 * GB }) <= 0);
+  assert.equal(spawnMarginsOk(band), false);
+}
+
+// ── researcher cap + slice rotation pointer ──────────────────────────────
 {
   const GB = 1024 ** 3, MB = 1024 ** 2;
   const ctl = { researchers: { mode: 'auto', max: 16, disabled: [] }, limits: { reserve_gb: 4 } };
-  // memoryAllowance = floor((free−reserve)/avgRss), clamped [0,16]
+  // cap = the user's number, both modes — memory fit is the gate's job
+  assert.equal(researcherCap(ctl), 16);
+  assert.equal(researcherCap({ ...ctl, researchers: { mode: 'manual', max: 8 } }), 8);
+  assert.equal(researcherCap({ ...ctl, researchers: { mode: 'manual', max: 0 } }), 0); // kill-all
+  assert.equal(researcherCap({ ...ctl, researchers: { mode: 'auto', max: 99 } }), 16); // clamped to slices
+  assert.equal(researcherCap({}), 16); // defaults
+  // memoryAllowance — display estimate of what memory could host
   assert.equal(memoryAllowance(12 * GB, 400 * MB, 4 * GB), 16);   // 8GB/400MB=20 → cap
   assert.equal(memoryAllowance(6 * GB, 400 * MB, 4 * GB), 5);     // 2GB/400MB=5
-  assert.equal(memoryAllowance(4.1 * GB, 400 * MB, 4 * GB), 0);   // ~0 → floor 0 (admission blocks)
+  assert.equal(memoryAllowance(4.1 * GB, 400 * MB, 4 * GB), 0);
   assert.equal(memoryAllowance(9 * GB, NaN, 4 * GB), 10);         // unmeasured → 500MB default
-  // auto = clamp(memN, RES_MIN, user max); user max caps the formula
-  assert.equal(researcherAllowance(ctl, 12 * GB, 400 * MB), 16);
-  assert.equal(researcherAllowance(ctl, 6 * GB, 400 * MB), 5);
-  assert.equal(researcherAllowance(ctl, 4.1 * GB, 400 * MB), 2);  // auto floors at 2
-  assert.equal(researcherAllowance({ ...ctl, researchers: { ...ctl.researchers, max: 6 } }, 12 * GB, 400 * MB), 6);
-  assert.equal(researcherAllowance({ ...ctl, researchers: { ...ctl.researchers, max: 0 } }, 12 * GB, 400 * MB), 0); // kill-all
-  assert.equal(researcherAllowance({ ...ctl, researchers: { ...ctl.researchers, max: 1 } }, 12 * GB, 400 * MB), 1);
-  // manual = exactly the user's count, still memory-capped ("requested 8 · memory allows 3")
-  const man = { ...ctl, researchers: { mode: 'manual', max: 8, disabled: [] } };
-  assert.equal(researcherAllowance(man, 12 * GB, 400 * MB), 8);
-  assert.equal(researcherAllowance(man, 5.4 * GB, 400 * MB), 3);  // (5.4−4)/0.4=3.5→3
-  assert.equal(researcherAllowance(man, 3 * GB, 400 * MB), 0);    // under reserve → 0
-  // configurable reserve shifts the memory allowance
-  assert.equal(researcherAllowance({ ...man, limits: { reserve_gb: 2 } }, 5.4 * GB, 400 * MB), 8);
   assert.equal(reserveBytesOf({ limits: { reserve_gb: 6 } }), 6 * GB);
   assert.equal(reserveBytesOf({ limits: { reserve_gb: 99 } }), 10 * GB); // clamped
   assert.equal(reserveBytesOf({}), 4 * GB);
   assert.equal(fleetBudgetBytesOf({}), 12 * GB);
-  // spawn admission: free − projected RSS must hold the reserve
-  assert.equal(admitResearcher(5 * GB, 400 * MB, 4 * GB), true);   // 5−0.4 ≥ 4
-  assert.equal(admitResearcher(4.2 * GB, 400 * MB, 4 * GB), false); // 4.2−0.4 < 4
-  assert.equal(admitResearcher(4.5 * GB, NaN, 4 * GB), true);       // 500MB default
-  assert.equal(admitResearcher(4.4 * GB, NaN, 4 * GB), false);
-  // ±2/min rate limit toward target, now clamped to [0,16] so kill-all reaches 0
-  assert.equal(researcherStep(16, 6), 14);
-  assert.equal(researcherStep(2, 16), 4);
-  assert.equal(researcherStep(14, 14), 14);
-  assert.equal(researcherStep(2, 0), 0);   // can reach 0 (kill-all / memory floor)
-  assert.equal(researcherStep(1, 0), 0);
-  assert.equal(researcherStep(15, 99), 16); // can't exceed total
-  assert.equal(researcherStep(undefined, 7), 14); // unmeasured starts at total, steps ±2
-  // newest-first cull order (budget + emergency drains)
+  // plain reserve admission (expansion researchers)
+  assert.equal(admitResearcher(5 * GB, 400 * MB, 4 * GB), true);
+  assert.equal(admitResearcher(4.2 * GB, 400 * MB, 4 * GB), false);
+  assert.equal(admitResearcher(4.5 * GB, NaN, 4 * GB), true);
+  // newest-first cull order (pressure + budget drains)
   const rs = (n, t) => ({ spec: { name: `local-res-${n}` }, startedAt: t });
   assert.deepEqual(cullOrder([rs(0, 100), rs(5, 400), rs(9, 200)]).map((r) => r.spec.name), ['local-res-5', 'local-res-9', 'local-res-0']);
-  // rotation: contiguous wrap-around window, start advances by allowed per epoch
-  const E = 10 * 60 * 1000;
-  const w1 = researcherWindow(7 * E, 5);
-  assert.equal(w1.start, (7 * 5) % 16); // =3
-  assert.deepEqual(w1.names, ['local-res-3', 'local-res-4', 'local-res-5', 'local-res-6', 'local-res-7']);
-  const w2 = researcherWindow(7 * E, 13); // start = 91 % 16 = 11 → wraps
-  assert.equal(w2.start, 11);
-  assert.equal(w2.names.length, 13);
-  assert.deepEqual(w2.names.slice(0, 5), ['local-res-11', 'local-res-12', 'local-res-13', 'local-res-14', 'local-res-15']);
-  assert.equal(w2.names[5], 'local-res-0'); // wrapped to slice 0
-  // every slice is covered across a full rotation cycle
-  const covered = new Set();
-  for (let e = 0; e < 16; e++) researcherWindow(e * E, 5).names.forEach((n) => covered.add(n));
+  // rotation pointer: next index skipping wanted/disabled/blocked, wraps
+  const taken = new Set(['local-res-3']);
+  assert.equal(nextSliceIndex(0, taken, new Set(), new Set()), 0);
+  assert.equal(nextSliceIndex(3, taken, new Set(), new Set()), 4); // skips index 3
+  assert.equal(nextSliceIndex(15, taken, new Set(), new Set()), 15);
+  assert.equal(nextSliceIndex(15, new Set(['local-res-15']), new Set(), new Set()), 0); // wraps
+  assert.equal(nextSliceIndex(0, new Set(), new Set(['local-res-0']), new Set()), 1);   // disabled skipped
+  assert.equal(nextSliceIndex(0, new Set(), new Set(), new Set(['local-res-0'])), 1);   // mem-blocked skipped
+  const all = new Set(Array.from({ length: 16 }, (_, i) => `local-res-${i}`));
+  assert.equal(nextSliceIndex(0, all, new Set(), new Set()), -1);
+  // pointer walk covers all 16 slices — every slice gets runtime
+  const covered = new Set(); const t2 = new Set();
+  for (let p = 0, i = 0; i < 16; i++) { const idx = nextSliceIndex(p, t2, new Set(), new Set()); covered.add(idx); t2.add(`local-res-${idx}`); p = idx + 1; }
   assert.equal(covered.size, 16);
-  // disabled slices are skipped by the window — rotation reaches past them
-  const w3 = researcherWindow(7 * E, 5, 16, ['local-res-4', 'local-res-6']);
-  assert.deepEqual(w3.names, ['local-res-3', 'local-res-5', 'local-res-7', 'local-res-8', 'local-res-9']);
-  const w4 = researcherWindow(7 * E, 5, 16, ['local-res-3', 'local-res-4', 'local-res-5', 'local-res-6', 'local-res-7', 'local-res-8', 'local-res-9', 'local-res-10', 'local-res-11', 'local-res-12', 'local-res-13', 'local-res-14']);
-  assert.equal(w4.names.length, 4); // only 4 enabled slices exist → window shrinks
 }
 
 // ── user-stopped workers excluded from the active set ────────────────────

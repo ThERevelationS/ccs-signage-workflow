@@ -518,8 +518,17 @@ function plainAction(d){
  const s=String(d||'');
  let m=s.match(/(?:pressure|emergency|fleet budget) cull local-res-([0-9]+) — free ([[0-9].]+)GB/);
  if(m)return 'Stopped Researcher '+(Number(m[1])+1)+' to free memory (free dropped to '+m[2]+' GB)';
+ m=s.match(/cull local-res-([0-9]+) — Windows memory headroom ([0-9.]+)GB/);
+ if(m)return 'Stopped Researcher '+(Number(m[1])+1)+' — Windows was nearly out of memory space (down to '+m[2]+' GB)';
+ m=s.match(/cull local-res-([0-9]+) — server using ([0-9.]+)GB/);
+ if(m)return 'Stopped Researcher '+(Number(m[1])+1)+' — server was over its memory limit';
  m=s.match(/fleet budget cull local-res-([0-9]+)/);if(m)return 'Stopped Researcher '+(Number(m[1])+1)+' — server was over its memory limit';
  m=s.match(/spawn blocked local-res-([0-9]+)/);if(m)return 'Waiting to start Researcher '+(Number(m[1])+1)+' — not enough free memory yet';
+ m=s.match(/rotation — local-res-([0-9]+) rests, local-res-([0-9]+)/);
+ if(m)return 'Researcher '+(Number(m[1])+1)+' finished its turn — Researcher '+(Number(m[2])+1)+' takes over';
+ m=s.match(/memory emergency — free ([0-9.]+)GB/);if(m)return 'Memory emergency ('+m[1]+' GB free) — pausing background work';
+ m=s.match(/memory recovered — free ([0-9.]+)GB/);if(m)return 'Memory recovered ('+m[1]+' GB free) — resuming';
+ if(/margins held/.test(s))return 'Memory is steady again — researchers can restart';
  if(/kill-all/.test(s))return 'All researchers stopped by you';
  m=s.match(/guard level ([0-9]) — free ([[0-9].]+)GB/);if(m)return 'Memory low ('+m[2]+' GB free) — pausing background work';
  if(/guard cleared/.test(s)){m=s.match(/free ([[0-9].]+)GB/);return 'Memory recovered'+(m?' ('+m[1]+' GB free)':'')+' — resuming';}

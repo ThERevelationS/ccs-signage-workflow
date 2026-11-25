@@ -20,25 +20,23 @@ const EVENTS = path.join(ROOT, '.live-events.jsonl');
 const API_PORT = Number(process.env.PERMIT_SERVER_PORT || 4175);
 const DASH_PORT = '4174';
 const LOG_MAX = 50 * 1024 * 1024;      // rotate at 50MB, keep .1/.2 (3 total)
-const GUARD_MS = 15000;
-const LOW_RESEARCH = 3.5 * 1024 ** 3;  // <3.5GB free → researchers pause (L1)
-const LOW_ALL = 1.5 * 1024 ** 3;       // <1.5GB free → everything but flusher (L2)
-// Step-down hysteresis: L2→L1 after free >3.5GB for 60s; L1→L0 after >5GB
-// for 120s. Step-up is immediate — pressure wins over hysteresis.
-const STEP_21_FREE = 3.5 * 1024 ** 3;
-const STEP_21_TICKS = Math.ceil(60000 / GUARD_MS);
-const STEP_10_FREE = 5 * 1024 ** 3;
-const STEP_10_TICKS = Math.ceil(120000 / GUARD_MS);
-// Adaptive researchers at L0: allowed = clamp(floor((free−4GB)/avgRss), 2,
-// 16), adjusted ≤±2 per minute, window rotated every 10min so every slice
-// gets runtime. Paused slices stay spawned but idle via guard_paused.
-const RES_HEADROOM = 4 * 1024 ** 3;
+const EVENTS_MAX = 20 * 1024 * 1024;   // .live-events.jsonl — same treatment
+const GUARD_MS = 3000;                 // fast sensing — scale "at a moment's notice"
+const LOW_ALL = 1.5 * 1024 ** 3;       // free <1.5GB → emergency pause of non-researchers
+const COMMIT_CULL_BYTES = 3 * 1024 ** 3;  // commit headroom <3GB → memory pressure
+const COMMIT_PAUSE_BYTES = 1.5 * 1024 ** 3; // commit headroom <1.5GB → emergency
+// Auto-scale model: DOWN is immediate — any tick over a margin culls
+// ceil(deficit/avgRss) researchers newest-first. UP is paced — at most one
+// spawn per 10s, only while every margin still holds with cushion. Recovery
+// re-admits culled slices after 15s of clean margins (not the old 60–120s).
 const RES_DEFAULT_RSS = 500 * 1024 ** 2; // 500MB until live RSS is measured
-const RES_MIN = 2;
-const RES_STEP = 2;
 const RES_TOTAL = 16;
-const RES_ADJUST_MS = 60000;
-const RES_ROTATE_MS = 10 * 60 * 1000;
+const RES_SPAWN_MS = 10000;            // ≤1 researcher spawn per 10s
+const RES_SETTLE_MS = 10000;           // previous spawn must be alive ≥10s
+const RES_ROTATE_MS = 10 * 60 * 1000;  // fairness — cycle slices through runtime
+const RECOVER_HOLD_MS = 15000;         // clean-margin hold before unpause/re-admit
+const SCALE_UP_MARGIN = 1 * 1024 ** 3; // spawn needs free − rss ≥ reserve + 1GB
+const SCALE_UP_COMMIT = 4 * 1024 ** 3; // …and commit headroom − rss ≥ 4GB
 const RESERVE_DEFAULT_GB = 4;          // spawn admission keeps this much free
 const FLEET_BUDGET_DEFAULT_GB = 12;    // total fleet RSS cap
 const MEM_HISTORY_MS = 30 * 60 * 1000; // sparkline window, sampled per tick
@@ -91,12 +89,24 @@ export function activeSetFor(control, catalog = CATALOG, researcherAllowed = nul
   if (researcherAllowed != null) return out.filter((n) => !/^local-res-\d+$/.test(n) || researcherAllowed.includes(n));
   return out;
 }
-// Guard levels: 0 none · 1 researchers pause (<3.5GB) · 2 all but flusher (<1.5GB).
-export function guardLevelFor(freeBytes) {
-  if (!Number.isFinite(freeBytes)) return 0;
-  if (freeBytes < LOW_ALL) return 2;
-  if (freeBytes < LOW_RESEARCH) return 1;
-  return 0;
+// Emergency pause: free under 1.5GB, or commit headroom under 1.5GB (the
+// overnight "low virtual memory" crash was commit exhaustion, not free RAM).
+export function isEmergency(freeBytes, commitHeadroomBytes) {
+  return freeBytes < LOW_ALL || (commitHeadroomBytes != null && commitHeadroomBytes < COMMIT_PAUSE_BYTES);
+}
+// Pressure = how many bytes of margin we're short, across the three
+// automatic blockers: free under the reserve, commit headroom under 3GB,
+// or the fleet over its budget. Positive → cull this tick.
+export function pressureDeficit({ freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes }) {
+  return Math.max(
+    reserveBytes - freeBytes,
+    commitHeadroomBytes == null ? -Infinity : COMMIT_CULL_BYTES - commitHeadroomBytes,
+    fleetRssBytes - budgetBytes,
+  );
+}
+// Cull count for a deficit: each researcher frees ~avgRss, rounded up.
+export function downScaleCount(deficitBytes, avgRssBytes) {
+  return deficitBytes > 0 ? Math.ceil(deficitBytes / avgRssOr(avgRssBytes)) : 0;
 }
 // Pause list drives worker self-idle via waitWhilePaused. Researchers are
 // NOT on it — pausing a spawned researcher frees nothing (each holds ~500MB
@@ -237,10 +247,49 @@ function releaseLock() { try { const c = readJSON(LOCK_FILE, null); if (c?.pid =
 // ── controller state ─────────────────────────────────────────────────────
 let control = { ...DEFAULT_CONTROL, ...readJSON(CONTROL_FILE, {}) };
 let shuttingDown = false;
-// allowed starts at RES_MIN, not RES_TOTAL: cold-booting all 16 slices at
-// once (~8GB transient) trips the guard and culls them back — observed 2x.
-let guard = { level: 0, streak: 0, since: null, allowed: RES_MIN, avgRss: 0, lastAdjust: 0, windowStart: 0 };
+// resWanted = the slice membership the controller aims for. It fills toward
+// the user's cap instantly, but actual spawns are gated 1/10s by
+// maySpawnResearcher; pressure culls remove members the same tick.
+let guard = { level: 0, paused: false, pressureAt: 0, since: null, avgRss: 0, fleetRss: 0, lastSpawn: null, resNext: 0, lastRotate: 0 };
+const resWanted = new Set();
 const guardActions = [];
+
+// ── Windows commit sensing — one long-lived probe, never per-tick ────────
+// os.freemem ≈ Available MBytes (verified on this box). But the overnight
+// crash was commit exhaustion ("low virtual memory") — the counter probe
+// emits `availMB committedBytes commitLimit` every 2s; headroom = limit −
+// committed. Stale >10s or dead → headroom reports null (and the probe
+// restarts); a null headroom blocks scale-up but never triggers a cull.
+const memProbe = { proc: null, avail: null, committed: null, limit: null, at: 0 };
+function commitHeadroomBytes() {
+  if (!memProbe.at || Date.now() - memProbe.at > 10000 || !Number.isFinite(memProbe.limit)) return null;
+  return memProbe.limit - memProbe.committed;
+}
+function startMemProbe() {
+  if (memProbe.proc || shuttingDown) return;
+  let proc;
+  try {
+    proc = spawn('powershell', ['-NoProfile', '-Command',
+      'while($true){ $m = Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory; "$($m.AvailableMBytes) $($m.CommittedBytes) $($m.CommitLimit)"; Start-Sleep -Seconds 2 }'],
+      { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch { setTimeout(startMemProbe, 5000).unref(); return; }
+  memProbe.proc = proc;
+  let buf = '';
+  proc.stdout.on('data', (d) => {
+    buf += d;
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const parts = buf.slice(0, i).trim().split(/\s+/).map(Number);
+      buf = buf.slice(i + 1);
+      if (parts.length >= 3 && parts.every(Number.isFinite)) {
+        memProbe.avail = parts[0]; memProbe.committed = parts[1]; memProbe.limit = parts[2]; memProbe.at = Date.now();
+      }
+    }
+  });
+  const dead = () => { if (memProbe.proc === proc) memProbe.proc = null; setTimeout(startMemProbe, 5000).unref(); };
+  proc.on('exit', dead);
+  proc.on('error', dead);
+}
 
 let vpCache = { at: 0, data: undefined };
 function verificationProgress() {
@@ -260,49 +309,50 @@ function reconcile() {
     emit({ stage: 'expansion_unlocked', detail: 'verification ledger clean — expansion lock cleared' });
     control = writeControl({ expansion_locked: false }, 'verification-gate');
   }
+  syncResMembership();
   const want = new Set(activeSetFor(control, CATALOG, researcherRunSet()));
+  const isSlice = (n) => /^local-res-\d+$/.test(n);
   let spawned = 0;
   for (const spec of CATALOG) {
     const r = procs.get(spec.name);
-    const alive = Boolean(r?.proc && !r.proc.killed && r.proc.exitCode === null);
+    const alive = isAlive(r);
     if (want.has(spec.name)) {
       // Recurring one-shots (profile-relink every 6h) re-arm after the interval.
       if (spec.once && r?.finished && spec.every_ms && Date.now() - (r.finishedAt || 0) >= spec.every_ms) r.finished = false;
-      // Stagger starts — a cold boot of ~22 node workers at once spikes RAM
-      // hard enough to trip the guard (observed on this box).
-      if (!alive && !r?.restartTimer && !(spec.once && r?.finished) && spawned < 2) {
-        // Spawn admission: a researcher only starts if free − its projected
-        // RSS still holds the reserve — memory vetoes any count the user or
-        // the adaptive window asks for.
-        if (spec.researcher && !admitResearcher(os.freemem(), guard.avgRss, reserveBytesOf(control))) {
+      if (alive || r?.restartTimer || (spec.once && r?.finished)) continue;
+      // Researcher slices: the up-scale gate decides — margins (reserve +
+      // 1GB cushion, commit headroom −4GB, fleet under budget), at most one
+      // spawn per 10s, previous spawn settled. Pacing blocks are invisible;
+      // margin blocks surface as "blocked-by-memory" on the dashboard.
+      if (isSlice(spec.name)) {
+        const last = guard.lastSpawn && procs.get(guard.lastSpawn.name);
+        const lastSpawnAliveMs = isAlive(last) ? Date.now() - last.startedAt : null;
+        const margins = { freeBytes: os.freemem(), reserveBytes: reserveBytesOf(control), commitHeadroomBytes: commitHeadroomBytes(), fleetRssBytes: guard.fleetRss, budgetBytes: fleetBudgetBytesOf(control), avgRssBytes: guard.avgRss };
+        if (!spawnMarginsOk(margins)) {
           if (!admitBlocked.has(spec.name)) {
             admitBlocked.add(spec.name);
-            guardActions.push({ at: new Date().toISOString(), detail: `spawn blocked ${spec.name} — free ${GB(os.freemem())}GB − ${GB(guard.avgRss || RES_DEFAULT_RSS)}GB projected < ${GB(reserveBytesOf(control))}GB reserve` });
+            guardActions.push({ at: new Date().toISOString(), detail: `spawn blocked ${spec.name} — margins don't fit another ${GB(margins.avgRssBytes || RES_DEFAULT_RSS)}GB researcher yet` });
+            guardActions.splice(0, Math.max(0, guardActions.length - 50));
             emit({ stage: 'guard', detail: `spawn blocked ${spec.name} — insufficient memory headroom` });
           }
           continue;
         }
+        if (!maySpawnResearcher({ ...margins, now: Date.now(), lastSpawnAt: guard.lastSpawn?.at ?? null, lastSpawnAliveMs })) continue;
         admitBlocked.delete(spec.name);
-        spawnWorker(spec); spawned++;
+        spawnWorker(spec);
+        guard.lastSpawn = { name: spec.name, at: Date.now() };
+        continue;
       }
+      // Other researcher-flagged workers (expansion, dormant) keep the
+      // plain reserve admission; non-researchers stagger ≤2 per pass.
+      if (spec.researcher && !admitResearcher(os.freemem(), guard.avgRss, reserveBytesOf(control))) continue;
+      if (spawned >= 2) continue;
+      spawnWorker(spec); spawned++;
     } else if (r?.proc && !r.stoppedByUs) { emit({ stage: 'worker_stop', detail: `${spec.name} not in active set` }); stopWorker(spec.name); }
   }
 }
 
-// Hysteresis: rising pressure steps up immediately; recovery releases ONE
-// level at a time, each only after its floor has held for its window.
-export function guardNextLevel(curLevel, freeBytes, streak) {
-  const sampled = guardLevelFor(freeBytes);
-  if (sampled >= curLevel) return { level: sampled, streak: 0, changed: sampled !== curLevel };
-  const step = curLevel === 2
-    ? { above: STEP_21_FREE, ticks: STEP_21_TICKS }
-    : { above: STEP_10_FREE, ticks: STEP_10_TICKS };
-  const s = freeBytes > step.above ? streak + 1 : 0;
-  const release = s >= step.ticks;
-  return { level: release ? curLevel - 1 : curLevel, streak: release ? 0 : s, changed: release };
-}
-
-// ── adaptive researchers (level 0 only) ──────────────────────────────────
+// ── researcher membership + limits ───────────────────────────────────────
 const resCfg = (c) => ({ mode: 'auto', max: RES_TOTAL, disabled: [], ...(c?.researchers || {}) });
 export function reserveBytesOf(control) {
   const gb = Number(control?.limits?.reserve_gb);
@@ -319,145 +369,164 @@ const avgRssOr = (b) => (Number.isFinite(b) && b > 0 ? b : RES_DEFAULT_RSS);
 export function admitResearcher(freeBytes, avgRssBytes, reserveBytes) {
   return freeBytes - avgRssOr(avgRssBytes) >= reserveBytes;
 }
-// How many researchers memory can host right now (floor 0, no RES_MIN).
+// Display estimate — how many researchers memory could host right now.
 export function memoryAllowance(freeBytes, avgRssBytes, reserveBytes, total = RES_TOTAL) {
   return Math.max(0, Math.min(total, Math.floor((freeBytes - reserveBytes) / avgRssOr(avgRssBytes))));
 }
-// Effective researcher allowance: auto = adaptive formula capped by the
-// user's max; manual = exactly the user's count, still capped by memory.
-export function researcherAllowance(control, freeBytes, avgRssBytes, total = RES_TOTAL) {
-  const res = resCfg(control);
-  const max = Math.max(0, Math.min(total, Number.isFinite(res.max) ? res.max : total));
-  const mem = memoryAllowance(freeBytes, avgRssBytes, reserveBytesOf(control), total);
-  if (res.mode === 'manual') return Math.min(max, mem);
-  if (max === 0) return 0;
-  return Math.min(max, Math.max(Math.min(RES_MIN, max), mem));
+// The user's cap: auto = up to their max, manual = exactly their count.
+// The memory fit is enforced by the spawn gate and the cull — never by
+// loosening this number.
+export function researcherCap(control, total = RES_TOTAL) {
+  const max = Number(resCfg(control).max);
+  return Math.max(0, Math.min(total, Number.isFinite(max) ? Math.floor(max) : total));
 }
-export function researcherStep(prev, target, total = RES_TOTAL) {
-  const p = Number.isFinite(prev) ? prev : total;
-  const moved = p + Math.max(-RES_STEP, Math.min(RES_STEP, target - p));
-  return Math.max(0, Math.min(total, moved));
+// Scale-up margins: another researcher only starts when all three limits
+// still hold after its projected RSS lands — reserve plus a 1GB cushion,
+// commit headroom minus 4GB, fleet under budget. A missing commit reading
+// fails closed (no spawn) — pressure data we can't see can't be trusted.
+export function spawnMarginsOk({ freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes, avgRssBytes }) {
+  const a = avgRssOr(avgRssBytes);
+  return freeBytes - a >= reserveBytes + SCALE_UP_MARGIN
+    && commitHeadroomBytes != null && commitHeadroomBytes - a >= SCALE_UP_COMMIT
+    && fleetRssBytes + a <= budgetBytes;
+}
+// Full up-scale gate: margins + at most one spawn per 10s + the previous
+// spawn settled (alive ≥10s so its real RSS feeds avgRss). A dead previous
+// spawn only needs the pacing wait — crash backoff handles its restart.
+export function maySpawnResearcher({ freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes, avgRssBytes, now, lastSpawnAt, lastSpawnAliveMs }) {
+  if (!spawnMarginsOk({ freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes, avgRssBytes })) return false;
+  if (lastSpawnAt != null && now - lastSpawnAt < RES_SPAWN_MS) return false;
+  if (lastSpawnAliveMs != null && lastSpawnAliveMs < RES_SETTLE_MS) return false;
+  return true;
 }
 // Cull order for memory pressure: newest-spawned first (the oldest slice is
 // likeliest to be mid-item; the newest hasn't earned its keep yet).
 export function cullOrder(records) {
   return records.slice().sort((a, b) => b.startedAt - a.startedAt);
 }
-// Contiguous wrap-around window of `allowed` slices, skipping user-disabled
-// names; the start advances by `allowed` per 10-min epoch so every slice
-// gets runtime over a full cycle.
-export function researcherWindow(now, allowed, total = RES_TOTAL, disabled = []) {
-  const start = ((Math.floor(now / RES_ROTATE_MS) * allowed) % total + total) % total;
-  const dis = new Set(disabled);
-  const names = [];
-  for (let i = 0; names.length < allowed && i < total; i++) {
-    const n = `local-res-${(start + i) % total}`;
-    if (!dis.has(n)) names.push(n);
+// Rotation pointer: next slice index not already wanted, user-disabled, or
+// memory-blocked. Returns -1 when nothing is available.
+export function nextSliceIndex(start, taken, disabled, blocked, total = RES_TOTAL) {
+  for (let i = 0; i < total; i++) {
+    const idx = (start + i) % total;
+    const n = `local-res-${idx}`;
+    if (!taken.has(n) && !disabled.has(n) && !blocked.has(n)) return idx;
   }
-  return { start, names };
+  return -1;
 }
 const memBlocked = new Set();   // slices culled for memory — stay out until recovery
-const admitBlocked = new Set(); // window slices that failed spawn admission
-const userStarted = new Set();  // manually started slices — wanted until next rotation
-const memHistory = [];          // {t, free, fleet} per guard tick, 30min ring
-// Which slices may be spawned right now. L0: the rotating window plus
-// user-started pins, minus disabled and memory-blocked. Under pressure
-// (L1+): nothing new spawns, but live slices stay wanted — the emergency
-// cull drains them newest-first until free ≥ the L1 floor, so a dip kills
-// only as many as memory can't hold instead of all 16 at once.
+const admitBlocked = new Set(); // wanted slices that failed spawn margins
+const memHistory = [];          // {t, free, fleet, headroom} per tick, 30min ring
+const isAlive = (r) => Boolean(r?.proc && !r.proc.killed && r.proc.exitCode === null);
+const liveRes = () => [...procs.values()].filter((r) => /^local-res-\d+$/.test(r.spec.name) && isAlive(r));
+
+// Which slices may be spawned right now: the wanted membership minus
+// user-disabled and memory-culled names.
 function researcherRunSet() {
   const disabled = new Set(resCfg(control).disabled);
-  if (guard.level === 0) {
-    const win = researcherWindow(Date.now(), guard.allowed, RES_TOTAL, [...disabled]);
-    return win.names.concat([...userStarted]).filter((n) => !disabled.has(n) && !memBlocked.has(n));
+  return [...resWanted].filter((n) => !disabled.has(n) && !memBlocked.has(n));
+}
+// Membership maintenance, run every reconcile: shrink to the user's cap
+// (pending spawns first, then newest live), rotate the longest-running
+// slice for a fresh one every 10min (fairness), then grow toward the cap.
+// Growing only adjusts membership — the spawn gate paces actual starts.
+function syncResMembership() {
+  const cap = researcherCap(control);
+  const disabled = new Set(resCfg(control).disabled);
+  for (const n of [...resWanted]) if (disabled.has(n)) resWanted.delete(n);
+  while (resWanted.size > cap) {
+    const pending = [...resWanted].filter((n) => !isAlive(procs.get(n)));
+    const drop = pending[0] || cullOrder([...resWanted].map((n) => procs.get(n)).filter(isAlive))[0]?.spec.name || [...resWanted][0];
+    resWanted.delete(drop);
   }
-  return [...procs.values()]
-    .filter((r) => /^local-res-\d+$/.test(r.spec.name) && r.proc && !r.proc.killed && r.proc.exitCode === null && !disabled.has(r.spec.name) && !memBlocked.has(r.spec.name))
-    .map((r) => r.spec.name);
+  const now = Date.now();
+  if (now - guard.lastRotate >= RES_ROTATE_MS) {
+    guard.lastRotate = now;
+    const live = liveRes().filter((r) => resWanted.has(r.spec.name));
+    if (live.length) {
+      const oldest = live.reduce((a, b) => (a.startedAt < b.startedAt ? a : b));
+      resWanted.delete(oldest.spec.name);
+      const idx = nextSliceIndex(guard.resNext, resWanted, disabled, memBlocked);
+      if (idx >= 0) { guard.resNext = (idx + 1) % RES_TOTAL; resWanted.add(`local-res-${idx}`); emit({ stage: 'guard', detail: `rotation — ${oldest.spec.name} rests, local-res-${idx} takes its slot` }); }
+    }
+  }
+  while (resWanted.size < cap) {
+    const idx = nextSliceIndex(guard.resNext, resWanted, disabled, memBlocked);
+    if (idx < 0) break;
+    guard.resNext = (idx + 1) % RES_TOTAL;
+    resWanted.add(`local-res-${idx}`);
+  }
 }
 
-// Guard tick + RSS cap + log rotation.
+// Plain description of which margins are breached, for the action log.
+function pressureReasons(freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes) {
+  const parts = [];
+  if (freeBytes < reserveBytes) parts.push(`free ${GB(freeBytes)}GB < ${GB(reserveBytes)}GB reserve`);
+  if (commitHeadroomBytes != null && commitHeadroomBytes < COMMIT_CULL_BYTES) parts.push(`Windows memory headroom ${GB(commitHeadroomBytes)}GB < ${GB(COMMIT_CULL_BYTES)}GB`);
+  if (fleetRssBytes > budgetBytes) parts.push(`server using ${GB(fleetRssBytes)}GB > ${GB(budgetBytes)}GB limit`);
+  return parts.join(' + ');
+}
+
+// Guard tick (every 3s): sense → cull on any breached margin → pause
+// non-researchers on emergency → recover after 15s clean → RSS cap → logs.
 async function guardTick() {
   const free = os.freemem();
   const rss = rssByPid();
-  const t = guardNextLevel(guard.level, free, guard.streak);
-  guard.streak = t.streak;
-  const newLevel = t.level;
-  if (newLevel > 0 && guard.level !== newLevel) guard.since = new Date().toISOString();
-  if (newLevel === 0 && t.changed) guard.since = null;
-  guard.level = newLevel;
   const now = Date.now();
+  const headroom = commitHeadroomBytes();
+  const reserve = reserveBytesOf(control);
+  const budget = fleetBudgetBytesOf(control);
   const act = (msg) => { guardActions.push({ at: new Date().toISOString(), detail: msg }); guardActions.splice(0, Math.max(0, guardActions.length - 50)); emit({ stage: 'guard', detail: msg }); };
-  const liveRes = () => [...procs.values()]
-    .filter((r) => /^local-res-\d+$/.test(r.spec.name) && r.proc && !r.proc.killed && r.proc.exitCode === null);
-  // Measured average researcher RSS feeds admission + the adaptive count.
+  // Measured average researcher RSS feeds admission + the cull count.
   const resRsses = liveRes().map((r) => rss.get(r.proc.pid)).filter(Boolean);
   if (resRsses.length) guard.avgRss = resRsses.reduce((a, b) => a + b, 0) / resRsses.length;
   // Fleet RSS + 30-min history for the dashboard memory panel.
   let fleetRss = 0;
-  for (const r of procs.values()) if (r.proc && !r.proc.killed && r.proc.exitCode === null) fleetRss += rss.get(r.proc.pid) || 0;
+  for (const r of procs.values()) if (isAlive(r)) fleetRss += rss.get(r.proc.pid) || 0;
   guard.fleetRss = fleetRss;
-  memHistory.push({ t: now, free, fleet: fleetRss });
+  memHistory.push({ t: now, free, fleet: fleetRss, headroom });
   while (memHistory.length && now - memHistory[0].t > MEM_HISTORY_MS) memHistory.shift();
-  // Adaptive researcher window — binds only at L0. Auto steps ≤±2/min;
-  // manual tracks the user's count directly. Both capped by what memory
-  // allows and by the user's max.
-  if (guard.level === 0 && now - guard.lastAdjust >= RES_ADJUST_MS) {
-    guard.lastAdjust = now;
-    const target = researcherAllowance(control, free, guard.avgRss, RES_TOTAL);
-    guard.allowed = resCfg(control).mode === 'manual' ? target : researcherStep(guard.allowed, target);
-  }
-  const win = researcherWindow(now, guard.allowed, RES_TOTAL, resCfg(control).disabled);
-  if (guard.windowStart !== win.start) userStarted.clear(); // manual pins last one rotation
-  guard.windowStart = win.start;
-  // ── automatic memory blockers ─────────────────────────────────────────
-  // Fleet budget: total worker RSS over the cap → cull newest researchers
-  // until under. Culled slices are memBlocked so reconcile can't respawn
-  // them straight back into the same pressure.
-  const budget = fleetBudgetBytesOf(control);
-  if (fleetRss > budget) {
+  // ── scale down, immediately ────────────────────────────────────────────
+  // Any breached margin → cull ceil(deficit/avgRss) researchers the same
+  // tick, newest first. Culled slices leave the wanted set and memBlocked
+  // keeps them out until margins hold 15s clean — no instant re-spawn into
+  // the same pressure.
+  const emergency = isEmergency(free, headroom);
+  const deficit = pressureDeficit({ freeBytes: free, reserveBytes: reserve, commitHeadroomBytes: headroom, fleetRssBytes: fleetRss, budgetBytes: budget });
+  if (deficit > 0 || emergency) {
+    guard.pressureAt = now;
+    if (emergency && !guard.paused) {
+      guard.paused = true;
+      guard.since = new Date().toISOString();
+      act(`memory emergency — free ${GB(free)}GB${headroom != null ? `, Windows headroom ${GB(headroom)}GB` : ''} — pausing background work`);
+    }
+    let n = downScaleCount(Math.max(deficit, 0), guard.avgRss);
+    const why = pressureReasons(free, reserve, headroom, fleetRss, budget) || 'low memory';
     for (const r of cullOrder(liveRes().filter((x) => !memBlocked.has(x.spec.name)))) {
-      if (fleetRss <= budget) break;
-      const mb = Math.round((rss.get(r.proc.pid) || 0) / 1048576);
+      if (n <= 0) break;
+      n--;
       memBlocked.add(r.spec.name);
+      resWanted.delete(r.spec.name);
       stopWorker(r.spec.name);
-      fleetRss -= rss.get(r.proc.pid) || 0;
-      act(`fleet budget cull ${r.spec.name} (${mb}MB) — fleet RSS ${GB(fleetRss)}GB over ${GB(budget)}GB budget`);
+      act(`${emergency ? 'emergency' : 'pressure'} cull ${r.spec.name} — ${why}`);
     }
   }
-  // Emergency / pressure cull: free below the L1 floor → kill the newest
-  // researcher per tick until free recovers ≥3.5GB. One mechanism covers
-  // the L1 band and the <1.5GB emergency — drains to fit, not to zero.
-  if (free < LOW_RESEARCH) {
-    const victim = cullOrder(liveRes().filter((x) => !memBlocked.has(x.spec.name)))[0];
-    if (victim) {
-      memBlocked.add(victim.spec.name);
-      stopWorker(victim.spec.name);
-      act(`${free < LOW_ALL ? 'emergency' : 'pressure'} cull ${victim.spec.name} — free ${GB(free)}GB < ${GB(LOW_RESEARCH)}GB, killing newest first until ≥${GB(LOW_RESEARCH)}GB`);
-    }
+  // ── recover: 15s of clean margins releases the pause and re-admits ────
+  const recovered = guard.pressureAt > 0 && deficit <= 0 && !emergency && now - guard.pressureAt >= RECOVER_HOLD_MS;
+  if (guard.paused && recovered) {
+    guard.paused = false;
+    guard.since = null;
+    act(`memory recovered — free ${GB(free)}GB — resuming background work`);
   }
-  // Recovery: all pressure gone and the fleet fits its budget → re-admit
-  // culled slices. Level hysteresis (60s/120s holds) still gates L0 itself.
-  if (guard.level === 0 && memBlocked.size && free > STEP_10_FREE && fleetRss + (guard.avgRss || RES_DEFAULT_RSS) <= budget) memBlocked.clear();
-  // Pause list = non-researcher workers at L2 only. Researcher slices are
-  // culled from the spawn set by reconcile, not paused — a paused slice
-  // still holds its ~500MB, so pausing never released memory pressure.
-  const names = guardPausedNames(guard.level);
-  // Reconcile the paused set, not only on level transitions: a restarted
-  // controller inherits whatever the previous one last wrote, and with
-  // in-memory level 0 a "changed" transition never fires — workers would
-  // stay guard-paused on a dead controller's list forever. At L0 the same
-  // reconcile carries the adaptive researcher window.
+  if (recovered && memBlocked.size) { memBlocked.clear(); act('memory margins held — culled researchers can start again'); }
+  guard.level = guard.paused ? 2 : 0;
+  // Pause list = non-researcher workers during emergency only. Researcher
+  // slices are culled from the spawn set, not paused — a paused slice still
+  // holds its ~500MB, so pausing never released memory pressure.
+  const names = guard.paused ? guardPausedNames(2) : [];
   const stale = control.guard_paused || [];
   const drift = stale.length !== names.length || names.some((n) => !stale.includes(n));
-  if (t.changed || drift) {
-    writeControl({ guard_paused: names }, 'permit-server guard');
-    const msg = t.changed
-      ? (guard.level === 0 ? `guard cleared — free ${GB(free)}GB` : `guard level ${guard.level} — free ${GB(free)}GB, pausing ${names.length} worker(s)`)
-      : `guard pause set reconciled (${stale.length} → ${names.length} entries) — free ${GB(free)}GB, researchers ${guard.level === 0 ? win.names.length : 0}/${RES_TOTAL}`;
-    guardActions.push({ at: new Date().toISOString(), detail: msg }); guardActions.splice(0, Math.max(0, guardActions.length - 50));
-    emit({ stage: 'guard', detail: msg });
-  }
+  if (drift) writeControl({ guard_paused: names }, 'permit-server guard');
   for (const [name, r] of procs) {
     if (!r.proc || r.stoppedByUs) continue;
     const bytes = rss.get(r.proc.pid);
@@ -468,6 +537,7 @@ async function guardTick() {
     }
     rotateLogIfBig(name);
   }
+  rotateIfBig(EVENTS, EVENTS_MAX); // the event feed grows unbounded otherwise
 }
 
 // Tail .live-events.jsonl (last 256KB) → last event per worker alias.
@@ -506,15 +576,16 @@ function statusJSON() {
     else if (spec.once && r?.finished) status = 'done';
     else if (disRes.has(spec.name) || stoppedW.has(spec.name)) status = 'stopped-by-user';
     else if (memBlocked.has(spec.name)) status = 'culled-by-memory';
-    else if (admitBlocked.has(spec.name)) status = 'blocked-by-memory';
-    else if (/^local-res-\d+$/.test(spec.name) && control.state !== 'stopped') status = 'culled-by-memory'; // out of the memory-sized window / pressure-drained
+    else if (admitBlocked.has(spec.name) || resWanted.has(spec.name)) status = 'blocked-by-memory'; // queued for a spawn slot / margins
+    else if (/^local-res-\d+$/.test(spec.name) && control.state !== 'stopped') status = 'culled-by-memory'; // not in the wanted set — pressure-drained or capped
     else if ((control.guard_paused || []).includes(spec.name)) status = 'paused-by-guard';
     else status = 'stopped';
     return { name: spec.name, group: spec.group, status, pid: alive ? r.proc.pid : null, alive, rss_mb: alive && rss.get(r.proc.pid) ? Math.round(rss.get(r.proc.pid) / 1048576) : null, uptime_s: alive && r ? Math.round((now - r.startedAt) / 1000) : null, restarts: (r?.restarts || []).length, recent_restarts: recentRestarts, crash_looping: recentRestarts >= 5, last_heartbeat: hb, last_event: lastEvent };
   });
   const vp = verificationProgress();
   const res = resCfg(control);
-  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: guard.level === 0 ? guard.allowed : 0, requested: res.mode === 'manual' ? res.max : null, memory_allows: memoryAllowance(os.freemem(), guard.avgRss, reserveBytesOf(control)), mode: res.mode, max: res.max, disabled: res.disabled, mem_blocked: [...memBlocked], total: RES_TOTAL, window_start: guard.windowStart, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, limits: { reserve_gb: Number(control.limits?.reserve_gb) || RESERVE_DEFAULT_GB, fleet_budget_gb: Number(control.limits?.fleet_budget_gb) || FLEET_BUDGET_DEFAULT_GB }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()), fleet_rss_gb: GB(guard.fleetRss || 0), history: memHistory.map((h) => ({ t: h.t, free_gb: GB(h.free), fleet_gb: GB(h.fleet) })) }, updated_at: control.updated_at || null, workers, verification_progress: vp ? { at: vp.at, jurisdictions: vp.jurisdictions, offices: vp.offices, gap_reasons: vp.gap_reasons, missing_roles: vp.missing_roles, promotions: vp.promotions, eta: vp.eta, held_relinks: (vp.held_relinks || []).length, needs_review_total: vp.needs_review_total || 0 } : null };
+  const headroom = commitHeadroomBytes();
+  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: resWanted.size, requested: res.mode === 'manual' ? res.max : null, memory_allows: memoryAllowance(os.freemem(), guard.avgRss, reserveBytesOf(control)), mode: res.mode, max: res.max, disabled: res.disabled, mem_blocked: [...memBlocked], total: RES_TOTAL, next_slice: guard.resNext, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, limits: { reserve_gb: Number(control.limits?.reserve_gb) || RESERVE_DEFAULT_GB, fleet_budget_gb: Number(control.limits?.fleet_budget_gb) || FLEET_BUDGET_DEFAULT_GB }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()), fleet_rss_gb: GB(guard.fleetRss || 0), commit_used_gb: Number.isFinite(memProbe.committed) ? GB(memProbe.committed) : null, commit_limit_gb: Number.isFinite(memProbe.limit) ? GB(memProbe.limit) : null, commit_headroom_gb: headroom != null ? GB(headroom) : null, history: memHistory.map((h) => ({ t: h.t, free_gb: GB(h.free), fleet_gb: GB(h.fleet), headroom_gb: h.headroom != null ? GB(h.headroom) : null })) }, updated_at: control.updated_at || null, workers, verification_progress: vp ? { at: vp.at, jurisdictions: vp.jurisdictions, offices: vp.offices, gap_reasons: vp.gap_reasons, missing_roles: vp.missing_roles, promotions: vp.promotions, eta: vp.eta, held_relinks: (vp.held_relinks || []).length, needs_review_total: vp.needs_review_total || 0 } : null };
 }
 
 // ── stop: pause → flusher drains → kill trees ────────────────────────────
@@ -561,15 +632,11 @@ const server = http.createServer(async (req, res) => {
         if (body.mode != null) { if (!['auto', 'manual'].includes(body.mode)) return json(res, 400, { error: 'mode must be auto|manual' }); rc.mode = body.mode; }
         if (body.max != null) { const m = Math.floor(Number(body.max)); if (!Number.isFinite(m) || m < 0 || m > RES_TOTAL) return json(res, 400, { error: `max must be 0..${RES_TOTAL}` }); rc.max = m; }
         control = writeControl({ researchers: rc }, 'api');
-        // Recompute the window now — guardTick only adjusts every 60s, so a
-        // kill-all (max 0) or count change would otherwise respawn the stale
-        // window for up to a minute after the slices were stopped.
-        if (guard.level === 0) {
-          const t = researcherAllowance(control, os.freemem(), guard.avgRss, RES_TOTAL);
-          guard.allowed = resCfg(control).mode === 'manual' ? t : researcherStep(guard.allowed, t);
-        }
+        // Recompute membership now — reconcile only runs every 2s and a
+        // kill-all or count drop shouldn't wait for it.
+        syncResMembership();
         if (rc.max === 0) {
-          for (const r of procs.values()) if (/^local-res-\d+$/.test(r.spec.name) && r.proc && !r.proc.killed && r.proc.exitCode === null) stopWorker(r.spec.name);
+          for (const r of procs.values()) if (/^local-res-\d+$/.test(r.spec.name) && isAlive(r)) stopWorker(r.spec.name);
           emit({ stage: 'guard', detail: 'kill-all — researchers max set to 0, all slices stopping' });
         }
         reconcile(); return json(res, 200, { ok: true, researchers: rc });
@@ -593,7 +660,7 @@ const server = http.createServer(async (req, res) => {
             const rc = resCfg(cur); rc.disabled = rc.disabled.filter((n) => n !== spec.name);
             control = writeControl({ researchers: rc }, 'api');
             memBlocked.delete(spec.name); admitBlocked.delete(spec.name);
-            userStarted.add(spec.name); // stays wanted until the next window rotation
+            resWanted.add(spec.name); // user-started slices are wanted (may exceed the cap by one)
           } else {
             const sw = new Set(cur.stopped_workers || []); sw.delete(spec.name); control = writeControl({ stopped_workers: [...sw] }, 'api');
             const r = procs.get(spec.name); if (r) r.finished = false;
@@ -632,11 +699,12 @@ async function main() {
   emit({ stage: 'server_boot', detail: `permit-server pid ${process.pid} — restored state=${control.state} verification=${control.verification} expansion=${control.expansion}` });
   reapOrphans();
   server.listen(API_PORT, '127.0.0.1', () => console.log(`permit-server API on 127.0.0.1:${API_PORT} — dashboard http://localhost:${DASH_PORT}`));
+  startMemProbe();
   setInterval(reconcile, 2000).unref();
   setInterval(() => guardTick().catch(() => {}), GUARD_MS).unref();
   reconcile();
   guardTick().catch(() => {}); // heals a stale guard_paused list at boot, before workers read it
-  const bye = () => { shuttingDown = true; writeControl({ state: 'stopped' }, 'permit-server exit'); releaseLock(); process.exit(0); };
+  const bye = () => { shuttingDown = true; try { memProbe.proc?.kill(); } catch {} writeControl({ state: 'stopped' }, 'permit-server exit'); releaseLock(); process.exit(0); };
   process.on('SIGINT', bye); process.on('SIGTERM', bye); process.on('exit', releaseLock);
 }
 
