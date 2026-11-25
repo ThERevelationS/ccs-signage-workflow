@@ -312,7 +312,17 @@ async function pass(onlyNames = null) {
     };
   };
   const hash = (s) => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0);
+  let lastLedgerWrite = Date.now(), scannedLocs = 0;
   for (const loc of localities) {
+    // Mid-pass checkpoint every 90s: a pass runs ~30min and restarts/culls
+    // used to leave the ledger stale (the unlock gate needs it fresh) and
+    // drop a pass's attempt bookkeeping.
+    if (Date.now() - lastLedgerWrite > 90e3) {
+      writeVerificationLedger(localities, officeState, passStart);
+      heartbeat('authority-verifier', 'busy', `verify pass ${scannedLocs}/${localities.length}`);
+      lastLedgerWrite = Date.now();
+    }
+    scannedLocs++;
     if (only && !only.has(`${String(loc.name || '').toLowerCase().trim()}|${String(loc.state || '').toUpperCase().trim()}`)) continue;
     if (SLICES > 1 && Math.abs(hash(loc.id)) % SLICES !== SLICE) continue;
     const offices = Array.isArray(loc.offices) ? loc.offices : [];
