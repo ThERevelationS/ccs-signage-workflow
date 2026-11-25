@@ -75,26 +75,9 @@ function expiryOf(e) {
   return quoteExpirationDate(e.quote_issue_date, Number(validDays)) || null;
 }
 
-// The EXPIRED badge is computed at read, but reporting needs a persisted
-// flag — sweep a bounded slice of stale rows each load so `quote_expired`
-// stays a truthful filter without a dedicated cron job.
-const EXPIRY_FLAG_SWEEP_LIMIT = 10;
-function syncExpiredFlags(rows) {
-  const now = today();
-  const stale = (Array.isArray(rows) ? rows : []).filter((e) => {
-    const expired = Boolean(expiryOf(e) && expiryOf(e) < now);
-    return Boolean(e?.id) && expired !== (e?.quote_expired === true);
-  }).slice(0, EXPIRY_FLAG_SWEEP_LIMIT);
-  for (const e of stale) {
-    const expired = Boolean(expiryOf(e) && expiryOf(e) < now);
-    // Best-effort sweep stays swallowed — a stale anchor just no-ops and
-    // the next load retries (update() is not an allowed op on estimates).
-    staffEntities.AllInOneEstimate.updateMany(
-      { id: e.id, updated_date: e.updated_date },
-      { $set: { quote_expired: expired } },
-    ).catch(() => {});
-  }
-}
+// The EXPIRED badge is computed at read; the persisted quote_expired flag is
+// reconciled daily by checkDeadlineReminders (2026-11-25 — the per-load sweep
+// used to fire up to ~10 updateMany writes on the shared budget every mount).
 
 function daysSince(dateStr) {
   const d = Date.parse(dateStr || "");
@@ -332,7 +315,6 @@ export default function EstimatorQueues() {
         // to the paged gateway read + the legacy defaults read.
         const bundle = await fetchEstimateQueueBundle();
         setEstimates(bundle.estimates || []);
-        syncExpiredFlags(bundle.estimates || []);
         applyQuoteDefaults(bundle.quoteDefaults);
       } catch (err) {
         console.error("Estimate queues could not be loaded:", err);
