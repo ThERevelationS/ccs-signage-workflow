@@ -49,8 +49,12 @@ const regexOr = (fields: string[], term: string) => ({
 // largest steady drain on the shared service-token entity_list budget.
 // Isolates persist across invocations under load, exactly when the extra
 // reads hurt most; data freshness stays within ~2 minutes.
-let attentionFeedRowsCache: { rows: any[]; expires: number } | null = null;
+let attentionFeedRowsCache: { rows: any[]; expires: number; today?: string; failed?: boolean } | null = null;
 const ATTENTION_FEED_CACHE_MS = 120_000;
+// A partial (some tables failed) result still gets a short cache — otherwise
+// a saturation wave makes every 60s bell poll re-scan the full row set, which
+// multiplies the very entity_list pressure that caused the failures.
+const ATTENTION_FEED_PARTIAL_CACHE_MS = 30_000;
 
 // M-03: per-key isolate cache for the two heaviest uncached aggregates —
 // get_customer_360 + customer_workspace each fan out 8-11 entity reads per
@@ -645,8 +649,11 @@ Deno.serve(async (req) => {
 
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
-      const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
-      let afFailed = false;
+      // `today` varies per caller (browser-local date) and the pushed-down
+      // date predicates embed it, so a cached row set is only valid for the
+      // same today it was fetched for.
+      const afCacheHit = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now() && attentionFeedRowsCache.today === today);
+      let afFailed = afCacheHit && attentionFeedRowsCache!.failed === true;
       const afFail = () => { afFailed = true; return []; };
       // (#174/#295/#420) Recency-bounded first-page reads escalate to a paged
       // full scan the moment a cap actually trips — sections, matched_totals
@@ -660,16 +667,23 @@ Deno.serve(async (req) => {
         if (!Array.isArray(first)) return null;
         return first.length < cap ? first : loadAllEntityRows({ entity, query, sort, label });
       };
-      const feedRows: any[] = afCached ? attentionFeedRowsCache!.rows : await Promise.all([
+      // (2026-11-25) The date/status predicates are pushed INTO the queries
+      // now — the old unfiltered `null` queries paged the ENTIRE Invoice
+      // (4.6k rows) and WorkOrder (3.2k) tables every cold call, which was
+      // the single largest service-token entity_list spender in the app.
+      // The client-side filters below stay as a cheap safety net over the
+      // reduced sets; section semantics and matched_totals are unchanged.
+      const soon30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+      const feedRows: any[] = afCacheHit ? attentionFeedRowsCache!.rows : await Promise.all([
         feedRead(PortalMessage, { author_side: "customer", read_by_staff: false }, "-created_date", 200, "Feed portal messages").catch(afFail),
-        feedRead(Invoice, null, "-updated_date", 200, "Feed invoices").catch(afFail),
-        feedRead(PurchaseOrder, null, "-updated_date", 200, "Feed purchase orders").catch(afFail),
+        feedRead(Invoice, { status: { $in: ["sent", "partially_paid"] }, balance_due: { $gt: 0 }, due_date: { $lt: today } }, "-updated_date", 200, "Feed invoices").catch(afFail),
+        feedRead(PurchaseOrder, { status: { $in: ["sent", "partially_received"] }, expected_date: { $lt: today } }, "-updated_date", 200, "Feed purchase orders").catch(afFail),
         feedRead(ChangeOrder, { status: "proposed" }, "-created_date", 100, "Feed change orders").catch(afFail),
-        feedRead(Opportunity, null, "-last_activity_at", 300, "Feed opportunities").catch(afFail),
-        feedRead(EstimatingRequest, null, "-created_date", 200, "Feed estimating requests").catch(afFail),
-        feedRead(Inventory, null, "-updated_date", 300, "Feed inventory").catch(afFail),
-        feedRead(WorkOrder, null, "-updated_date", 300, "Feed work orders").catch(afFail),
-        feedRead(PermitLineItem, null, "-updated_date", 300, "Feed permit lines").catch(afFail),
+        feedRead(Opportunity, { next_action_due: { $lt: today } }, "-last_activity_at", 300, "Feed opportunities").catch(afFail),
+        feedRead(EstimatingRequest, { status: { $in: [...OPEN_REQUEST_STATUSES] } }, "-created_date", 200, "Feed estimating requests").catch(afFail),
+        feedRead(Inventory, { reorder_point: { $gt: 0 } }, "-updated_date", 300, "Feed inventory").catch(afFail),
+        feedRead(WorkOrder, { current_stage: { $ne: "completed" }, due_date: { $lt: today } }, "-updated_date", 300, "Feed work orders").catch(afFail),
+        feedRead(PermitLineItem, { status: { $ne: "completed" }, $or: [{ expiration_date: { $lte: soon30 } }, { jurisdiction_fee_status: "due" }] }, "-updated_date", 300, "Feed permit lines").catch(afFail),
         // (#401/#406) One Estimate scan feeds all three estimate-derived
         // sections (sent, expiring/expired, sync-pending) — the fan-out used
         // to issue a second Estimate query for sync-pending rows. The merged
@@ -677,7 +691,7 @@ Deno.serve(async (req) => {
         feedRead(Estimate, { $or: [{ status: "sent" }, { pipeline_sync_pending: true }] }, "-updated_date", 400, "Feed estimate rows").catch(afFail),
         feedRead(BuilderPart, { needs_recalc: true }, "-updated_date", 150, "Feed needs-recalc parts").catch(afFail),
       ]);
-      if (!afCached && !afFailed) attentionFeedRowsCache = { rows: feedRows, expires: Date.now() + ATTENTION_FEED_CACHE_MS };
+      if (!afCacheHit) attentionFeedRowsCache = { rows: feedRows, expires: Date.now() + (afFailed ? ATTENTION_FEED_PARTIAL_CACHE_MS : ATTENTION_FEED_CACHE_MS), today, failed: afFailed };
       const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, estimateRows, needsRecalcRows] = feedRows;
       const sentEstimates = list(estimateRows).filter((e: any) => clean(e?.status) === "sent");
       const syncPendingRows = list(estimateRows).filter((e: any) => e?.pipeline_sync_pending === true);
