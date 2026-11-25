@@ -387,10 +387,57 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Quote-expiry flag sweep — replaces the per-page-mount burst of ~10
+    // updateMany calls from EstimatorQueues (each mount wrote the flag
+    // row-by-row on the shared service budget). quote_expired only needs to
+    // be truthful for filters/reports — the badge is computed at read — so a
+    // daily reconciliation keeps it honest at near-zero ambient cost. The
+    // computation mirrors expiryOf() in EstimatorQueues: an explicit
+    // quote_expiration_date wins, else quote_issue_date + quote_valid_days,
+    // and only 'sent' estimates can be expired. CAS-anchored per row so a
+    // concurrent save is skipped, not clobbered.
+    let quoteExpiredSynced = 0;
+    let quoteExpiredSkipped = 0;
+    try {
+      const expiryCandidates = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.AllInOneEstimate,
+        query: { deleted: { $ne: true }, $or: [{ status: 'sent' }, { quote_expired: true }] },
+        sort: '-updated_date',
+        label: 'Quote expiry sweep estimates',
+      });
+      for (const e of expiryCandidates) {
+        const override = String(e?.quote_expiration_date || '').trim();
+        let expiry: string | null = null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(override)) {
+          expiry = override;
+        } else {
+          const validDays = e?.quote_valid_days ?? e?.valid_days;
+          const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(e?.quote_issue_date || '').trim());
+          if (String(e?.status || 'draft') === 'sent' && m && validDays) {
+            const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+            const days = Number.isFinite(Number(validDays)) ? Math.max(0, Math.trunc(Number(validDays))) : 30;
+            d.setUTCDate(d.getUTCDate() + days);
+            expiry = d.toISOString().slice(0, 10);
+          }
+        }
+        const expired = Boolean(expiry && expiry < today);
+        if (expired === (e?.quote_expired === true)) continue;
+        const res = await base44.asServiceRole.entities.AllInOneEstimate.updateMany(
+          { id: e.id, updated_date: e.updated_date },
+          { $set: { quote_expired: expired } },
+        ).catch(() => null);
+        if (res?.updated === 1) quoteExpiredSynced += 1; else quoteExpiredSkipped += 1;
+      }
+    } catch (error) {
+      console.error('Quote expiry sweep failed:', error?.message || error);
+    }
+
     return Response.json({
       success: true,
       checked_at: now.toISOString(),
       summary: {
+        quote_expired_synced: quoteExpiredSynced,
+        quote_expired_skipped: quoteExpiredSkipped,
         total_work_orders: workOrders.length,
         total_orders: activeOrders.length,
         total_opportunities: openOpportunities.length,
