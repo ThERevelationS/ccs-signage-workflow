@@ -21,10 +21,24 @@ const API_PORT = Number(process.env.PERMIT_SERVER_PORT || 4175);
 const DASH_PORT = '4174';
 const LOG_MAX = 50 * 1024 * 1024;      // rotate at 50MB, keep .1/.2 (3 total)
 const GUARD_MS = 15000;
-const LOW_RESEARCH = 6 * 1024 ** 3;    // <6GB free → researchers pause
-const LOW_ALL = 3 * 1024 ** 3;         // <3GB free → everything but flusher
-const HIGH_WATER = 8 * 1024 ** 3;      // resume after >8GB for 2 minutes
-const HIGH_STREAK = Math.ceil(120000 / GUARD_MS);
+const LOW_RESEARCH = 3.5 * 1024 ** 3;  // <3.5GB free → researchers pause (L1)
+const LOW_ALL = 1.5 * 1024 ** 3;       // <1.5GB free → everything but flusher (L2)
+// Step-down hysteresis: L2→L1 after free >3.5GB for 60s; L1→L0 after >5GB
+// for 120s. Step-up is immediate — pressure wins over hysteresis.
+const STEP_21_FREE = 3.5 * 1024 ** 3;
+const STEP_21_TICKS = Math.ceil(60000 / GUARD_MS);
+const STEP_10_FREE = 5 * 1024 ** 3;
+const STEP_10_TICKS = Math.ceil(120000 / GUARD_MS);
+// Adaptive researchers at L0: allowed = clamp(floor((free−4GB)/avgRss), 2,
+// 16), adjusted ≤±2 per minute, window rotated every 10min so every slice
+// gets runtime. Paused slices stay spawned but idle via guard_paused.
+const RES_HEADROOM = 4 * 1024 ** 3;
+const RES_DEFAULT_RSS = 400 * 1024 ** 2; // 400MB until live RSS is measured
+const RES_MIN = 2;
+const RES_STEP = 2;
+const RES_TOTAL = 16;
+const RES_ADJUST_MS = 60000;
+const RES_ROTATE_MS = 10 * 60 * 1000;
 const RSS_CAP = 1.5 * 1024 ** 3;       // restart a worker over 1.5GB
 const DRAIN_MS = 60000;                // stop: grace for the flusher's batch
 const HEALTHY_MS = 5 * 60 * 1000;      // alive this long → restart backoff resets
@@ -64,7 +78,7 @@ export function activeSetFor(control, catalog = CATALOG) {
   }
   return [...set];
 }
-// Guard levels: 0 none · 1 researchers pause (<6GB) · 2 all but flusher (<3GB).
+// Guard levels: 0 none · 1 researchers pause (<3.5GB) · 2 all but flusher (<1.5GB).
 export function guardLevelFor(freeBytes) {
   if (!Number.isFinite(freeBytes)) return 0;
   if (freeBytes < LOW_ALL) return 2;
@@ -202,7 +216,7 @@ function releaseLock() { try { const c = readJSON(LOCK_FILE, null); if (c?.pid =
 // ── controller state ─────────────────────────────────────────────────────
 let control = { ...DEFAULT_CONTROL, ...readJSON(CONTROL_FILE, {}) };
 let shuttingDown = false;
-let guard = { level: 0, highStreak: 0, since: null };
+let guard = { level: 0, streak: 0, since: null, allowed: RES_TOTAL, avgRss: 0, lastAdjust: 0, windowStart: 0 };
 const guardActions = [];
 
 function reconcile() {
@@ -220,43 +234,80 @@ function reconcile() {
   }
 }
 
-// Hysteresis: drop to a lower guard level only after HIGH_STREAK
-// consecutive samples above the 8GB high-water mark. Pure — tested.
-export function guardNextLevel(curLevel, freeBytes, highStreak) {
-  const level = guardLevelFor(freeBytes);
-  if (level === 0) highStreak = freeBytes > HIGH_WATER ? highStreak + 1 : 0;
-  else highStreak = 0;
-  let next = curLevel;
-  if (level > curLevel) next = level;
-  else if (level === 0 && curLevel > 0 && highStreak >= HIGH_STREAK) next = 0;
-  return { level: next, highStreak, changed: next !== curLevel };
+// Hysteresis: rising pressure steps up immediately; recovery releases ONE
+// level at a time, each only after its floor has held for its window.
+export function guardNextLevel(curLevel, freeBytes, streak) {
+  const sampled = guardLevelFor(freeBytes);
+  if (sampled >= curLevel) return { level: sampled, streak: 0, changed: sampled !== curLevel };
+  const step = curLevel === 2
+    ? { above: STEP_21_FREE, ticks: STEP_21_TICKS }
+    : { above: STEP_10_FREE, ticks: STEP_10_TICKS };
+  const s = freeBytes > step.above ? streak + 1 : 0;
+  const release = s >= step.ticks;
+  return { level: release ? curLevel - 1 : curLevel, streak: release ? 0 : s, changed: release };
+}
+
+// ── adaptive researchers (level 0 only) ──────────────────────────────────
+export function researcherTarget(freeBytes, avgRssBytes, total = RES_TOTAL) {
+  const rss = Number.isFinite(avgRssBytes) && avgRssBytes > 0 ? avgRssBytes : RES_DEFAULT_RSS;
+  return Math.max(RES_MIN, Math.min(total, Math.floor((freeBytes - RES_HEADROOM) / rss)));
+}
+export function researcherStep(prev, target, total = RES_TOTAL) {
+  const p = Number.isFinite(prev) ? prev : total;
+  const moved = p + Math.max(-RES_STEP, Math.min(RES_STEP, target - p));
+  return Math.max(RES_MIN, Math.min(total, moved));
+}
+// Contiguous wrap-around window of `allowed` slices; the start advances by
+// `allowed` per 10-min epoch so every slice gets runtime over a full cycle.
+export function researcherWindow(now, allowed, total = RES_TOTAL) {
+  const start = ((Math.floor(now / RES_ROTATE_MS) * allowed) % total + total) % total;
+  const names = [];
+  for (let i = 0; i < allowed; i++) names.push(`local-res-${(start + i) % total}`);
+  return { start, names };
 }
 
 // Guard tick + RSS cap + log rotation.
 async function guardTick() {
   const free = os.freemem();
-  const t = guardNextLevel(guard.level, free, guard.highStreak);
-  guard.highStreak = t.highStreak;
+  const rss = rssByPid();
+  const t = guardNextLevel(guard.level, free, guard.streak);
+  guard.streak = t.streak;
   const newLevel = t.level;
   if (newLevel > 0 && guard.level !== newLevel) guard.since = new Date().toISOString();
   if (newLevel === 0 && t.changed) guard.since = null;
-  const names = guardPausedNames(newLevel);
+  guard.level = newLevel;
+  // Adaptive researcher window — binds only at L0 (L1+ pauses the whole
+  // researcher set regardless). Adjusted once a minute by ≤±2 against the
+  // measured average RSS of the live local-res processes.
+  const now = Date.now();
+  if (guard.level === 0 && now - guard.lastAdjust >= RES_ADJUST_MS) {
+    guard.lastAdjust = now;
+    const rsses = [...procs.values()]
+      .filter((r) => /^local-res-\d+$/.test(r.spec.name) && r.proc && !r.proc.killed && r.proc.exitCode === null)
+      .map((r) => rss.get(r.proc.pid)).filter(Boolean);
+    if (rsses.length) guard.avgRss = rsses.reduce((a, b) => a + b, 0) / rsses.length;
+    guard.allowed = researcherStep(guard.allowed, researcherTarget(free, guard.avgRss));
+  }
+  const win = researcherWindow(now, guard.allowed, RES_TOTAL);
+  guard.windowStart = win.start;
+  const names = guard.level >= 1
+    ? guardPausedNames(guard.level)
+    : CATALOG.filter((w) => /^local-res-\d+$/.test(w.name) && !win.names.includes(w.name)).map((w) => w.name);
   // Reconcile the paused set, not only on level transitions: a restarted
   // controller inherits whatever the previous one last wrote, and with
   // in-memory level 0 a "changed" transition never fires — workers would
-  // stay guard-paused on a dead controller's list forever.
+  // stay guard-paused on a dead controller's list forever. At L0 the same
+  // reconcile carries the adaptive researcher window.
   const stale = control.guard_paused || [];
   const drift = stale.length !== names.length || names.some((n) => !stale.includes(n));
   if (t.changed || drift) {
-    guard.level = newLevel;
     writeControl({ guard_paused: names }, 'permit-server guard');
     const msg = t.changed
-      ? (newLevel === 0 ? `guard cleared — free ${GB(free)}GB` : `guard level ${newLevel} — free ${GB(free)}GB, pausing ${names.length} worker(s)`)
-      : `guard healed stale pause list (${stale.length} → ${names.length} entries) — free ${GB(free)}GB`;
+      ? (guard.level === 0 ? `guard cleared — free ${GB(free)}GB` : `guard level ${guard.level} — free ${GB(free)}GB, pausing ${names.length} worker(s)`)
+      : `guard pause set reconciled (${stale.length} → ${names.length} entries) — free ${GB(free)}GB, researchers ${win.names.length}/${RES_TOTAL}`;
     guardActions.push({ at: new Date().toISOString(), detail: msg }); guardActions.splice(0, Math.max(0, guardActions.length - 50));
     emit({ stage: 'guard', detail: msg });
   }
-  const rss = rssByPid();
   for (const [name, r] of procs) {
     if (!r.proc || r.stoppedByUs) continue;
     const bytes = rss.get(r.proc.pid);
@@ -299,7 +350,7 @@ function statusJSON() {
     const recentRestarts = (r?.restarts || []).filter((t) => now - t < 10 * 60 * 1000).length;
     return { name: spec.name, group: spec.group, pid: alive ? r.proc.pid : null, alive, rss_mb: alive && rss.get(r.proc.pid) ? Math.round(rss.get(r.proc.pid) / 1048576) : null, restarts: (r?.restarts || []).length, recent_restarts: recentRestarts, crash_looping: recentRestarts >= 5, last_heartbeat: hb, last_event: lastEvent };
   });
-  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10) }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()) }, updated_at: control.updated_at || null, workers };
+  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: guard.allowed, total: RES_TOTAL, window_start: guard.windowStart, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()) }, updated_at: control.updated_at || null, workers };
 }
 
 // ── stop: pause → flusher drains → kill trees ────────────────────────────

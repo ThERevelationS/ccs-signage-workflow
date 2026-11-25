@@ -10,7 +10,7 @@ const tmp = mkdtempSync(path.join(tmpdir(), 'permit-server-test-'));
 process.env.PERMIT_AUDIT_DIR = tmp; // must land before the lib imports
 
 const { readControl, waitWhilePaused, heartbeat, heartbeatFile, DEFAULT_CONTROL, HEARTBEAT_DIR } = await import('./lib/server-control.mjs');
-const { activeSetFor, guardLevelFor, guardPausedNames, guardNextLevel, nextBackoff, lockStale, rotateIfBig } = await import('./permit-server.mjs');
+const { activeSetFor, guardLevelFor, guardPausedNames, guardNextLevel, researcherTarget, researcherStep, researcherWindow, nextBackoff, lockStale, rotateIfBig } = await import('./permit-server.mjs');
 
 const ctl = path.join(tmp, 'server-control.json');
 const writeCtl = (o) => writeFileSync(ctl, JSON.stringify({ ...DEFAULT_CONTROL, ...o, updated_at: new Date().toISOString() }));
@@ -49,12 +49,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   assert.ok(!off.includes('local-res-0') && !off.includes('authority-verifier') && off.includes('write-flusher'));
 }
 
-// ── resource guard thresholds + hysteresis ───────────────────────────────
+// ── resource guard thresholds + stepped hysteresis ───────────────────────
 {
   const GB = 1024 ** 3;
   assert.equal(guardLevelFor(9 * GB), 0);
-  assert.equal(guardLevelFor(5.5 * GB), 1);
-  assert.equal(guardLevelFor(2 * GB), 2);
+  assert.equal(guardLevelFor(4 * GB), 0);   // ≥3.5GB → clear
+  assert.equal(guardLevelFor(3 * GB), 1);   // <3.5GB → researchers pause
+  assert.equal(guardLevelFor(1.2 * GB), 2); // <1.5GB → all but flusher
   assert.equal(guardLevelFor(NaN), 0);
   const l1 = guardPausedNames(1);
   assert.ok(l1.includes('local-res-3') && l1.includes('office-sweep-1') && l1.includes('forever-runner') && l1.includes('parcel-resolver'));
@@ -62,14 +63,60 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const l2 = guardPausedNames(2);
   assert.equal(l2.length, 26); // everything except flusher + dashboard
   assert.ok(!l2.includes('write-flusher') && !l2.includes('dashboard'));
-  // hysteresis: rising pressure trips instantly; clearing needs 8 samples >8GB
-  assert.equal(guardNextLevel(0, 5 * GB, 0).level, 1);
-  assert.equal(guardNextLevel(1, 9 * GB, 3).level, 1); // still held — streak too short
-  assert.equal(guardNextLevel(1, 9 * GB, 7).level, 0); // 8th high sample clears
-  assert.equal(guardNextLevel(1, 2 * GB, 7).level, 2); // worse pressure overrides instantly
-  assert.equal(guardNextLevel(2, 9 * GB, 0).highStreak, 1); // streak counting up
-  assert.equal(guardNextLevel(2, 7 * GB, 5).highStreak, 0); // below high-water resets the streak
-  assert.equal(guardNextLevel(2, 7 * GB, 5).level, 2); // …and stays paused — only level 0 resumes
+  // step-up is immediate at any depth
+  assert.equal(guardNextLevel(0, 3 * GB, 0).level, 1);
+  assert.equal(guardNextLevel(1, 1.2 * GB, 0).level, 2);
+  assert.equal(guardNextLevel(0, 1.2 * GB, 0).level, 2);
+  // holding at the current level resets the recovery streak
+  assert.deepEqual(guardNextLevel(2, 1.4 * GB, 3).level, 2);
+  assert.equal(guardNextLevel(2, 1.4 * GB, 3).streak, 0);
+  // step-down 2→1 needs >3.5GB for 4 ticks (60s)
+  assert.equal(guardNextLevel(2, 4 * GB, 0).level, 2);
+  assert.equal(guardNextLevel(2, 4 * GB, 0).streak, 1);
+  assert.equal(guardNextLevel(2, 4 * GB, 3).level, 1); // 4th sustained tick releases to L1
+  // …but not while free sits in the L1 band
+  assert.equal(guardNextLevel(2, 2 * GB, 3).level, 2);
+  // step-down 1→0 needs >5GB for 8 ticks (120s)
+  assert.equal(guardNextLevel(1, 5.5 * GB, 6).level, 1);
+  assert.equal(guardNextLevel(1, 5.5 * GB, 7).level, 0);
+  assert.equal(guardNextLevel(1, 4.5 * GB, 7).level, 1); // 4.5GB isn't >5GB — held
+  // sequential full release: 2→1 at 60s, then 1→0 at 120s
+  assert.equal(guardNextLevel(2, 6 * GB, 3).level, 1);
+  assert.equal(guardNextLevel(1, 6 * GB, 7).level, 0);
+  // re-trip mid-recovery resets the streak
+  assert.equal(guardNextLevel(2, 1.2 * GB, 2).level, 2);
+  assert.equal(guardNextLevel(2, 1.2 * GB, 2).streak, 0);
+}
+
+// ── adaptive researcher window ───────────────────────────────────────────
+{
+  const GB = 1024 ** 3, MB = 1024 ** 2;
+  // clamp(floor((free−4GB)/avgRss), 2, 16)
+  assert.equal(researcherTarget(12 * GB, 400 * MB), 16);              // 8GB/400MB=20 → cap
+  assert.equal(researcherTarget(6 * GB, 400 * MB), 5);                // 2GB/400MB=5
+  assert.equal(researcherTarget(4.1 * GB, 400 * MB), 2);              // ~0 → floor 2
+  assert.equal(researcherTarget(9 * GB, NaN), Math.floor(5 * GB / (400 * MB))); // unmeasured → 400MB default
+  // ±2/min rate limit toward target, clamped to [2,16]
+  assert.equal(researcherStep(16, 6), 14);
+  assert.equal(researcherStep(2, 16), 4);
+  assert.equal(researcherStep(14, 14), 14);
+  assert.equal(researcherStep(3, 1), 2);   // can't go below the floor
+  assert.equal(researcherStep(15, 99), 16); // can't exceed total
+  assert.equal(researcherStep(undefined, 7), 14); // unmeasured starts at total, steps ±2
+  // rotation: contiguous wrap-around window, start advances by allowed per epoch
+  const E = 10 * 60 * 1000;
+  const w1 = researcherWindow(7 * E, 5);
+  assert.equal(w1.start, (7 * 5) % 16); // =3
+  assert.deepEqual(w1.names, ['local-res-3', 'local-res-4', 'local-res-5', 'local-res-6', 'local-res-7']);
+  const w2 = researcherWindow(7 * E, 13); // start = 91 % 16 = 11 → wraps
+  assert.equal(w2.start, 11);
+  assert.equal(w2.names.length, 13);
+  assert.deepEqual(w2.names.slice(0, 5), ['local-res-11', 'local-res-12', 'local-res-13', 'local-res-14', 'local-res-15']);
+  assert.equal(w2.names[5], 'local-res-0'); // wrapped to slice 0
+  // every slice is covered across a full rotation cycle
+  const covered = new Set();
+  for (let e = 0; e < 16; e++) researcherWindow(e * E, 5).names.forEach((n) => covered.add(n));
+  assert.equal(covered.size, 16);
 }
 
 // ── restart backoff ──────────────────────────────────────────────────────
