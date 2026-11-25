@@ -5,6 +5,7 @@ import { Bell, Gift, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { usePolling } from "@/lib/usePolling";
+import { claimPollLeadership, broadcastPollResult, onPollResult } from "@/lib/pollLeader";
 import { computedAttentionCount } from "./attentionComputedModel";
 import {
   listMyNotifications,
@@ -61,7 +62,8 @@ function playNotificationBeep() {
 }
 
 export default function AttentionBell({ compact = false, shellGlass = false }) {
-  const { sessionToken } = useAuth();
+  const { currentUser, sessionToken } = useAuth();
+  const leaderKey = `attention-bell|${String(currentUser?.email || "").trim().toLowerCase()}`;
   const navigate = useNavigate();
   const [count, setCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -81,6 +83,20 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  // Shared by the leader (fresh fetch) and follower tabs (leader broadcast):
+  // publish the feed/notifications into the module stores and return the
+  // badge count so every tab renders identically.
+  const applyPayload = useCallback(({ feed, notifications, unread_count }) => {
+    publishAttentionFeed(feed);
+    publishPersistedNotifications(notifications, unread_count);
+    const feedCount = FEED_SECTION_KEYS.reduce(
+      (sum, key) => sum + (Array.isArray(feed[key]) ? feed[key].length : 0), 0);
+    const unread = typeof unread_count === "number"
+      ? unread_count
+      : notifications.filter((n) => isNotificationUnread(n)).length;
+    return feedCount + computedAttentionCount() + unread;
+  }, []);
+
   const load = useCallback(async () => {
     if (!sessionToken) return;
     try {
@@ -93,15 +109,11 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
         listMyNotifications(sessionToken, { limit: 40 }),
       ]);
       const feed = feedRes?.data || feedRes || {};
-      publishAttentionFeed(feed);
       const notifications = notifRes?.notifications || [];
-      publishPersistedNotifications(notifications, notifRes?.unread_count);
-      const feedCount = FEED_SECTION_KEYS.reduce(
-        (sum, key) => sum + (Array.isArray(feed[key]) ? feed[key].length : 0), 0);
-      const unread = typeof notifRes?.unread_count === "number"
-        ? notifRes.unread_count
-        : notifications.filter((n) => isNotificationUnread(n)).length;
-      setCount(feedCount + computedAttentionCount() + unread);
+      const unread_count = notifRes?.unread_count;
+      setCount(applyPayload({ feed, notifications, unread_count }));
+      // Follower tabs skip the network entirely — they hydrate from this.
+      broadcastPollResult(leaderKey, { feed, notifications, unread_count });
 
       // New-persisted-notification detection → toast (+ beep, #336/#339).
       const seen = readSeenIds();
@@ -134,7 +146,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
         }
       }
     } catch { /* fail soft — bell just stays quiet */ }
-  }, [sessionToken, pushToasts]);
+  }, [sessionToken, pushToasts, applyPayload, leaderKey]);
 
   // usePolling already pauses when document.hidden, skips open 429 breakers,
   // clears timers on unmount and only refreshes on focus when due (#330).
@@ -146,7 +158,19 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
     const t = setTimeout(() => setAmbientGate(true), 15000);
     return () => clearTimeout(t);
   }, []);
-  const { runNow } = usePolling(load, 60000, { enabled: ambientGate });
+  // Cross-tab leader election: only one tab per user fires the ambient
+  // attention_feed + list_mine pair each minute; siblings consume the
+  // leader's broadcast payload instead of duplicating the invokes.
+  const pollAsLeader = useCallback(async () => {
+    if (!claimPollLeadership(leaderKey, 60000)) return;
+    await load();
+  }, [leaderKey, load]);
+  usePolling(pollAsLeader, 60000, { enabled: ambientGate });
+
+  useEffect(() => onPollResult(leaderKey, (payload) => {
+    if (!payload || !Array.isArray(payload.notifications)) return;
+    try { setCount(applyPayload(payload)); } catch { /* non-fatal */ }
+  }), [leaderKey, applyPayload]);
 
   // Keep the sound flag live — the feed strip and the prefs tab both write it.
   useEffect(() => {
@@ -170,7 +194,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
           {count > 99 ? "99+" : count}
         </span>
       )}
-      <NotificationCenter open={open} onClose={() => setOpen(false)} onRefresh={runNow} />
+      <NotificationCenter open={open} onClose={() => setOpen(false)} onRefresh={() => { void load(); }} />
       {/* Celebration/event toasts — new persisted notifications pop here on
           every page the bell renders on, including EstimatorQueues (#336). */}
       {toasts.length > 0 && createPortal(
