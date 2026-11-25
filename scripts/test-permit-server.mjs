@@ -47,6 +47,19 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   // verification OFF drops its whole group, keeps core
   const off = activeSetFor({ ...run, verification: false });
   assert.ok(!off.includes('local-res-0') && !off.includes('authority-verifier') && off.includes('write-flusher'));
+  // researcherAllowed culls slices outside the adaptive window — they leave
+  // the active set entirely so reconcile stops (not pauses) them.
+  const win = researcherWindow(0, 5);
+  const culled = activeSetFor(run, undefined, win.names);
+  const culledRes = culled.filter((n) => /^local-res-/.test(n));
+  assert.deepEqual(culledRes.sort(), [...win.names].sort());
+  assert.equal(culledRes.length, 5);
+  assert.equal(culled.length, 23 - 16 + 5); // window replaces the full slice set
+  assert.ok(culled.includes('authority-verifier') && culled.includes('write-flusher'));
+  // empty window (guard L1+) → no researcher processes at all
+  assert.equal(activeSetFor(run, undefined, []).filter((n) => /^local-res-/.test(n)).length, 0);
+  // null → legacy behavior, all slices
+  assert.equal(activeSetFor(run, undefined, null).filter((n) => /^local-res-/.test(n)).length, 16);
 }
 
 // ── resource guard thresholds + stepped hysteresis ───────────────────────
@@ -57,12 +70,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   assert.equal(guardLevelFor(3 * GB), 1);   // <3.5GB → researchers pause
   assert.equal(guardLevelFor(1.2 * GB), 2); // <1.5GB → all but flusher
   assert.equal(guardLevelFor(NaN), 0);
-  const l1 = guardPausedNames(1);
-  assert.ok(l1.includes('local-res-3') && l1.includes('office-sweep-1') && l1.includes('forever-runner') && l1.includes('parcel-resolver'));
-  assert.ok(!l1.includes('write-flusher') && !l1.includes('mirror-sync') && !l1.includes('authority-verifier') && !l1.includes('dashboard') && !l1.includes('seed-scan'));
+  // L1 pauses NOTHING — researchers are culled from the spawn set instead
+  // (a paused slice still holds ~500MB; stopping it releases the pressure).
+  assert.deepEqual(guardPausedNames(1), []);
   const l2 = guardPausedNames(2);
-  assert.equal(l2.length, 27); // everything except flusher + dashboard
-  assert.ok(!l2.includes('write-flusher') && !l2.includes('dashboard'));
+  // L2 pauses non-researcher workers only: flusher + dashboard exempt,
+  // researchers stopped not paused.
+  assert.equal(l2.length, 5); // mirror-sync + seed-scan + verifier + hygiene + profile-relink
+  assert.ok(!l2.includes('write-flusher') && !l2.includes('dashboard') && !l2.includes('local-res-3') && !l2.includes('office-sweep-1'));
+  assert.ok(l2.includes('mirror-sync') && l2.includes('authority-verifier'));
   // step-up is immediate at any depth
   assert.equal(guardNextLevel(0, 3 * GB, 0).level, 1);
   assert.equal(guardNextLevel(1, 1.2 * GB, 0).level, 2);
@@ -95,7 +111,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   assert.equal(researcherTarget(12 * GB, 400 * MB), 16);              // 8GB/400MB=20 → cap
   assert.equal(researcherTarget(6 * GB, 400 * MB), 5);                // 2GB/400MB=5
   assert.equal(researcherTarget(4.1 * GB, 400 * MB), 2);              // ~0 → floor 2
-  assert.equal(researcherTarget(9 * GB, NaN), Math.floor(5 * GB / (400 * MB))); // unmeasured → 400MB default
+  assert.equal(researcherTarget(9 * GB, NaN), Math.floor(5 * GB / (500 * MB))); // unmeasured → 500MB default
   // ±2/min rate limit toward target, clamped to [2,16]
   assert.equal(researcherStep(16, 6), 14);
   assert.equal(researcherStep(2, 16), 4);

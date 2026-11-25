@@ -33,7 +33,7 @@ const STEP_10_TICKS = Math.ceil(120000 / GUARD_MS);
 // 16), adjusted ≤±2 per minute, window rotated every 10min so every slice
 // gets runtime. Paused slices stay spawned but idle via guard_paused.
 const RES_HEADROOM = 4 * 1024 ** 3;
-const RES_DEFAULT_RSS = 400 * 1024 ** 2; // 400MB until live RSS is measured
+const RES_DEFAULT_RSS = 500 * 1024 ** 2; // 500MB until live RSS is measured
 const RES_MIN = 2;
 const RES_STEP = 2;
 const RES_TOTAL = 16;
@@ -72,7 +72,7 @@ function catalog() {
 const CATALOG = catalog();
 
 // Pure helpers — exported for scripts/test-permit-server.mjs.
-export function activeSetFor(control, catalog = CATALOG) {
+export function activeSetFor(control, catalog = CATALOG, researcherAllowed = null) {
   const set = new Set(['dashboard']);
   if (!control || control.state === 'stopped') return [...set];
   for (const w of catalog) {
@@ -80,7 +80,12 @@ export function activeSetFor(control, catalog = CATALOG) {
     else if (w.group === 'verification' && control.verification) set.add(w.name);
     else if (w.group === 'expansion' && control.expansion && !control.expansion_locked) set.add(w.name);
   }
-  return [...set];
+  // researcherAllowed (array of local-res-* names) culls slices outside the
+  // adaptive window — they leave the active set entirely so reconcile stops
+  // them (clean stop, not a crash) and the memory pressure actually drops.
+  const out = [...set];
+  if (researcherAllowed != null) return out.filter((n) => !/^local-res-\d+$/.test(n) || researcherAllowed.includes(n));
+  return out;
 }
 // Guard levels: 0 none · 1 researchers pause (<3.5GB) · 2 all but flusher (<1.5GB).
 export function guardLevelFor(freeBytes) {
@@ -89,9 +94,13 @@ export function guardLevelFor(freeBytes) {
   if (freeBytes < LOW_RESEARCH) return 1;
   return 0;
 }
+// Pause list drives worker self-idle via waitWhilePaused. Researchers are
+// NOT on it — pausing a spawned researcher frees nothing (each holds ~500MB
+// working set), so guard levels cull them from the spawn set instead and
+// let the memory actually release. Only non-researcher workers pause at L2.
 export function guardPausedNames(level, catalog = CATALOG) {
-  if (level <= 0) return [];
-  return catalog.filter((w) => w.group !== 'dashboard' && w.name !== 'write-flusher' && (level >= 2 || w.researcher)).map((w) => w.name);
+  if (level < 2) return [];
+  return catalog.filter((w) => w.group !== 'dashboard' && w.name !== 'write-flusher' && !w.researcher).map((w) => w.name);
 }
 export function nextBackoff(prevMs, aliveMs) {
   if (aliveMs >= HEALTHY_MS) return 1000;
@@ -241,7 +250,7 @@ function reconcile() {
     emit({ stage: 'expansion_unlocked', detail: 'verification ledger clean — expansion lock cleared' });
     control = writeControl({ expansion_locked: false }, 'verification-gate');
   }
-  const want = new Set(activeSetFor(control));
+  const want = new Set(activeSetFor(control, CATALOG, researcherRunSet()));
   let spawned = 0;
   for (const spec of CATALOG) {
     const r = procs.get(spec.name);
@@ -287,6 +296,13 @@ export function researcherWindow(now, allowed, total = RES_TOTAL) {
   for (let i = 0; i < allowed; i++) names.push(`local-res-${(start + i) % total}`);
   return { start, names };
 }
+// Which slices may be spawned right now: none under guard pressure (L1+),
+// the rotating window at L0. Reconcile stops the rest — stopping a culled
+// slice goes through the normal not-in-active-set path (stoppedByUs, no
+// restart), and every slice rejoins when the window wraps.
+function researcherRunSet() {
+  return guard.level >= 1 ? [] : researcherWindow(Date.now(), guard.allowed, RES_TOTAL).names;
+}
 
 // Guard tick + RSS cap + log rotation.
 async function guardTick() {
@@ -312,9 +328,10 @@ async function guardTick() {
   }
   const win = researcherWindow(now, guard.allowed, RES_TOTAL);
   guard.windowStart = win.start;
-  const names = guard.level >= 1
-    ? guardPausedNames(guard.level)
-    : CATALOG.filter((w) => /^local-res-\d+$/.test(w.name) && !win.names.includes(w.name)).map((w) => w.name);
+  // Pause list = non-researcher workers at L2 only. Researcher slices are
+  // culled from the spawn set by reconcile, not paused — a paused slice
+  // still holds its ~500MB, so pausing never released memory pressure.
+  const names = guardPausedNames(guard.level);
   // Reconcile the paused set, not only on level transitions: a restarted
   // controller inherits whatever the previous one last wrote, and with
   // in-memory level 0 a "changed" transition never fires — workers would
@@ -326,7 +343,7 @@ async function guardTick() {
     writeControl({ guard_paused: names }, 'permit-server guard');
     const msg = t.changed
       ? (guard.level === 0 ? `guard cleared — free ${GB(free)}GB` : `guard level ${guard.level} — free ${GB(free)}GB, pausing ${names.length} worker(s)`)
-      : `guard pause set reconciled (${stale.length} → ${names.length} entries) — free ${GB(free)}GB, researchers ${win.names.length}/${RES_TOTAL}`;
+      : `guard pause set reconciled (${stale.length} → ${names.length} entries) — free ${GB(free)}GB, researchers ${guard.level === 0 ? win.names.length : 0}/${RES_TOTAL}`;
     guardActions.push({ at: new Date().toISOString(), detail: msg }); guardActions.splice(0, Math.max(0, guardActions.length - 50));
     emit({ stage: 'guard', detail: msg });
   }
@@ -373,7 +390,7 @@ function statusJSON() {
     return { name: spec.name, group: spec.group, pid: alive ? r.proc.pid : null, alive, rss_mb: alive && rss.get(r.proc.pid) ? Math.round(rss.get(r.proc.pid) / 1048576) : null, restarts: (r?.restarts || []).length, recent_restarts: recentRestarts, crash_looping: recentRestarts >= 5, last_heartbeat: hb, last_event: lastEvent };
   });
   const vp = verificationProgress();
-  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: guard.allowed, total: RES_TOTAL, window_start: guard.windowStart, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()) }, updated_at: control.updated_at || null, workers, verification_progress: vp ? { at: vp.at, jurisdictions: vp.jurisdictions, offices: vp.offices, gap_reasons: vp.gap_reasons, missing_roles: vp.missing_roles, promotions: vp.promotions, eta: vp.eta, held_relinks: (vp.held_relinks || []).length, needs_review_total: vp.needs_review_total || 0 } : null };
+  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: guard.level === 0 ? guard.allowed : 0, total: RES_TOTAL, window_start: guard.windowStart, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()) }, updated_at: control.updated_at || null, workers, verification_progress: vp ? { at: vp.at, jurisdictions: vp.jurisdictions, offices: vp.offices, gap_reasons: vp.gap_reasons, missing_roles: vp.missing_roles, promotions: vp.promotions, eta: vp.eta, held_relinks: (vp.held_relinks || []).length, needs_review_total: vp.needs_review_total || 0 } : null };
 }
 
 // ── stop: pause → flusher drains → kill trees ────────────────────────────
