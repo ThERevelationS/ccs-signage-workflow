@@ -487,74 +487,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     runOnMount: false,
   });
 
-  useEffect(() => {
-    if (!sessionToken) return undefined;
+  // The staff-gateway subscribe() shim emits `{ type: "update", data: null }`
+  // — events never carry a row id, so every handler branch here bailed on the
+  // missing id while the subscription still polled a 50-row staffDataRead
+  // every 120s in every open tab. Removed; the 60s usePolling reload above is
+  // the freshness mechanism and is unchanged.
 
-    let unsubscribe = null;
-    try {
-      unsubscribe = WorkOrder.subscribe((event) => {
-        const id = String(event?.id || event?.data?.id || "").trim();
-        if (!id) return;
-
-        if (event?.type === "delete" || event?.data?.deleted === true) {
-          if (liveEditPinsRef.current[id]) {
-            const nextPins = { ...liveEditPinsRef.current };
-            delete nextPins[id];
-            liveEditPinsRef.current = nextPins;
-            setLiveEditPinVersion((version) => version + 1);
-          }
-          setWorkOrders((current) => current.filter((row) => row.id !== id));
-          setSelectedWorkOrder((selected) => selected?.id === id ? null : selected);
-          return;
-        }
-
-        const remotePatch = event?.data && typeof event.data === "object" ? event.data : {};
-        const pendingForRow = pendingChangesRef.current[id] || {};
-        const currentPin = liveEditPinsRef.current[id] || null;
-        if (currentPin) {
-          const reconciledPin = reconcileSalesLiveEditPinWithRemote(currentPin, remotePatch, pendingForRow);
-          if (salesLiveEditPinChanged(currentPin, reconciledPin)) {
-            const nextPins = { ...liveEditPinsRef.current };
-            if (reconciledPin) nextPins[id] = reconciledPin;
-            else delete nextPins[id];
-            liveEditPinsRef.current = nextPins;
-            setLiveEditPinVersion((version) => version + 1);
-          }
-        }
-
-        setWorkOrders((current) => {
-          const existing = current.find((row) => row.id === id) || null;
-          const remoteRow = { ...(existing || {}), ...remotePatch, id };
-          const scopedPending = pendingRecordScopesRef.current[id] === activeRecordScopeRef.current && !pendingSameTaskRepairRef.current.has(id)
-            ? pendingForRow
-            : {};
-          const displayRow = { ...remoteRow, ...scopedPending };
-          const projectedRow = projectSalesRowForLiveView(displayRow, liveEditPinsRef.current[id] || null);
-          const belongsToWorkspace = salesRecordBelongsToLoadedScope(projectedRow, activeRecordScopeRef.current);
-
-          if (!belongsToWorkspace) {
-            return existing ? current.filter((row) => row.id !== id) : current;
-          }
-          if (!existing) return [displayRow, ...current];
-          return current.map((row) => row.id === id ? displayRow : row);
-        });
-
-        setSelectedWorkOrder((selected) => {
-          if (selected?.id !== id) return selected;
-          const scopedPending = pendingRecordScopesRef.current[id] === activeRecordScopeRef.current && !pendingSameTaskRepairRef.current.has(id)
-            ? pendingForRow
-            : {};
-          return { ...selected, ...remotePatch, id, ...scopedPending };
-        });
-      });
-    } catch (error) {
-      console.error("Sales Pipeline realtime WorkOrder subscription failed:", error);
-    }
-
-    return () => {
-      if (typeof unsubscribe === "function") unsubscribe();
-    };
-  }, [sessionToken]);
 
   useEffect(() => {
     if (!["insights", "daily"].includes(viewMode)) return;
