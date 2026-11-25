@@ -441,6 +441,15 @@ const server = http.createServer(async (req, res) => {
 });
 
 async function main() {
+  // The exe spawns us hidden with no stderr redirect — a fatal crash
+  // otherwise leaves no trace (controller died silently once already).
+  process.on('uncaughtException', (e) => {
+    try { appendFileSync('.audit-work/permit-server.err.log', `${new Date().toISOString()} uncaughtException ${e?.stack || e}\n`); } catch {}
+    process.exit(1);
+  });
+  process.on('unhandledRejection', (e) => {
+    try { appendFileSync('.audit-work/permit-server.err.log', `${new Date().toISOString()} unhandledRejection ${e?.stack || e}\n`); } catch {}
+  });
   acquireLock();
   // Fresh state if the file never existed; otherwise restore exactly.
   if (!existsSync(CONTROL_FILE)) writeControl({}, 'permit-server boot');
