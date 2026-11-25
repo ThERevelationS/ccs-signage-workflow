@@ -9,6 +9,75 @@ import { applyOwnerCapabilities } from './ownerRole.ts';
 const sessionAuthCache = new Map<string, { user: any; expires: number }>();
 const SESSION_AUTH_CACHE_MS = 15_000;
 
+// Shared roster + revocation snapshot — the per-token cache above only helps
+// a caller that lands on a warm isolate; every cold call used to spend ~2
+// entity_list reads (AuthorizedEmail + UserSession) re-verifying the same
+// session, and requests spread across isolates so most calls paid full price.
+// The roster and revoked-session sets are small and shared across ALL staff
+// tokens, so one pair of reads per isolate per TTL covers every caller.
+// Misses, ambiguity and snapshot failures degrade to the direct per-call
+// reads at the call site, preserving the exact pre-snapshot behavior.
+// Staleness: deactivation, role/permission changes and revocation now take
+// effect within ~60s per isolate (was ~15s) — the accepted trade for cutting
+// ~2 entity reads off nearly every function call.
+type StaffSessionSnapshot = {
+  usersByEmail: Map<string, any[]>;
+  revokedHashes: Set<string>;
+  revokedOverflow: boolean;
+  at: number;
+};
+const STAFF_SNAPSHOT_TTL_MS = 60_000;
+const STAFF_SNAPSHOT_LIMIT = 2000;
+const staffSnapshotState: { snapshot: StaffSessionSnapshot | null; inFlight: Promise<StaffSessionSnapshot | null> | null } = {
+  snapshot: null,
+  inFlight: null,
+};
+
+async function staffSessionSnapshot(base44: any): Promise<StaffSessionSnapshot | null> {
+  const { snapshot, inFlight } = staffSnapshotState;
+  if (snapshot && Date.now() - snapshot.at < STAFF_SNAPSHOT_TTL_MS) return snapshot;
+  if (inFlight) return inFlight;
+  const promise = (async () => {
+    try {
+      const [users, revoked] = await Promise.all([
+        base44.asServiceRole.entities.AuthorizedEmail.list('-updated_date', STAFF_SNAPSHOT_LIMIT),
+        base44.asServiceRole.entities.UserSession.filter({ revoked: true }, '-created_date', STAFF_SNAPSHOT_LIMIT).catch(() => null),
+      ]);
+      if (!Array.isArray(users)) return null;
+      const usersByEmail = new Map<string, any[]>();
+      for (const u of users) {
+        const key = String(u?.email || '').trim().toLowerCase();
+        if (!key) continue;
+        const rows = usersByEmail.get(key) || [];
+        rows.push(u);
+        usersByEmail.set(key, rows);
+      }
+      // A failed or capped revoked-set read must not let a revoked token ride
+      // the snapshot — overflow marks it unusable so the caller falls back to
+      // the direct per-token check.
+      const revokedOverflow = !Array.isArray(revoked) || revoked.length >= STAFF_SNAPSHOT_LIMIT;
+      const snap: StaffSessionSnapshot = {
+        usersByEmail,
+        revokedHashes: new Set(
+          (Array.isArray(revoked) ? revoked : [])
+            .map((r: any) => String(r?.token_hash || ''))
+            .filter(Boolean),
+        ),
+        revokedOverflow,
+        at: Date.now(),
+      };
+      staffSnapshotState.snapshot = snap;
+      return snap;
+    } catch {
+      return null;
+    } finally {
+      staffSnapshotState.inFlight = null;
+    }
+  })();
+  staffSnapshotState.inFlight = promise;
+  return promise;
+}
+
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -122,29 +191,44 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
     return cachedUser;
   }
 
-  const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
-  if (!Array.isArray(users)) {
-    throw Object.assign(new Error('Authenticated user identity could not be verified'), { status: 503 });
-  }
-  if (users.length === 0) throw Object.assign(new Error('Authentication required'), { status: 401 });
-  if (users.length !== 1) {
-    throw Object.assign(new Error('Authenticated user identity is ambiguous'), { status: 409 });
-  }
-
-  // Revocation check — a revoked UserSession row (by token fingerprint) rejects this token.
-  try {
-    const revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
-    if (Array.isArray(revoked) && revoked.length > 0) {
-      throw Object.assign(new Error('Authentication required'), { status: 401 });
+  let row: any = null;
+  const snap = await staffSessionSnapshot(base44);
+  if (snap) {
+    const rows = snap.usersByEmail.get(email);
+    if (Array.isArray(rows) && rows.length === 1 && !snap.revokedOverflow) {
+      if (snap.revokedHashes.has(tokenHash)) {
+        throw Object.assign(new Error('Authentication required'), { status: 401 });
+      }
+      row = rows[0];
     }
-  } catch (e) {
-    if (e?.status === 401) throw e;
-    // UserSession may not exist yet — treat lookup failures as non-blocking.
+  }
+  if (!row) {
+    const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
+    if (!Array.isArray(users)) {
+      throw Object.assign(new Error('Authenticated user identity could not be verified'), { status: 503 });
+    }
+    if (users.length === 0) throw Object.assign(new Error('Authentication required'), { status: 401 });
+    if (users.length !== 1) {
+      throw Object.assign(new Error('Authenticated user identity is ambiguous'), { status: 409 });
+    }
+
+    // Revocation check — a revoked UserSession row (by token fingerprint) rejects this token.
+    try {
+      const revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
+      if (Array.isArray(revoked) && revoked.length > 0) {
+        throw Object.assign(new Error('Authentication required'), { status: 401 });
+      }
+    } catch (e) {
+      if (e?.status === 401) throw e;
+      // UserSession may not exist yet — treat lookup failures as non-blocking.
+    }
+    row = users[0];
   }
 
   // Owner normalization runs AFTER grant-expiry strip — an owner (anchored or
-  // granted) is never demoted by a lapsed break-glass grant.
-  const user = applyOwnerCapabilities(rejectInactive(stripExpiredGrant(users[0])));
+  // granted) is never demoted by a lapsed break-glass grant. Snapshot rows are
+  // shared across callers, so normalize a copy (the helpers mutate the row).
+  const user = applyOwnerCapabilities(rejectInactive(stripExpiredGrant({ ...row })));
   if (sessionAuthCache.size > 500) sessionAuthCache.clear();
   sessionAuthCache.set(tokenHash, { user, expires: Date.now() + SESSION_AUTH_CACHE_MS });
   const notBefore = Date.parse(String(user?.session_not_before || ''));
