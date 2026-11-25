@@ -233,7 +233,9 @@ function releaseLock() { try { const c = readJSON(LOCK_FILE, null); if (c?.pid =
 // ── controller state ─────────────────────────────────────────────────────
 let control = { ...DEFAULT_CONTROL, ...readJSON(CONTROL_FILE, {}) };
 let shuttingDown = false;
-let guard = { level: 0, streak: 0, since: null, allowed: RES_TOTAL, avgRss: 0, lastAdjust: 0, windowStart: 0 };
+// allowed starts at RES_MIN, not RES_TOTAL: cold-booting all 16 slices at
+// once (~8GB transient) trips the guard and culls them back — observed 2x.
+let guard = { level: 0, streak: 0, since: null, allowed: RES_MIN, avgRss: 0, lastAdjust: 0, windowStart: 0 };
 const guardActions = [];
 
 let vpCache = { at: 0, data: undefined };
