@@ -1,7 +1,5 @@
-import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
-import { staffEntities } from "@/components/staff/staffEntities";
 import { invokeFleet, isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { isPlatformRateLimit } from "@/api/requestGovernor.mjs";
 import { getSessionToken } from "@/components/auth/EmailGate";
@@ -256,58 +254,16 @@ export function refreshAllWorkOrders() {
   return queryClientInstance.refetchQueries({ queryKey: ALL_WORK_ORDERS_KEY });
 }
 
-function applyWorkOrderEvent(rows, event) {
-  if (!Array.isArray(rows)) return rows;
-  const id = String(event?.id || event?.data?.id || "").trim();
-  if (!id) return rows;
-  if (event?.type === "delete" || event?.data?.deleted === true) {
-    return rows.filter((row) => row.id !== id);
-  }
-  const patch = event?.data && typeof event.data === "object" ? event.data : {};
-  const exists = rows.some((row) => row.id === id);
-  if (!exists) return [{ ...patch, id }, ...rows];
-  return rows.map((row) => (row.id === id ? { ...row, ...patch, id } : row));
-}
-
-let subscriptionCount = 0;
-let unsubscribeWorkOrders = null;
-
-function retainWorkOrderSubscription() {
-  subscriptionCount += 1;
-  if (unsubscribeWorkOrders || subscriptionCount > 1) return;
-  try {
-    unsubscribeWorkOrders = staffEntities.WorkOrder.subscribe((event) => {
-      queryClientInstance.setQueryData(ALL_WORK_ORDERS_KEY, (rows) => applyWorkOrderEvent(rows, event));
-      const state = stateFor("WorkOrder");
-      const id = String(event?.id || event?.data?.id || "").trim();
-      if (!id) return;
-      if (event?.type === "delete" || event?.data?.deleted === true) {
-        state.rows.delete(id);
-      } else if (event?.data && typeof event.data === "object") {
-        state.rows.set(id, { ...(state.rows.get(id) || {}), ...event.data, id });
-      }
-    });
-  } catch {
-    unsubscribeWorkOrders = null;
-  }
-}
-
-function releaseWorkOrderSubscription() {
-  subscriptionCount = Math.max(0, subscriptionCount - 1);
-  if (subscriptionCount > 0) return;
-  if (typeof unsubscribeWorkOrders === "function") unsubscribeWorkOrders();
-  unsubscribeWorkOrders = null;
-}
+// The staff-gateway subscribe() shim emits `{ type: "update", data: null }` —
+// events never carry a row id or payload, so the old live-patch handlers here
+// could never apply anything (every event bailed on the missing id) while the
+// subscription itself still polled a 50-row staffDataRead every 120s in every
+// open tab. Removed: the query's refetchInterval below is the freshness
+// mechanism and is unchanged.
 
 const EMPTY_WORK_ORDERS = [];
 
 export function useAllWorkOrders({ enabled = true } = {}) {
-  useEffect(() => {
-    if (!enabled) return undefined;
-    retainWorkOrderSubscription();
-    return () => releaseWorkOrderSubscription();
-  }, [enabled]);
-
   const query = useQuery({
     queryKey: ALL_WORK_ORDERS_KEY,
     queryFn: () => fetchAllWorkOrders(),
