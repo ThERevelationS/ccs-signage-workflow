@@ -11,6 +11,31 @@ export const MIRROR_DIR = '.audit-work/mirrors';
 export const mirrorPath = (n) => `${MIRROR_DIR}/${n}.json`;
 const journalPath = (n) => `${mirrorPath(n)}.journal.jsonl`;
 
+// Slim companion mirrors — profiles carry ~85MB workers never read
+// (document bodies/summaries, discovery_scan_state internals, activity_log).
+// <name>.slim.json is written alongside every putMirror of the base name and
+// reads fold the SAME journal + pending as the full mirror, so write-through
+// stays consistent. Workers that only need identity/office_research/doc
+// metadata read 'profiles-oh.slim' and parse ~half the bytes.
+const SLIM_NAMES = new Set(['profiles-oh', 'profiles-ky']);
+const SLIM_DOC_KEEP = ['id', 'title', 'url', 'file_url', 'doc_type', 'source', 'catalog_state', 'last_fetched', 'downloaded_at', 'superseded'];
+const SLIM_TOP_DROP = new Set(['discovery_scan_state', 'ai_summary', 'activity_log']);
+const slimBase = (n) => (n.endsWith('.slim') ? n.slice(0, -5) : null);
+export function slimRow(r) {
+  if (!r || typeof r !== 'object') return r;
+  const out = {};
+  for (const k in r) if (!SLIM_TOP_DROP.has(k)) out[k] = r[k];
+  if (Array.isArray(out.documents)) {
+    out.documents = out.documents.map((d) => {
+      if (!d || typeof d !== 'object') return d;
+      const s = {};
+      for (const k of SLIM_DOC_KEEP) if (k in d) s[k] = d[k];
+      return s;
+    });
+  }
+  return out;
+}
+
 // Write journal — mirrorApply appends one line instead of rewriting the whole
 // base file (profiles-oh is 80MB; ~40 workers doing full rewrites per write was
 // a disk+parse storm). getMirror folds the journal over the base at read time;
@@ -30,7 +55,7 @@ function readJournal(name) {
     return { map, latest };
   } catch { return { map: new Map(), latest: 0 }; }
 }
-function foldJournal(name, rows) {
+function foldJournal(name, rows, slim = false) {
   const { map: j } = readJournal(name);
   if (!j.size) return rows;
   const byId = new Map(rows.map((r) => [r?.id, r]));
@@ -39,28 +64,37 @@ function foldJournal(name, rows) {
     const e = j.get(r?.id);
     if (!e) { out.push(r); continue; }
     if (e.del) continue;
-    out.push({ ...r, ...e.row });
+    out.push({ ...r, ...(slim ? slimRow(e.row) : e.row) });
     j.delete(r.id);
   }
-  for (const e of j.values()) if (!e.del && e.row?.id) out.push(e.row);
+  for (const e of j.values()) if (!e.del && e.row?.id) out.push(slim ? slimRow(e.row) : e.row);
   return out;
 }
 
 export function getMirror(name) {
+  const base = slimBase(name);
   try {
-    const j = JSON.parse(fs.readFileSync(mirrorPath(name), 'utf8'));
+    const f = base ? `${MIRROR_DIR}/${base}.slim.json` : mirrorPath(name);
+    const j = JSON.parse(fs.readFileSync(f, 'utf8'));
     if (!j || !Array.isArray(j.rows)) return null;
-    const { latest } = readJournal(name);
+    const jn = base || name;
+    const { latest } = readJournal(jn);
     // Journal writes bump freshness — otherwise mirrorRead's maxAge check would
     // fall back to full remote reads between 10min daemon syncs.
-    return { ...j, at: Math.max(j.at || 0, latest), rows: foldJournal(name, j.rows) };
-  } catch { return null; }
+    return { ...j, at: Math.max(j.at || 0, latest), rows: foldJournal(jn, j.rows, Boolean(base)) };
+  } catch {
+    // Slim file not written yet (pre-upgrade mirror) — derive the view from
+    // the full mirror so readers never come back empty.
+    if (base) { const full = getMirror(base); return full ? { ...full, rows: full.rows.map(slimRow) } : null; }
+    return null;
+  }
 }
 export function mirrorAgeMs(name) {
   const m = getMirror(name);
   return m ? Date.now() - m.at : Infinity;
 }
 export function putMirror(name, rows, { fold = true } = {}) {
+  name = slimBase(name) || name; // slim is a view — the base file is the only write target
   fs.mkdirSync(MIRROR_DIR, { recursive: true });
   if (fold) rows = foldJournal(name, rows); // journal is newer than any base snapshot
   const tmp = `${mirrorPath(name)}.${process.pid}.tmp`;
@@ -68,16 +102,34 @@ export function putMirror(name, rows, { fold = true } = {}) {
   // Windows EPERM: rename fails while another worker holds the file open for
   // read. Retry briefly, then fall back to copy-over (atomicity loss is fine —
   // a torn JSON read just falls back to the previous snapshot or self-sync).
+  let renamed = false;
   for (let i = 0; i < 5; i++) {
-    try { fs.renameSync(tmp, mirrorPath(name)); return; }
+    try { fs.renameSync(tmp, mirrorPath(name)); renamed = true; break; }
     catch (e) {
       if (e?.code !== 'EPERM' && e?.code !== 'EBUSY') throw e;
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200 + i * 300);
     }
   }
-  try { fs.copyFileSync(tmp, mirrorPath(name)); } catch {}
-  try { fs.unlinkSync(tmp); } catch {}
-  try { fs.unlinkSync(journalPath(name)); } catch {} // base now carries journal — reset it
+  if (!renamed) {
+    try { fs.copyFileSync(tmp, mirrorPath(name)); } catch {}
+    try { fs.unlinkSync(tmp); } catch {}
+  }
+  // Slim companion — same rows minus the fields workers never read.
+  if (SLIM_NAMES.has(name)) writeSlim(name, rows);
+  // Base now carries journal — reset it. This must run on the SUCCESSFUL
+  // rename too: the old early-return skipped it and let journals grow
+  // unbounded (observed 111MB, re-folded on every getMirror).
+  try { fs.unlinkSync(journalPath(name)); } catch {}
+}
+// Companion write, same tmp→rename→copy fallback discipline as the base.
+function writeSlim(name, rows) {
+  const slimPath = `${MIRROR_DIR}/${name}.slim.json`;
+  const slimTmp = `${slimPath}.${process.pid}.tmp`;
+  try {
+    fs.writeFileSync(slimTmp, JSON.stringify({ at: Date.now(), rows: rows.map(slimRow) }));
+    try { fs.renameSync(slimTmp, slimPath); }
+    catch { try { fs.copyFileSync(slimTmp, slimPath); } catch {} try { fs.unlinkSync(slimTmp); } catch {} }
+  } catch {}
 }
 // Write-through: after a confirmed remote write, fold the change into the
 // local mirror so every other worker sees it before the next daemon sync.
@@ -87,7 +139,7 @@ export function putMirror(name, rows, { fold = true } = {}) {
 // Cross-process merge mutex — mirrorApply is get→merge→put across ~20
 // worker processes; without a lock two writers can interleave reads and lose
 // each other's record. mkdir is the atomic primitive on Windows.
-function withMirrorLock(name, fn) {
+export function withMirrorLock(name, fn) {
   const lock = `${mirrorPath(name)}.lock`;
   try { fs.mkdirSync(MIRROR_DIR, { recursive: true }); } catch {}
   for (let t = 0; ; t++) {
@@ -149,6 +201,7 @@ export function dedupeOfficeRows(offices) {
 }
 
 export function mirrorApply(name, record) {
+  name = slimBase(name) || name; // slim is a read view — writes always hit the base journal
   if (!record?.id) return false;
   if (Array.isArray(record.offices)) record = { ...record, offices: dedupeOfficeRows(record.offices) };
   return withMirrorLock(name, () => {
@@ -163,6 +216,7 @@ export function mirrorApply(name, record) {
   });
 }
 export function mirrorRemove(name, id) {
+  name = slimBase(name) || name;
   return withMirrorLock(name, () => {
     try { fs.appendFileSync(journalPath(name), JSON.stringify({ id, del: true, t: Date.now() }) + '\n'); } catch { return false; }
     const p = readPending(name);
@@ -208,6 +262,8 @@ export async function mirrorRead(name, maxAgeMs, remoteSync) {
   if (m && Date.now() - m.at < maxAgeMs) return m.rows;
   const rows = await remoteSync();
   if (rows === null) return m ? m.rows : null; // serve stale over nothing
-  putMirror(name, rows);
+  // Lock around the write: putMirror folds+truncates the journal, and a
+  // mirrorApply append between fold and unlink must not get lost.
+  withMirrorLock(name, () => putMirror(name, rows));
   return rows;
 }

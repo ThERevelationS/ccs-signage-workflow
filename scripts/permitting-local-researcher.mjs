@@ -352,7 +352,7 @@ async function main() {
   do {
     await waitWhilePaused(`local-res-${SLICE}`, { item: 'research pass' });
     const queue = getMirror('queue')?.rows || [];
-    const profiles = [...(getMirror('profiles-oh')?.rows || []), ...(getMirror('profiles-ky')?.rows || [])];
+    const profiles = [...(getMirror('profiles-oh.slim')?.rows || []), ...(getMirror('profiles-ky.slim')?.rows || [])];
     const profById = new Map(profiles.map((p) => [p.id, p]));
     // Verification gap targeting comes FIRST — unblocking needs_verification
     // offices outranks widening the discovery queue.

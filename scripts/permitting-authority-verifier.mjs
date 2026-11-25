@@ -241,8 +241,8 @@ const AUTHORITY_ROLES = new Set(['sign_permit', 'zoning', 'building', 'electrica
 
 async function loadProfiles() {
   const [oh, ky] = await Promise.all([
-    mirrorRead('profiles-oh', 45 * 60 * 1000, async () => null),
-    mirrorRead('profiles-ky', 45 * 60 * 1000, async () => null),
+    mirrorRead('profiles-oh.slim', 45 * 60 * 1000, async () => null),
+    mirrorRead('profiles-ky.slim', 45 * 60 * 1000, async () => null),
   ]);
   const rows = [...(oh || []), ...(ky || [])];
   const byId = new Map(), byKey = new Map();
@@ -323,6 +323,10 @@ async function pass(onlyNames = null) {
       lastLedgerWrite = Date.now();
     }
     scannedLocs++;
+    // Tombstoned rows (duplicate_of set) are dead — relink/researchers skip
+    // them already; scanning their offices wastes pass time and counts dead
+    // offices in the ledger.
+    if (loc?.duplicate_of) continue;
     if (only && !only.has(`${String(loc.name || '').toLowerCase().trim()}|${String(loc.state || '').toUpperCase().trim()}`)) continue;
     if (SLICES > 1 && Math.abs(hash(loc.id)) % SLICES !== SLICE) continue;
     const offices = Array.isArray(loc.offices) ? loc.offices : [];
@@ -502,7 +506,15 @@ function writeVerificationLedger(localities, officeState, passStart) {
     const jur = { all_verified: 0, some_verified: 0, none_verified: 0, no_offices: 0 };
     const offices = { total: 0, staff_verified: 0, needs_verification: 0, needs_review: 0 };
     const gapReasons = {}, missingRoles = {};
+    const tomb = new Set(localities.filter((l) => l?.duplicate_of).map((l) => l.id));
+    // Localities declared as having no permitting authority (paper records
+    // tombstoned onto the county/state jurisdiction that actually permits).
+    const notPermitting = localities
+      .filter((l) => l?.duplicate_of && /no permitting authority/i.test(`${l.name || ''} ${l.permit_required_summary || ''}`))
+      .map((l) => ({ name: String(l.name || '').replace(/ *[(][^)]*[)]/g, '').trim(), state: l.state, county: l.county_name, handled_by: l.permit_required_summary || null }))
+      .slice(0, 100);
     for (const l of localities) {
+      if (l?.duplicate_of) continue;
       const offs = (Array.isArray(l.offices) ? l.offices : []).filter((o) => Array.isArray(o?.authority_roles) && o.authority_roles.length);
       if (!offs.length) { jur.no_offices++; continue; }
       const v = offs.filter((o) => o.authority_verification_status === 'staff_verified').length;
@@ -521,6 +533,7 @@ function writeVerificationLedger(localities, officeState, passStart) {
     const held = [];
     for (const [k, rec] of Object.entries(st)) {
       if (!rec || rec.status !== 'needs_verification') continue;
+      if (tomb.has(rec.locality_id)) continue; // records for tombstoned localities are dead weight
       const primary = (rec.reasons || [])[0] || 'other';
       gapReasons[primary] = (gapReasons[primary] || 0) + 1;
       for (const r of rec.missing_roles || []) missingRoles[r] = (missingRoles[r] || 0) + 1;
@@ -545,6 +558,7 @@ function writeVerificationLedger(localities, officeState, passStart) {
       promotions: { last_hour: h, last_24h: d, last_at: promos.length ? new Date(Math.max(...promos.map((p) => p.at))).toISOString() : null },
       eta: { needs_verification: remaining, promotions_per_hour: Math.round(perHour * 100) / 100, hours: perHour > 0 ? Math.round(remaining / perHour) : null },
       held_relinks: held_relinks.slice(-50),
+      not_permitting: notPermitting,
       needs_review: held.slice(0, 200),
       needs_review_total: held.length,
     };
@@ -561,7 +575,7 @@ const applyReadyOffices = (offices) => {
 };
 
 async function consumePendingApplies(localities) {
-  const wants = localities.filter((l) => Array.isArray(l?.pending_applies) && l.pending_applies.length);
+  const wants = localities.filter((l) => !l?.duplicate_of && Array.isArray(l?.pending_applies) && l.pending_applies.length);
   for (const loc of wants) {
     const fresh = await call('staffDataRead', { entity: 'PermitLocality', query: { id: loc.id }, limit: 1 }).then((r) => (r?.records || r?.data || r?.items || [])[0]).catch(() => null);
     if (!fresh) continue;

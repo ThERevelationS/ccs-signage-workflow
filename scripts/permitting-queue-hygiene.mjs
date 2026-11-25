@@ -156,8 +156,8 @@ async function pass() {
     }
     // no qualified sibling — try a unique profile match to backfill the county
     if (!profiles) {
-      const oh = await mirrorRead('profiles-oh', 45 * 60 * 1000, async () => null) || [];
-      const ky = await mirrorRead('profiles-ky', 45 * 60 * 1000, async () => null) || [];
+      const oh = await mirrorRead('profiles-oh.slim', 45 * 60 * 1000, async () => null) || [];
+      const ky = await mirrorRead('profiles-ky.slim', 45 * 60 * 1000, async () => null) || [];
       profiles = oh.concat(ky);
     }
     // Unambiguous = exactly ONE county among same-name profiles. Township
@@ -213,8 +213,8 @@ async function pass() {
   //       Township vs municipal NEVER merge — different jurisdictions.
   let profDup = 0;
   if (!profiles) {
-    const oh = await mirrorRead('profiles-oh', 45 * 60 * 1000, async () => null) || [];
-    const ky = await mirrorRead('profiles-ky', 45 * 60 * 1000, async () => null) || [];
+    const oh = await mirrorRead('profiles-oh.slim', 45 * 60 * 1000, async () => null) || [];
+    const ky = await mirrorRead('profiles-ky.slim', 45 * 60 * 1000, async () => null) || [];
     profiles = oh.concat(ky);
   }
   const liveProfs = profiles.filter((p) => p?.id && !p.is_sample && !['historical', 'duplicate'].includes(String(p.verification_status || '').toLowerCase()) && !String(p.duplicate_of || '').trim());

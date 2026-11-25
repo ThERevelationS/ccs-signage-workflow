@@ -129,6 +129,25 @@ async function countyAt(point) {
     return /county$/i.test(nm) ? nm : nm ? `${nm} County` : null;
   } catch { return null; }
 }
+// Office-name identity hint — 'Deerfield Township Planning & Zoning' names
+// the jurisdiction directly. When candidates mix types (the widened
+// no-candidate search), exactly one hinted candidate beats a geocode.
+function officeHint(loc, cands) {
+  const hinted = new Set();
+  for (const o of loc.offices || []) {
+    const on = String(o.name || '').toLowerCase();
+    if (!on) continue;
+    for (const c of cands) {
+      const cn = String(c.name || '').toLowerCase().replace(/^(city|village|town) of /, '').trim();
+      if (cn.length < 4 || !on.includes(cn)) continue;
+      const t = ctype(c.type);
+      if (t === 'township' && !/\btownship\b|\btwp\b/.test(on)) continue;
+      if (t === 'county' && !/\bcounty\b/.test(on)) continue;
+      hinted.add(c.id);
+    }
+  }
+  return hinted.size === 1 ? [...hinted][0] : null;
+}
 // Returns {county, via} or null — office addresses, office-name county hints,
 // then the locality's own name geocoded.
 async function deriveCounty(loc, cands) {
@@ -189,7 +208,7 @@ function loadData() {
     if (!Number.isFinite(age)) throw new Error(`mirror ${m} missing`);
     if (age > 25 * 60 * 1000) console.warn(`warn: mirror ${m} is ${Math.round(age / 60000)}min old — waiting for mirror-sync freshness is safer`);
   }
-  const profiles = [...(getMirror('profiles-oh')?.rows || []), ...(getMirror('profiles-ky')?.rows || [])];
+  const profiles = [...(getMirror('profiles-oh.slim')?.rows || []), ...(getMirror('profiles-ky.slim')?.rows || [])];
   const locs = (getMirror('localities')?.rows || []).filter((r) => !r.duplicate_of);
   return { profiles, locs };
 }
@@ -234,14 +253,51 @@ async function main() {
     if (match.length === 1) ambResolved.push({ rec: { ...r, to: match[0].id, to_name: match[0].name, to_county: match[0].parent_county?.name || match[0].county_name || null, derived_county: got.county, via: got.via }, loc, to: match[0] });
     else reviewList.push({ ...r, reason: `county ${got.county} matched ${match.length} candidate(s)`, via: got.via });
   }
-  for (const r of plan.none) reviewList.push({ ...r, reason: 'no_candidate' });
+  // ── no-candidate rows: widen across ALL profile types before holding ───
+  // A missing jurisdiction_type makes ctype() guess 'municipal', hiding real
+  // township/county profiles (the Deerfield case). Retry with the type
+  // constraint dropped, then disambiguate: office-name identity hint first,
+  // Census/TIGER county match second. Still 0 or >1 → hold with evidence.
+  const active = profiles.filter((p) => p.verification_status !== 'historical');
+  const noneResolved = [];
+  let evidenceCalls = 0;
+  for (const r of plan.none) {
+    const loc = locById.get(r.locality_id);
+    if (!loc || loc.duplicate_of) { reviewList.push({ ...r, reason: 'locality_missing_or_tombstoned' }); continue; }
+    const cands = active.filter((p) => String(p.state) === String(loc.state) && norm(p.name) === norm(String(loc.name || '').replace(/ *[(][^)]*[)]/g, '')));
+    if (!cands.length) {
+      // Record what free geocoding says about the place so the hold carries
+      // evidence — capped so a large none list can't queue hours of lookups.
+      let ev = null;
+      if (evidenceCalls < 40) { evidenceCalls++; ev = await deriveCounty(loc, []); }
+      reviewList.push({ ...r, reason: 'no_candidate', via: ev?.via, derived_county: ev?.county });
+      continue;
+    }
+    let match = null, via = null;
+    const hint = officeHint(loc, cands);
+    if (hint) { match = cands.filter((c) => c.id === hint); via = 'office_name_hint'; }
+    if (!match) {
+      const got = await deriveCounty(loc, cands);
+      if (!got) { reviewList.push({ ...r, reason: 'county_underivable', candidates: cands.length, candidate_ids: cands.map((c) => c.id) }); continue; }
+      const f = cands.filter((p) => ncounty(p.parent_county?.name || p.county_name) === ncounty(got.county));
+      if (f.length !== 1) { reviewList.push({ ...r, reason: `county ${got.county} matched ${f.length} candidate(s)`, via: got.via, candidates: cands.length, candidate_ids: cands.map((c) => c.id) }); continue; }
+      match = f; via = `widened_${got.via}`;
+    }
+    const to = match[0];
+    noneResolved.push({ rec: { ...r, to: to.id, to_name: to.name, to_county: to.parent_county?.name || to.county_name || null, candidates: cands.length, via }, loc, to });
+  }
 
-  console.log(`\nvalidated — apply ${applyList.length} · skip ${skipped.length} · ambiguous→relink ${ambResolved.length} · needs_review ${reviewList.length} · keeper copies ${copyList.length}`);
+  console.log(`\nvalidated — apply ${applyList.length} · skip ${skipped.length} · ambiguous→relink ${ambResolved.length} · none→relink ${noneResolved.length} · needs_review ${reviewList.length} · keeper copies ${copyList.length}`);
   for (const s of skipped.slice(0, 10)) console.log('  SKIP', s.name, s.state, '-', s.why);
   for (const a of ambResolved) console.log('  AMB→', a.rec.name, a.rec.state, '|', a.rec.derived_county, `(${a.rec.via})`, '→', a.to.name, a.rec.to_county);
+  for (const n of noneResolved) console.log('  NONE→', n.rec.name, n.rec.state, '|', n.rec.via, '→', n.to.name, n.rec.to_county);
   for (const rv of reviewList.slice(0, 10)) console.log('  REVIEW', rv.name, rv.state, '-', rv.reason);
-  const report = { at: new Date().toISOString(), applied_plan: 'current-mirror replan', apply: applyList.map((a) => a.rec), skipped, amb_resolved: ambResolved.map((a) => a.rec), needs_review: reviewList, keeper_copies: copyList.map((c) => ({ locality_id: c.rec.locality_id, profile: c.to.id, roles: (c.from.office_research?.roles || []).length })) };
+  const report = { at: new Date().toISOString(), applied_plan: 'current-mirror replan', apply: applyList.map((a) => a.rec), skipped, amb_resolved: ambResolved.map((a) => a.rec), none_resolved: noneResolved.map((n) => n.rec), needs_review: reviewList, keeper_copies: copyList.map((c) => ({ locality_id: c.rec.locality_id, profile: c.to.id, roles: (c.from.office_research?.roles || []).length })) };
   writeFileSync(REPORT, JSON.stringify(report, null, 1));
+  // needs-review.jsonl is CURRENT STATE (the ledger's held list reads it), not
+  // history — rewrite per run so resolved items stop surfacing. The report
+  // file above is the archive.
+  writeFileSync(REVIEW_LOG, reviewList.map((rv) => JSON.stringify({ locality_id: rv.locality_id, name: rv.name, state: rv.state, reason: rv.reason, candidates: rv.candidates || 0, derived_county: rv.derived_county, via: rv.via, at: new Date().toISOString() })).join('\n') + (reviewList.length ? '\n' : ''));
   if (!APPLY) { console.log(`\ndry run — report at ${REPORT} · pass --apply to enqueue`); return; }
 
   // ── enqueue: PermitLocality allows only create/update (NO updateMany —
@@ -250,15 +306,19 @@ async function main() {
   // uses; the single-field $set-equivalent lands via update-merge. ────────
   const j = (file, rec) => appendFileSync(file, JSON.stringify(rec) + '\n');
   let queued = 0;
-  for (const a of [...applyList, ...ambResolved]) {
+  for (const a of [...applyList, ...ambResolved, ...noneResolved]) {
+    // County backfill — when the locality's county_name is empty and the target
+    // profile carries one, fix the identity alongside the link (the missing
+    // county is what held Harrison). Logged for revert.
+    const countyFix = !a.loc.county_name && a.rec.to_county ? a.rec.to_county : null;
     enqueue({
       entity: 'PermitLocality', op: 'update', id: a.loc.id,
-      data: { jurisdiction_profile_id: a.to.id },
+      data: { jurisdiction_profile_id: a.to.id, ...(countyFix ? { county_name: countyFix } : {}) },
       note: `profile relink — ${a.loc.name}, ${a.loc.state} → ${a.to.name}`,
       tag: 'relink',
     });
-    mirrorApply('localities', { id: a.loc.id, jurisdiction_profile_id: a.to.id });
-    j(APPLIED_LOG, { locality_id: a.loc.id, old_profile_id: a.loc.jurisdiction_profile_id || null, new_profile_id: a.to.id, at: new Date().toISOString(), via: a.rec.via || 'single_candidate' });
+    mirrorApply('localities', { id: a.loc.id, jurisdiction_profile_id: a.to.id, ...(countyFix ? { county_name: countyFix } : {}) });
+    j(APPLIED_LOG, { locality_id: a.loc.id, old_profile_id: a.loc.jurisdiction_profile_id || null, new_profile_id: a.to.id, old_county_name: a.loc.county_name || null, new_county_name: countyFix, at: new Date().toISOString(), via: a.rec.via || 'single_candidate' });
     queued++;
   }
   for (const c of copyList) {
@@ -273,8 +333,7 @@ async function main() {
     j(APPLIED_LOG, { profile_copy: true, target_profile_id: c.to.id, source_profile_id: c.from.id, roles: (c.from.office_research?.roles || []).length, at: new Date().toISOString() });
     queued++;
   }
-  for (const rv of reviewList) j(REVIEW_LOG, { locality_id: rv.locality_id, name: rv.name, state: rv.state, reason: rv.reason, candidates: rv.candidates || 0, at: new Date().toISOString() });
-  console.log(`enqueued ${queued} writes (${applyList.length + ambResolved.length} relinks + ${copyList.length} research copies); ${reviewList.length} needs_review recorded — outbox drains at the fleet's write rate`);
+  console.log(`enqueued ${queued} writes (${applyList.length + ambResolved.length + noneResolved.length} relinks + ${copyList.length} research copies); ${reviewList.length} needs_review recorded — outbox drains at the fleet's write rate`);
 }
 
 // ── --verify: sample-read applied writes after the flusher drains ─────────

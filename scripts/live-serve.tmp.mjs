@@ -691,10 +691,12 @@ function renderVerification(){
  const roles=Object.entries((v&&v.missing_roles)||{}).sort((a,b)=>b[1]-a[1]).slice(0,12);
  const plist=(promos&&promos.items)||[];
  const ny=needsYou();
+ const np=(v&&v.not_permitting)||[];
  setH('tab-verification',
  '<div class="card"><h2>Jurisdictions</h2>'
  +'<div class="bar" style="height:18px">'+seg(j.all_verified||0,'var(--green)')+seg(j.some_verified||0,'#86efac')+seg(j.none_verified||0,'var(--amber)')+seg(j.no_offices||0,'#3b4a6b')+'</div>'
  +'<div class="legend" style="margin-top:8px">'+legend.map(l=>'<span><i style="background:'+l[2]+'"></i>'+l[0]+' <b class="num" style="color:var(--txt)">'+num(l[1]||0)+'</b></span>').join('')+'</div></div>'
+ +(np.length?'<div class="card"><h2>Not a permitting authority ('+np.length+')</h2><div class="dim small" style="margin-bottom:8px">These places don’t issue their own permits — they’re counted under the county or state office that actually does. They’re kept for records but skipped by the checker.</div><table>'+np.map(x=>'<tr><td style="width:260px"><b>'+esc(x.name)+(x.state?', '+esc(x.state):'')+'</b></td><td class="dim">'+esc(x.handled_by||'no permitting authority of its own')+'</td></tr>').join('')+'</table></div>':'')
  +'<div class="card"><h2>Why offices aren’t verified yet</h2>'
  +(gaps.length?'<table><tr><th>Reason</th><th style="width:90px">Offices</th><th>What happens next</th></tr>'+gaps.map(g=>'<tr><td>'+esc(GAP_LABEL[g[0]]||g[0])+'</td><td class="num">'+num(g[1])+'</td><td class="dim">'+esc(GAP_NEXT[g[0]]||'The checker will try again.')+'</td></tr>').join('')+'</table>':'<div class="empty">No gaps recorded yet.</div>')+'</div>'
  +(roles.length?'<div class="card"><h2>Most-missing office jobs</h2><div class="dim small" style="margin-bottom:8px">Roles researchers still need evidence for, across all jurisdictions.</div>'

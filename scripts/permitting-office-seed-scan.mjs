@@ -175,8 +175,8 @@ async function sweep(onlyNames = null) {
   const [localities, queueRows, profOH, profKY] = await Promise.all([
     mirrorRead('localities', 45 * 60 * 1000, noSync),
     mirrorRead('queue', 20 * 60 * 1000, noSync),
-    mirrorRead('profiles-oh', 45 * 60 * 1000, noSync),
-    mirrorRead('profiles-ky', 45 * 60 * 1000, noSync),
+    mirrorRead('profiles-oh.slim', 45 * 60 * 1000, noSync),
+    mirrorRead('profiles-ky.slim', 45 * 60 * 1000, noSync),
   ]);
   const locRows = localities || [], qRows = queueRows || [], profs = [...(profOH || []), ...(profKY || [])];
   // 'queued' must mean research actually pending — a terminal row
@@ -219,6 +219,7 @@ async function sweep(onlyNames = null) {
   const targets = only ? locRows.filter((l) => only.has(`${String(l.name || '').toLowerCase().trim()}|${String(l.state || '').toUpperCase().trim()}`)) : locRows;
   let done = 0;
   for (const loc of targets) {
+    if (loc?.duplicate_of) continue; // tombstoned — the real row carries the work
     const label = `${loc.name}, ${loc.state}`;
     await waitWhilePaused('seed-scan', { item: label });
     try {
