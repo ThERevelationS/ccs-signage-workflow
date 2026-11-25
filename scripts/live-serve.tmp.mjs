@@ -349,296 +349,495 @@ const status=()=>{
     summary:res?.summary||null,
   };
 };
-const page=`<!doctype html><meta charset="utf-8"><title>1000-address run — live</title>
-<style>body{background:#0f172a;color:#e2e8f0;font:14px/1.5 ui-monospace,Consolas,monospace;margin:0;padding:24px}
-h1{font-size:18px;color:#a5b4fc;margin:0 0 4px} .dim{color:#64748b;font-size:12px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin:12px 0}
-.card{background:#1e293b;border-radius:8px;padding:8px 10px} .num{font-size:19px;font-weight:700;color:#f8fafc}
-.num .sub{font-size:11px;color:#64748b;font-weight:400}
-.ok{color:#34d399}.warn{color:#fbbf24}.bad{color:#f87171}
-pre{background:#0b1120;border-radius:8px;padding:10px;overflow:auto;white-space:pre-wrap;margin:8px 0 0;max-height:none}
-table{border-collapse:collapse;width:100%}td{padding:4px 8px;border-bottom:1px solid #1e293b}
-.bar{height:10px;background:#334155;border-radius:5px;overflow:hidden;margin-top:6px}.bar>i{display:block;height:100%;background:#6366f1}
-.ev{display:flex;gap:8px;padding:3px 8px;border-bottom:1px solid #162033;font-size:13px}
-.ev .a{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ev .s{width:400px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.blink{animation:bl 1.2s infinite}@keyframes bl{50%{opacity:.35}}
-.el{color:#475569;font-size:10px;flex-shrink:0;width:64px;text-align:right;font-variant-numeric:tabular-nums}
-.fresh{animation:freshpulse 2.4s ease-out}@keyframes freshpulse{0%{background:#1e3a5f}100%{background:transparent}}
-#nowAddr,#nowOffice,#nowSup{max-height:160px;overflow-y:auto;padding-right:4px}
-#nowAddr::-webkit-scrollbar,#nowOffice::-webkit-scrollbar,#nowSup::-webkit-scrollbar,.feed::-webkit-scrollbar{width:6px}
-#nowAddr::-webkit-scrollbar-thumb,#nowOffice::-webkit-scrollbar-thumb,#nowSup::-webkit-scrollbar-thumb,.feed::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
-.okc{color:#34d399}.warnc{color:#fbbf24}.badc{color:#f87171}.dimc{color:#64748b}
-@keyframes fade{from{opacity:0}to{opacity:1}}
-.feed{max-height:calc(100vh - 340px);min-height:420px;overflow-y:auto}</style>
-<h1>Permitting — live address resolution</h1>
-<div class="card" id="srv" style="margin-bottom:10px;border:1px solid #334155"></div>
-<div class="dim" id="t"></div>
-<div class="grid" id="cards"></div>
-<div class="card"><div class="dim">address feeder — keeps the queue stocked</div><div id="fix"></div></div>
-<div style="display:flex;gap:10px;margin-top:10px">
-<div class="card" style="flex:1;border:1px solid #3730a3"><div class="dim" style="color:#a5b4fc;font-weight:600">ADDRESS WORKERS — resolving job addresses</div><div id="nowAddr"></div></div>
-<div class="card" style="flex:1;border:1px solid #065f46"><div class="dim" style="color:#6ee7b7;font-weight:600">OFFICE SWEEP — profiling every OH/KY office</div><div id="nowOffice"></div></div>
-</div>
-<div class="card" style="margin-top:10px"><div class="dim" style="font-weight:600">WORKER FLEET — what is actually running</div><div id="nowSup"></div></div>
-<div class="card" style="margin-top:10px"><div class="dim" style="font-weight:600;color:#38bdf8">DOWNLOADS — live file pull from jurisdiction sources</div><div id="dl"></div></div>
-<div class="card" style="margin-top:10px"><div class="dim" style="font-weight:600">OFFICE FILES — per-office document pipeline (local dossiers)</div><div id="officeFiles"></div></div>
-<div class="card" style="margin-top:10px"><div class="dim">LIVE — each address as the resolver answers it</div><div class="feed" id="feed"></div></div>
+const page=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CCS Permit Server</title>
+<style>
+:root{--bg:#0b1120;--panel:#131c31;--panel2:#17223c;--line:#24304d;--txt:#e2e8f0;--dim:#8b9bb8;--faint:#5b6b8c;
+ --green:#34d399;--amber:#fbbf24;--red:#f87171;--blue:#60a5fa;--purple:#a78bfa;
+ --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+ --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font:14px/1.5 var(--sans);margin:0;padding:0}
+header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+ background:rgba(11,17,32,.96);backdrop-filter:blur(6px);padding:12px 20px;border-bottom:1px solid var(--line)}
+.brand{font-size:17px;font-weight:700;letter-spacing:.2px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 12px;font-size:12.5px;font-weight:600;border:1px solid var(--line)}
+.pill i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.pill.on{color:var(--green);border-color:#14532d;background:#052e1b}.pill.on i{background:var(--green)}
+.pill.pause{color:var(--amber);border-color:#713f12;background:#2b1d04}.pill.pause i{background:var(--amber)}
+.pill.off{color:var(--dim);border-color:var(--line);background:#151d31}.pill.off i{background:var(--faint)}
+.pill.down{color:var(--red);border-color:#7f1d1d;background:#2a0f0f}.pill.down i{background:var(--red)}
+button{font:600 12.5px var(--sans);color:var(--txt);background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:6px 14px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--blue);background:#1b2a4d}
+button:disabled{opacity:.38;cursor:not-allowed}
+button.danger{background:#3b1215;border-color:#7f1d1d;color:#fca5a5}
+button.danger:hover:not(:disabled){border-color:var(--red);background:#4c1a1a}
+button.primary{border-color:#1d4ed8;background:#12306e}
+.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:12.5px;font-weight:600;user-select:none}
+.switch input{appearance:none;width:34px;height:19px;border-radius:999px;background:#24304d;position:relative;cursor:pointer;transition:.15s;flex-shrink:0}
+.switch input:checked{background:var(--green)}
+.switch input::after{content:'';position:absolute;top:2.5px;left:3px;width:14px;height:14px;border-radius:50%;background:#e2e8f0;transition:.15s}
+.switch input:checked::after{left:17px}
+.switch input:disabled{cursor:not-allowed;opacity:.4}
+.switch .swv{color:var(--dim);font-weight:400;font-size:11.5px}
+.badge{font-size:11.5px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:help}
+#banner{display:none;background:#3b1215;border-bottom:1px solid #7f1d1d;color:#fca5a5;padding:14px 20px;font-size:13.5px}
+#banner.show{display:block}
+nav.tabs{display:flex;gap:2px;padding:10px 20px 0;border-bottom:1px solid var(--line);background:var(--bg);flex-wrap:wrap}
+nav.tabs button{background:none;border:none;border-bottom:2.5px solid transparent;border-radius:0;padding:8px 14px;font-size:13.5px;font-weight:600;color:var(--dim)}
+nav.tabs button:hover:not(:disabled){color:var(--txt);background:none}
+nav.tabs button[aria-selected="true"]{color:var(--txt);border-bottom-color:var(--blue)}
+main{padding:18px 20px 40px;max-width:1240px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+h2{font-size:14px;font-weight:700;margin:0 0 10px;letter-spacing:.2px}
+h3{font-size:12.5px;font-weight:700;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
+.dim{color:var(--dim)}.small{font-size:12px}.mono{font-family:var(--mono)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.ok{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}.blue{color:var(--blue)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:14px 0}
+.tile{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.tile .t{font-size:11.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.tile .v{font:700 22px var(--mono);margin-top:4px}
+.tile .s{font-size:11.5px;color:var(--dim);margin-top:2px}
+.bar{height:14px;background:#0b1120;border-radius:7px;overflow:hidden;display:flex}
+.bar>i{display:block;height:100%}
+.chip{display:inline-block;border-radius:999px;padding:1.5px 9px;font-size:11px;font-weight:600;white-space:nowrap}
+.chip.g{color:var(--green);background:#052e1b;border:1px solid #14532d}
+.chip.a{color:var(--amber);background:#2b1d04;border:1px solid #713f12}
+.chip.r{color:var(--red);background:#2a0f0f;border:1px solid #7f1d1d}
+.chip.n{color:var(--dim);background:#151d31;border:1px solid var(--line)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:none;border-radius:0;padding:6px 16px}
+.seg button.on{background:#12306e;color:#fff}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-left:8px;vertical-align:middle}
+.stepper button{border:none;border-radius:0;padding:6px 13px;font-size:15px}
+.stepper b{font:700 15px var(--mono);padding:0 12px;min-width:34px;text-align:center}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px;margin-top:12px}
+.rcard{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.rcard .rn{font-weight:700;font-size:12.5px;margin-bottom:5px}
+.rcard .town{font-size:12px;margin-top:6px;min-height:32px;color:var(--txt)}
+.rcard .meta{font-size:11px;color:var(--dim);margin-top:4px}
+.rcard button{padding:3px 10px;font-size:11px;margin-top:7px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+tr:last-child td{border-bottom:none}
+.feed .row{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #1a2440;font-size:13px;align-items:baseline}
+.feed .row .who{color:var(--blue);flex-shrink:0;width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.feed .row .msg{flex:1;overflow:hidden}
+.feed .row .when{color:var(--faint);flex-shrink:0;font-size:11.5px;width:74px;text-align:right}
+.fchips{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fchips button{border-radius:999px;padding:4px 13px;font-size:12px}
+.fchips button.on{border-color:var(--blue);background:#12306e;color:#fff}
+details.mored{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-top:14px}
+details.mored summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--dim)}
+details.mored[open] summary{margin-bottom:12px;color:var(--txt)}
+canvas.chart{display:block;width:100%;background:#0b1120;border-radius:8px}
+.legend{display:flex;gap:18px;font-size:12px;color:var(--dim);margin-top:6px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+.setrow{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:8px}
+.setrow label{display:block;font-size:12px;color:var(--dim);margin-bottom:4px}
+.setrow input{width:76px;background:#0b1120;color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:6px 9px;font:600 13px var(--mono)}
+.setrow .ex{font-size:12px;color:var(--dim);max-width:330px}
+#saveMsg{font-size:12.5px;font-weight:600;margin-left:6px}
+.empty{color:var(--faint);font-size:13px;padding:10px 0}
+.tip{border-bottom:1px dotted var(--faint);cursor:help}
+@media (max-width:1000px){.tiles{grid-template-columns:repeat(2,1fr)}.feed .row .who{width:110px}header{gap:8px}}
+</style></head>
+<body>
+<header>
+ <div class="brand">CCS Permit Server</div>
+ <span id="pill" class="pill off"><i></i>…</span>
+ <span style="flex:1"></span>
+ <button id="btnStart" disabled>Start</button>
+ <button id="btnPause" disabled>Pause</button>
+ <button id="btnStop" class="danger" disabled>Stop</button>
+ <label class="switch" title="When on, the checker verifies office records and researchers collect evidence."><input type="checkbox" id="swVerify" disabled><span>Verify jurisdictions</span><span class="swv" id="swVerifyTxt"></span></label>
+ <span class="badge" id="expBadge" title="Adding new jurisdictions unlocks automatically once every current one is verified.">🔒 Expansion locked</span>
+</header>
+<div id="banner"><b>Server is offline.</b> The permit server isn’t answering — nothing on this page is live right now. To start it, double-click <b>CCS Permit Server</b> on the desktop. This page keeps retrying automatically.</div>
+<nav class="tabs" role="tablist">
+ <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+ <button role="tab" data-tab="researchers" aria-selected="false">Researchers</button>
+ <button role="tab" data-tab="verification" aria-selected="false">Verification</button>
+ <button role="tab" data-tab="memory" aria-selected="false">Memory</button>
+ <button role="tab" data-tab="activity" aria-selected="false">Activity</button>
+ <button role="tab" data-tab="advanced" aria-selected="false">Advanced</button>
+</nav>
+<main>
+ <section id="tab-overview"></section>
+ <section id="tab-researchers" hidden></section>
+ <section id="tab-verification" hidden></section>
+ <section id="tab-memory" hidden></section>
+ <section id="tab-activity" hidden></section>
+ <section id="tab-advanced" hidden></section>
+</main>
 <script>
-const okStages={resolved_apply:1,resolved_needs_office_check:1,draft_created:1,draft_exists:1,office_created:1,office_exists:1,profile_created:1,profile_deduped:1,office_created_followup:1,seed_office_ok:1,seed_office_backfilled:1,seed_office_scan_done:1,office_res_done:1,sweep_done:1,mirror_synced:1,mirror_cycle:1,cleanup_done:1,pending_apply_done:1,auth_verify_ok:1,gap_res_done:1,prop_pass:1,pipe_forwarded:1,repair_pass:1,hollow_sweep_done:1,office_dedupe_done:1,full_audit_done:1,hl_pass:1,rule_created:1,rule_already_covered:1,bbs_harvest_done:1,regional_harvest_done:1,dl_done:1,doc_archive_ok:1,doc_text_ok:1,up_ok:1,rx_run_ok:1};
-const warnStages={draft_no_profile:1,no_profile:1,research_queued:1,located_no_locality:1,research_queued_followup:1,seed_office_queued:1,seed_office_waiting:1,needs_review:1,invalid_input:1,office_res_idle:1,office_res_pass:1,office_res_boot:1,sweep_start:1,sweep_enumerated:1,sweep_progress:1,sweep_skipped_fixlist:1,mirror_boot:1,mirror_page:1,addr_feed_start:1,addr_feed_batch:1,addr_feed_idle:1,watchdog_alive:1,watchdog_seed:1,watchdog_retry_queued:1,watchdog_retry_launch:1,cleanup_start:1,research_dispatch_cycle:1,dl_start:1,dl_progress:1,doc_archive_err:1,doc_pipe_boot:1,doc_pipe_pass:1,up_pass:1,rx_pass:1,srcmon_pass:1,pending_apply_wait:1,auth_verify_pass:1,office_res_review:1,office_res_retry:1,mirror_error:1,gap_res_pass:1,gap_res_miss:1,gap_res_boot:1,fleet_respawn:1,fleet_respawn_batch:1,fleet_stall:1,fleet_boot:1,gis_boot:1,hl_step:1,ord_boot:1,auth_verify_trigger:1,parcel_rule_refute:1,bbs_harvest_boot:1,bbs_harvest_progress:1,regional_harvest_boot:1,regional_harvest_progress:1,outbox_recovered:1,outbox_wait:1};
-// Diff-render: setting innerHTML every tick repaints + flashes. Cache the last
-// markup per element and only write when it actually changed.
-const _h={};const _seen=new Set();const setH=(id,html)=>{if(_h[id]!==html){_h[id]=html;const el=document.getElementById(id);if(el)el.innerHTML=html;}};
-const cls=s=>okStages[s]?'okc':(warnStages[s]?'warnc':'badc');
-const lbl=s=>({resolved_apply:'resolved — office matched',resolved_needs_office_check:'resolved — verified · offices unverified',needs_review:'needs review',located_no_locality:'jurisdiction found — office record being created',office_created_followup:'office record created — matched',research_queued_followup:'office research queued',unresolved:'unresolved',city_conflict:'city sources conflict',geocode:'geocode miss',boundary:'boundary error',invoke:'call failed',draft_created:'office created',draft_exists:'office already exists',draft_no_profile:'no repo profile',draft_error:'office write failed',office_created:'OFFICE created',office_exists:'office already exists',profile_created:'repo profile created',no_profile:'no repo profile',office_error:'office write failed',research_queued:'queued for office research',research_queue_error:'research queue failed',profile_deduped:'duplicate profiles collapsed',seed_office_ok:'office data already complete',seed_office_backfilled:'office data filled from research',seed_office_queued:'queued for office research',seed_office_waiting:'research already queued — waiting',seed_office_error:'office seed write failed',seed_office_gap:'no profile — research queued',seed_office_ambiguous:'same-name profiles — needs human link',seed_office_scan_done:'office seed scan finished',stuck:'moved to fix list',invalid_input:'not a real address — skipped',watchdog_alive:'AGENT heartbeat',watchdog_seed:'AGENT seeded stale failures',watchdog_retry_queued:'AGENT queued a retry',watchdog_retry_launch:'AGENT launched retry pass',
- office_res_done:'office research completed',office_res_error:'office research failed',office_res_pass:'research pass finished',office_res_idle:'researcher idle — queue empty',office_res_boot:'researcher online',office_res_review:'office research held for review',office_res_retry:'office research retry',sweep_start:'sweep worker online',sweep_enumerated:'sweep enumerated jurisdictions',sweep_progress:'sweep pass progress',sweep_done:'sweep pass complete',sweep_skipped_fixlist:'skipped — on the fix list',sweep_stuck:'sweep stuck — moved to fix list',mirror_boot:'entity mirror online',mirror_page:'entity mirror syncing',mirror_synced:'entity mirror synced',mirror_cycle:'entity mirror pass complete',mirror_error:'entity mirror read stalled',addr_feed_start:'address feeder online',addr_feed_batch:'feeder searched a jurisdiction',addr_feed_idle:'address feeder idle',addr_feed_error:'address feeder failed',cleanup_start:'record cleanup started',cleanup_done:'record cleanup finished',cleanup_error:'record cleanup failed',research_dispatch_cycle:'research dispatch cycle',research_dispatch_error:'research dispatch failed',
- pending_apply_wait:'auto-apply queued — offices not verified yet',pending_apply_done:'auto-apply finished',pending_apply_error:'auto-apply failed',auth_verify_ok:'office authority auto-verified',auth_verify_pass:'authority verifier pass',auth_verify_done:'authority verifier pass complete',auth_verify_error:'authority verifier failed',auth_verify_trigger:'verifier batch triggered',queue_hygiene_error:'queue hygiene failed',rule_create_failed:'resolution rule write failed',seed_office_ambiguous:'same-name profiles — needs human link',parcel_resolve_error:'parcel resolve failed',parcel_rule_refute:'rule refuted — address re-flagged',sweep_enumerated:'sweep enumerated jurisdictions',
- gap_res_pass:'gap researcher pass',gap_res_done:'gap research completed',gap_res_miss:'gap re-crawl — no better evidence yet',gap_res_error:'gap research failed',gap_res_boot:'gap researcher online',fleet_respawn:'supervisor respawned a worker',fleet_respawn_batch:'supervisor respawned workers',fleet_stall:'supervisor killed a stalled worker',fleet_boot:'fleet supervisor online',gis_boot:'parcel discover online',hl_pass:'headless research pass',hl_step:'headless research step',pipe_forwarded:'trigger forwarded work to pipeline',prop_pass:'county propagation pass',repair_pass:'repair-blocked pass',hollow_sweep_done:'hollow-evidence sweep finished',office_dedupe_done:'office dedupe finished',full_audit_done:'full audit finished',
- doc_pipe_boot:'local doc pipeline online',doc_pipe_pass:'doc pipeline pass done',doc_pipe_err:'doc pipeline pass failed',doc_archive_ok:'source archived locally',doc_archive_err:'source archive deferred/failed',doc_text_ok:'source text extracted locally',doc_text_err:'source text extraction failed',
- dl_start:'download started',dl_progress:'downloading…',dl_done:'download complete',
- rx_boot:'rule extractor online',rx_pass:'extraction pass done',rx_run_err:'extraction run write failed',rx_unit_err:'extraction unit failed',rx_out_bad:'devin output failed validation',rx_auth_needed:'devin login required',rx_fatal:'rule extractor crashed',
- up_boot:'file uploader online',up_pass:'upload pass done',up_ok:'file uploaded to app storage',up_err:'file upload failed',up_verify_err:'upload verify failed',up_budget_wait:'upload budget pacing',
- srcmon_boot:'source monitor online',srcmon_pass:'source monitor pass done',srcmon_err:'source monitor error',srcmon_changed:'source document changed',
- burn_boot:'review burn-down online',burn_cycle:'burn-down cycle started',burn_p1_feed:'fed priority localities to verifier',burn_p2_triage:'queue triage pass',burn_p3_deadurl:'dead-URL rediscovery pass',burn_p45_ranked:'geocode/fixlist ranked',burn_p6_import:'rule candidates auto-imported',burn_queue_closed:'blocked queue row closed',burn_queue_requeued:'blocked row requeued',burn_url_fixed:'dead office URL repaired',burn_queue_depth:'human-review queue depth',burn_err:'burn-down error',
- outbox_flush:'write flusher online',outbox_flushed:'write landed on the app',outbox_pass:'write flusher drained a batch',outbox_error:'queued write failed permanently',outbox_recovered:'flusher requeued a crashed batch',outbox_wait:'flusher standby — backup holds lock',bbs_harvest_boot:'BBS certified-dept harvest online',bbs_harvest_progress:'BBS harvest enriching profiles',bbs_harvest_done:'BBS certified-dept harvest finished',regional_harvest_boot:'ADD/RPC regional harvest online',regional_harvest_progress:'regional harvest enriching profiles',regional_harvest_done:'ADD/RPC regional harvest finished'}[s]||s);
-async function tick(){
- const s=await(await fetch('/status.json')).json();
- const evAge=s.lastEventAt?Math.max(0,Math.round((Date.now()-s.lastEventAt)/1000)):null;
- const live=evAge!==null&&evAge<120;
- const prod=s.producers||{};
- const LIVE_MS=20*60*1000;
- const alive=k=>prod[k]&&(Date.now()-prod[k])<LIVE_MS;
- const lv=(k)=>{const a=prod[k];if(!a)return '<span class="dim" style="font-size:10px"> · never ran</span>';const age=Math.round((Date.now()-a)/1000);return alive(k)?'<span class="ok" style="font-size:10px"> · ● live</span>':'<span class="dim" style="font-size:10px"> · ‖ paused '+(age>3600?Math.floor(age/3600)+'h':Math.floor(age/60)+'m')+' ago</span>';};
- const pausedList=['validators','researchers','feeder','seedScan','sweep','watchdog'].filter(k=>!alive(k));
- setH('t','updated '+new Date().toLocaleTimeString()+' · <b class="'+(live?'ok':'bad')+'">'+(evAge===null?'waiting for events':live?'● LIVE — last pipeline event '+evAge+'s ago':'■ STALLED — last event '+Math.floor(evAge/60)+'m ago')+'</b>'+(s.eventsPerMin!=null?' · '+s.eventsPerMin+' events/min':'')
-  +(pausedList.length?' · <span class="dim" style="font-size:11px">idle: '+pausedList.join(', ')+'</span>':''));
- const juris=(s.stages.located_no_locality||0)+(s.stages.office_created_followup||0)+(s.stages.research_queued_followup||0)+(s.stages.resolved_apply||0)+(s.stages.resolved_needs_office_check||0);
- const office=(s.stages.resolved_apply||0)+(s.stages.resolved_needs_office_check||0)+(s.stages.office_created_followup||0);
- const fails=Object.entries(s.stages).filter(([k])=>!okStages[k]&&!warnStages[k]).reduce((a,[,n])=>a+n,0);
- const pct=s.total?Math.min(100,Math.round(s.done/s.total*100)):0;
- const wtag=(w)=>'<span style="color:#818cf8;font-size:10px">'+(/^[0-9]+$/.test(String(w))?'w':'')+(w||'?')+' </span>';
- const row=(w)=>'<div class="ev" style="border-bottom:none"><span class="a dimc">'+wtag(w.worker)+w.address+'</span><span class="s warn blink" style="width:220px">'+(w.step||'working…').slice(0,55)+'</span></div>';
- const all=s.workingNow||[];
- const addr=all.filter(w=>/^[0-9]+$/.test(String(w.worker)));
- const sweep=all.filter(w=>/^sweep/.test(String(w.worker)));
- const sup=all.filter(w=>!/^[0-9]+$/.test(String(w.worker))&&!/^sweep/.test(String(w.worker)));
- setH('nowAddr',addr.length?addr.map(row).join(''):'<div class="dim">idle — no lookups in flight</div>')
- setH('nowOffice',sweep.length?sweep.map(row).join(''):'<div class="dim">idle — no sweep tasks in flight</div>')
- const wrow=(w)=>{const age=w.at?Math.round((Date.now()-w.at)/1000):null;const tag=w.alive?'<span class="ok" style="font-size:10px">● LIVE'+(age!=null?' '+age+'s ago':'')+'</span>':'<span class="dim" style="font-size:10px">‖ paused'+(age!=null&&age>3600?' '+Math.floor(age/3600)+'h':age!=null?' '+Math.floor(age/60)+'m':'')+'</span>';return '<div class="ev" style="border-bottom:none"><span class="a dimc" style="width:170px">'+w.label+'</span>'+tag+'<span class="s '+(w.alive?'warn':'dimc')+'" style="width:340px;margin-left:8px">'+(w.detail||w.stage||'—').slice(0,80)+'</span></div>';};
- const lw=(s.liveWorkers||[]);
- setH('nowSup',lw.length?lw.map(wrow).join(''):(sup.length?sup.map(row).join(''):'<div class="dim">idle</div>'));
- const d=s.downloads||{active:[],done:[],errors:[],filesToday:0,bytesToday:0,doneTotal:0,errTotal:0};
- const mb=n=>n>1048576?(n/1048576).toFixed(1)+' MB':n>1024?(n/1024).toFixed(0)+' KB':n+' B';
- const dlRow=(a)=>{
-  if(a.stalled)return '<div class="ev" style="border-bottom:1px solid #162033;font-size:12px"><span class="a badc">■ '+(a.name||a.url||'?')+'</span><span class="s" style="width:170px;font-size:11px">stalled — '+mb(a.bytes||0)+(a.total?' / '+mb(a.total):'')+'</span></div>';
-  const pct=a.total?Math.min(100,Math.round(a.bytes/a.total*100)):null;
-  const barw=pct!==null?pct:(a.bytes?Math.min(100,Math.round(a.bytes/524288*100)):2);
-  const ind=pct===null?';animation:bl 1.2s infinite;background:#0e7490':'';
-  return '<div style="margin:5px 0"><div style="display:flex;gap:8px;font-size:12px"><span class="a" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(a.name||a.url||'?')+(a.retrying?' <span class="warnc">· '+(a.retrying||'').slice(0,40)+'</span>':'')+'</span><span style="color:#38bdf8;flex-shrink:0">'+mb(a.bytes||0)+(a.total?' / '+mb(a.total)+(pct!==null?' · '+pct+'%':''):'')+'</span></div><div class="bar" style="height:6px;margin-top:3px"><i style="width:'+barw+'%;background:#38bdf8'+ind+'"></i></div></div>';
- };
- setH('dl',
-  '<div class="dim" style="margin-bottom:4px"><b style="color:#38bdf8">'+(d.active?d.active.filter(a=>!a.stalled).length:0)+'</b> in flight · <b>'+(d.doneTotal||0)+'</b> files · <b>'+mb(d.totalBytes||0)+'</b> total · '+(d.filesToday||0)+' new today'+(d.errTotal?' · <span class="bad">'+d.errTotal+' failed</span>':'')+(d.linkOnly?' · '+d.linkOnly+' → link-only':'')+(d.transient?' · '+d.transient+' retrying':'')+'</div>'
-  +(d.active&&d.active.length?d.active.map(dlRow).join(''):'')
-  +(d.done&&d.done.length?'<div class="dim" style="margin-top:6px;font-size:11px">recent:</div>'+d.done.map(x=>'<div class="ev" style="border-bottom:1px solid #162033;font-size:12px"><span class="a"><span class="okc">✓</span> '+(x.name||'?')+'</span><span class="s" style="width:170px;font-size:11px">'+mb(x.bytes||0)+' · '+new Date(x.at).toLocaleTimeString()+'</span></div>').join(''):(d.active&&d.active.length?'':'<div class="dim">idle — files appear as researchers discover sources</div>'))
-  +(d.errors&&d.errors.length?d.errors.map(x=>'<div class="ev" style="border-bottom:1px solid #162033;font-size:12px"><span class="a badc">✗ '+(x.name||'?')+'</span><span class="s" style="width:170px;font-size:11px">'+(x.detail||'').slice(0,60)+'</span></div>').join(''):''));
- const of=s.officeFiles||{offices:[],totals:{offices:0,files:0,stages:{}}};
- const STAGE_COLORS={fetched:'#6366f1',extracted:'#38bdf8',queued:'#a78bfa',analyzed:'#c084fc',validated:'#f472b6',uploaded:'#34d399',rules:'#fbbf24',link_only:'#f87171'};
- const stageOrder=Object.keys(STAGE_COLORS);
- const chip=(st,n)=>'<span style="background:#0b1120;border:1px solid '+(STAGE_COLORS[st]||'#475569')+';border-radius:8px;padding:1px 7px;margin-right:4px;font-size:11px;white-space:nowrap">'+st.replace('_',' ')+' '+n+'</span>';
- setH('officeFiles',
-  '<div class="dim" style="margin-bottom:6px">'+of.totals.offices+' offices · '+of.totals.files+' files '+(stageOrder.filter(st=>of.totals.stages[st]).map(st=>chip(st,of.totals.stages[st])).join(''))+'</div>'
-  +(of.offices.length?of.offices.map(o=>'<div class="ev" style="border-bottom:1px solid #162033;align-items:baseline"><span class="a" style="width:320px;overflow:hidden;text-overflow:ellipsis">'+(o.jurisdiction||'')+' <span class="dimc">/ '+(o.office||'unassigned')+'</span></span><span class="s" style="width:auto;text-align:left">'+(stageOrder.filter(st=>o.stages[st]).map(st=>chip(st,o.stages[st])).join('')||'<span class="dim">dossier only — no files yet</span>')+'</span></div>').join(''):'<div class="dim">no office files yet — pipeline populates as archives land</div>'));
- setH('cards',
-  '<div class="card"><div class="dim">addresses'+lv('validators')+'</div><div class="num">'+(s.fixtureDone||s.done)+'<span class="sub"> done · '+(s.inQueue||0)+' queued · '+(s.total||0)+' total · '+(s.processedTotal||0)+' processed · '+(s.scannedTotal||0)+' scanned · '+juris+' jurisdictions</span></div></div>'
- +'<div class="card"><div class="dim">office records'+lv('seedScan')+'</div><div class="num ok">'+(s.totalOffices||0)+'<span class="sub"> · '+(s.verifiedOffices||0)+' verified / '+(s.locTotal||0)+' jurisdictions</span></div></div>'
- +'<div class="card"><div class="dim">apply-ready (sign+zoning verified)'+lv('verifier')+'</div><div class="num ok">'+(s.applyReady||0)+'<span class="sub"> / '+(s.locTotal||0)+(s.locTotal?' · '+Math.round(100*(s.applyReady||0)/s.locTotal)+'%':'')+'</span></div></div>'
- +'<div class="card"><div class="dim">write outbox → app'+lv('flusher')+'</div><div class="num'+(s.outboxDepth?' warn':' ok')+'">'+(s.outboxDepth||0)+'<span class="sub"> queued · '+(s.outboxDone||0)+' landed'+(s.outboxErrDepth?' · <span class="bad">'+s.outboxErrDepth+' dropped</span>':'')+'</span></div></div>'
- +'<div class="card"><div class="dim">errors — needs attention</div><div class="num '+(Math.max(0,s.failedNow-(s.stages.geocode||0))?'bad':'ok')+'">'+Math.max(0,s.failedNow-(s.stages.geocode||0))+'<span class="sub"> · '+(s.stages.geocode||0)+' geocode auto-resolving · '+(s.retryQueued||0)+' retrying · '+(s.needsReview||0)+' flagged</span></div></div>'
- +'<div class="card"><div class="dim">backlog'+lv('reviewBurn')+'</div><div class="num warn">'+(s.needsVerif||0)+'<span class="sub"> needs verification · '+(s.queueNotStarted||0)+' not-started · '+(s.queueBlocked||0)+' blocked</span><span class="'+(s.humanQueue?'bad':'ok')+' sub" style="display:block">'+(s.humanQueue||0)+' need a human</span></div></div>'
- +'<div class="card"><div class="dim">watchdog'+lv('watchdog')+'</div><div class="num" style="font-size:13px;line-height:1.3">'+(s.watchdog?lbl(s.watchdog.stage).replace('AGENT ','')+'<br><span class="sub">'+(s.watchdog.detail||'').slice(0,60)+'</span>':'<span class="sub">offline</span>')+'</div></div>');
- const citiesDone=s.pass2Cities||0;
- setH('fix','queue: <b>'+(s.inQueue||0)+'</b> addresses waiting'+(alive('validators')?' · <b>'+(s.feedSearched||0)+'</b> jurisdictions searched · added <b class="ok">'+(s.feedAdded||0)+'</b> new addresses · pool size '+(s.total||0):' · <span class="dim">validators + feeder paused (spend freeze) — pool size '+(s.total||0)+'</span>')
-  +(s.mirror?' · <span style="color:#6ee7b7">entity mirror '+(s.mirror.stage==='mirror_synced'||s.mirror.stage==='mirror_cycle'?'✓ ':'')+(s.mirror.detail||'')+' · '+new Date(s.mirror.at).toLocaleTimeString()+'</span>':''));
- setH('feed',s.events.length?s.events.map(e=>{
-   const wtag=e.worker?'<span style="color:#818cf8;font-size:10px">'+(/^[0-9]+$/.test(String(e.worker))?'w':'')+e.worker+' </span>':'';
-   if(e.start){const steps=e.liveSteps||[];const last=steps.length?steps[steps.length-1].detail:'calling resolver…';
-     // Pulse only the first time a row renders — re-running the animation on
-     // every innerHTML rewrite is what makes the feed flash.
-     const k=String(e.address)+'|'+e.t;const fresh=!_seen.has(k)?' fresh':'';_seen.add(k);if(_seen.size>5000)_seen.clear();
-     const substeps=steps.map(x=>'<div style="font-size:11px;color:#7dd3fc;padding:1px 8px 1px 24px;white-space:normal">› '+x.detail+'</div>').join('');
-     return '<div class="ev'+fresh+'"><span class="a dimc">'+wtag+e.address+'</span><span class="s warn blink" style="width:330px">'+last+'</span><span class="el" data-t="'+e.t+'"></span></div>'+substeps;}
-   const stepsTrace=(e.liveSteps||[]).map(x=>'<div style="font-size:10px;color:#475569;padding:0 8px 0 24px;white-space:normal">› '+x.detail+'</div>').join('');
-   let extra=e.suggested?' · '+e.suggested:(e.targets?' · '+e.targets:'');
-   if(e.detail)extra+=' · '+e.detail;
-   if(e.ms)extra+=' · '+(e.ms/1000).toFixed(1)+'s';
-   if(e.busy_waits)extra+=' · waited '+e.busy_waits+'x';
-   const trace=e.trace?'<div style="font-size:11px;color:#7dd3fc;padding:0 8px 4px;white-space:normal">↳ '+e.trace+'</div>':'';
-   return '<div class="ev"><span class="a dimc">'+wtag+e.address+'</span><span class="s '+(e.queued_retry?'warnc':cls(e.stage))+'">'+lbl(e.stage)+(e.queued_retry?' — queued for retry':'')+extra+'</span></div>'+stepsTrace+trace;
- }).join(''):'<div class="dim" style="padding:8px">waiting for lookups…</div>');
-
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=n=>Number(n||0).toLocaleString('en-US');
+const ago=(t)=>{const s=Math.max(0,Math.round((Date.now()-t)/1000));if(s<60)return s<3?'just now':s+' sec ago';const m=Math.floor(s/60);if(m<60)return m+' min ago';const h=Math.floor(m/60);if(h<24)return h+' hr ago';return Math.floor(h/24)+' days ago';};
+const agoT=(t)=>{const ms=typeof t==='number'?t:Date.parse(t);return Number.isFinite(ms)?ago(ms):'—';};
+const gb=n=>{const v=Number(n);return Number.isFinite(v)?(Math.round(v*10)/10)+' GB':'—';};
+const _h={};const setH=(id,html)=>{if(_h[id]!==html){_h[id]=html;const el=$(id);if(el)el.innerHTML=html;}};
+async function srvCmd(p,body){const r=await fetch('/api/server/'+p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body||{})});if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.error||('HTTP '+r.status));}return r.json().catch(()=>({}));}
+// Interaction hold — the page re-renders every 3s; without a hold a click can
+// land on a just-replaced node and typing gets wiped. Any interaction inside
+// the page pauses rendering briefly.
+let holdUntil=0;
+['pointerdown','focusin','keydown'].forEach(ev=>document.addEventListener(ev,e=>{if(e.target&&e.target.closest&&e.target.closest('main,header'))holdUntil=Date.now()+(ev==='pointerdown'?1200:2500);},true));
+const held=()=>Date.now()<holdUntil;
+// — plain-English mappings —
+const FRIENDLY={
+ 'write-flusher':['Saver','sends queued changes to the app'],
+ 'mirror-sync':['Copier','keeps a local copy of app data up to date'],
+ 'seed-scan':['Office builder','builds office records for every jurisdiction'],
+ 'authority-verifier':['Checker','verifies offices from collected evidence'],
+ 'queue-hygiene':['Cleaner','keeps the work queue tidy'],
+ 'profile-relink':['Linker','fixes links to duplicate profiles'],
+ 'dashboard':['This page','the dashboard itself'],
+ 'forever-runner':['Expansion','adds new jurisdictions — locked until all current ones are verified'],
+ 'parcel-resolver':['Expansion','adds new jurisdictions — locked until all current ones are verified'],
+};
+const friendlyName=n=>{if(FRIENDLY[n])return FRIENDLY[n][0];const m=n.match(/^local-res-([0-9]+)$/);if(m)return 'Researcher '+(Number(m[1])+1);if(/^office-sweep-[0-9]+$/.test(n))return 'Expansion';return n;};
+const friendlyDesc=n=>{if(FRIENDLY[n])return FRIENDLY[n][1];if(/^local-res-[0-9]+$/.test(n))return 'reads official town websites for evidence';if(/^office-sweep-[0-9]+$/.test(n))return 'adds new jurisdictions — locked until all current ones are verified';return '';};
+const STATUS_PLAIN={running:['Working','g'],idle:['Waiting','n'],done:['Done','n'],
+ 'paused-by-guard':['Paused for memory','a'],'culled-by-memory':['Paused for memory','a'],
+ 'blocked-by-memory':['Waiting for memory','a'],'stopped-by-user':['Stopped by you','r'],stopped:['Off','n']};
+const chip=w=>{const p=STATUS_PLAIN[w.status]||['Off','n'];return '<span class="chip '+p[1]+'">'+p[0]+'</span>';};
+const GAP_LABEL={no_research:'No research yet',no_quote:'No proof sentence found yet',no_role_match:'Research found, but not for this office’s job',
+ unofficial_source:'Evidence only from unofficial sites',county_scope:'County office — coverage unclear',non_permit_body:'Not a permitting office',other:'Other checks failed'};
+const GAP_NEXT={no_research:'Researchers will collect it automatically.',no_quote:'Researchers keep looking for a page that says this office handles permits.',
+ no_role_match:'Researchers keep looking for evidence about this specific job.',unofficial_source:'Needs an official .gov or city page — researchers keep looking.',
+ county_scope:'Needs proof the county office also covers areas outside cities.',non_permit_body:'Listed office is e.g. police or courts — will be skipped.',other:'The checker will try again on its next pass.'};
+const ROLE_LABEL={sign_permit:'Sign permit',zoning:'Zoning',right_of_way:'Right-of-way',building:'Building permit',electrical_permit:'Electrical permit',electrical_inspection:'Electrical inspection',historic_review:'Historic review',plumbing:'Plumbing',mechanical:'HVAC / mechanical',demolition:'Demolition'};
+const roleLabel=r=>ROLE_LABEL[r]||String(r||'').replace(/_/g,' ').replace(/(^| )[a-z]/g,m=>m.toUpperCase());
+// Guard action strings → plain English for the Memory tab + activity feed.
+const resWord=(a,b)=>'Researcher '+(Number(b)+1);
+function plainAction(d){
+ const s=String(d||'');
+ let m=s.match(/(?:pressure|emergency|fleet budget) cull local-res-([0-9]+) — free ([[0-9].]+)GB/);
+ if(m)return 'Stopped Researcher '+(Number(m[1])+1)+' to free memory (free dropped to '+m[2]+' GB)';
+ m=s.match(/fleet budget cull local-res-([0-9]+)/);if(m)return 'Stopped Researcher '+(Number(m[1])+1)+' — server was over its memory limit';
+ m=s.match(/spawn blocked local-res-([0-9]+)/);if(m)return 'Waiting to start Researcher '+(Number(m[1])+1)+' — not enough free memory yet';
+ if(/kill-all/.test(s))return 'All researchers stopped by you';
+ m=s.match(/guard level ([0-9]) — free ([[0-9].]+)GB/);if(m)return 'Memory low ('+m[2]+' GB free) — pausing background work';
+ if(/guard cleared/.test(s)){m=s.match(/free ([[0-9].]+)GB/);return 'Memory recovered'+(m?' ('+m[1]+' GB free)':'')+' — resuming';}
+ return s.replace(/local-res-([0-9]+)/g,resWord);
 }
-// ── permit-server control bar (proxied to 127.0.0.1:4175) ──────────────
-let lastLedger=null,lastLedgerAt=0,lastSrv=null;
-async function fetchLedger(){const n=Date.now();if(n-lastLedgerAt<15000&&lastLedger)return lastLedger;try{const r=await fetch('/api/verification-ledger',{cache:'no-store'});if(r.ok){lastLedger=await r.json();lastLedgerAt=n;}}catch(e){}return lastLedger;}
-async function srvCmd(p,body){try{const r=await fetch('/api/server/'+p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body||{})});if(r.status===409){const j=await r.json().catch(()=>({}));alert(j.error||'conflict');}}catch(e){}}
-function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-const BTN='cursor:pointer;background:#334155;color:#e2e8f0;border:1px solid #475569;border-radius:5px;padding:3px 10px;font:12px ui-monospace,monospace';
-async function srvTick(){
- let s=null;
- try{const r=await fetch('/api/server/status',{cache:'no-store'});if(r.ok)s=await r.json();}catch(e){}
- const el=document.getElementById('srv');if(!el)return;
- if(!s){setH('srv','<div class="dim"><b style="color:#f87171">permit-server controller OFFLINE</b> — start it with the CCS Permit Server desktop icon or <span style="color:#94a3b8">node scripts/permit-server.mjs</span></div>');return;}
- const stCol={running:'#34d399',paused:'#fbbf24',stopped:'#f87171'}[s.state]||'#94a3b8';
- const g=s.guard||{level:0},mem=s.memory||{},lim=s.limits||{},R=g.researchers||{};
- const gtxt=s.state==='stopped'?'':(g.level===2?' · <b class="bad">memory guard L2: workers paused · researchers draining</b>':g.level===1?' · <b class="warn">memory guard L1: draining researchers until free recovers</b>':' · guard ok');
- lastSrv=s;
- if(window._pendingMax){const rm=(s.guard&&s.guard.researchers&&s.guard.researchers.max);if(rm===window._pendingMax.v||Date.now()-window._pendingMax.at>10000)window._pendingMax=null;}
- let btns='';
- if(s.state!=='running')btns+='<button style="'+BTN+';border-color:#34d399" data-cmd="start">▶ Start</button> ';
- if(s.state==='running')btns+='<button style="'+BTN+';border-color:#fbbf24" data-cmd="pause">⏸ Pause</button> ';
- if(s.state==='paused')btns+='<button style="'+BTN+';border-color:#34d399" data-cmd="resume">▶ Resume</button> ';
- if(s.state!=='stopped')btns+='<button style="'+BTN+';border-color:#f87171" data-cmd="stop">■ Stop</button> ';
- btns+='<button style="'+BTN+';border-color:'+(s.verification?'#34d399':'#475569')+'" data-cmd="verification" data-on="'+(s.verification?0:1)+'">Verification '+(s.verification?'ON':'OFF')+'</button> ';
- if(s.expansion_locked)btns+='<button style="'+BTN+';opacity:.5" disabled title="locked until verification is done">Expansion 🔒</button> ';
- else btns+='<button style="'+BTN+';border-color:'+(s.expansion?'#34d399':'#475569')+'" data-cmd="expansion" data-on="'+(s.expansion?0:1)+'">Expansion '+(s.expansion?'ON':'OFF')+'</button> ';
- btns+='<button style="'+BTN+';background:#7f1d1d;border-color:#f87171" title="Stop every researcher immediately — sets researchers max to 0" data-cmd="killres">⛔ Kill all researchers</button> ';
- const grpBadge={core:'#38bdf8',verification:'#a78bfa',expansion:'#f472b6',dashboard:'#64748b'};
- const stColor={'running':'#34d399','idle':'#6ee7b7','paused-by-guard':'#fbbf24','culled-by-memory':'#fb923c','blocked-by-memory':'#fb923c','stopped-by-user':'#94a3b8','done':'#38bdf8','stopped':'#64748b'};
- const noCtl={'write-flusher':1,'mirror-sync':1,'dashboard':1};
- const rowBtn=(w)=>{
-  if(noCtl[w.name])return '<span class="dim" style="font-size:10px">core</span>';
-  if(w.alive)return '<button style="'+BTN+';padding:1px 7px;font-size:10px" data-cmd="wstop" data-name="'+esc(w.name)+'">stop</button>';
-  if(['stopped-by-user','stopped','culled-by-memory','blocked-by-memory'].includes(w.status))return '<button style="'+BTN+';padding:1px 7px;font-size:10px;border-color:#34d399" data-cmd="wstart" data-name="'+esc(w.name)+'">start</button>';
-  return '';
- };
- const wrow=(w)=>{
-  const hb=w.last_heartbeat||{};
-  const hbAge=hb.at?Math.round((Date.now()-new Date(hb.at).getTime())/1000):null;
-  const st=w.status||(w.alive?'running':'stopped');
-  const dot=w.alive?'<span class="ok">●</span>':'<span class="bad">■</span>';
-  const hbTxt=hb.state?esc(hb.state)+(hb.item?' · '+esc(hb.item).slice(0,44):'')+(hbAge!=null?' ('+hbAge+'s)':''):'—';
-  const ev=w.last_event?esc(w.last_event.stage||'')+' '+esc(w.last_event.detail||'').slice(0,52):'—';
-  const loop=w.crash_looping?' <span class="bad">CRASH-LOOP</span>':'';
-  const up=w.uptime_s!=null?(w.uptime_s>3600?Math.floor(w.uptime_s/3600)+'h'+Math.floor(w.uptime_s%3600/60)+'m':w.uptime_s>60?Math.floor(w.uptime_s/60)+'m':w.uptime_s+'s'):'—';
-  return '<tr style="font-size:11px"><td style="padding:1px 8px">'+dot+' '+esc(w.name)+loop+'</td>'
-   +'<td style="padding:1px 8px"><span style="color:'+(grpBadge[w.group]||'#64748b')+'">'+esc(w.group)+'</span></td>'
-   +'<td style="padding:1px 8px"><span style="color:'+(stColor[st]||'#94a3b8')+'">'+esc(st)+'</span></td>'
-   +'<td style="padding:1px 8px" class="dim">'+(w.pid||'—')+'</td>'
-   +'<td style="padding:1px 8px" class="dim">'+(w.rss_mb!=null?w.rss_mb+' MB':'—')+'</td>'
-   +'<td style="padding:1px 8px" class="dim">'+up+'</td>'
-   +'<td style="padding:1px 8px" class="dim">'+(w.restarts||0)+'</td>'
-   +'<td style="padding:1px 8px" class="dim">'+hbTxt+'</td>'
-   +'<td style="padding:1px 8px" class="dim">'+ev+'</td>'
-   +'<td style="padding:1px 8px">'+rowBtn(w)+'</td></tr>';
- };
- const running=(s.workers||[]).filter(w=>w.alive).length;
- const resAlive=(s.workers||[]).filter(w=>/^local-res-\d+$/.test(w.name)&&w.alive).length;
- const hist=mem.history||[];
- const memPanel='<div style="margin-top:8px;border-top:1px solid #1e293b;padding-top:6px">'
-  +'<b>MEMORY</b> <span class="dim" style="font-size:11px">free <b style="color:#e2e8f0">'+mem.free_gb+'</b>/'+mem.total_gb+' GB · fleet RSS <b style="color:#e2e8f0">'+(mem.fleet_rss_gb||0)+'</b> GB · guard level '+(g.level||0)+' (L1 &lt;3.5GB free · L2 &lt;1.5GB) · reserve '
-  +'<input type="number" min="2" max="10" step="0.5" value="'+(lim.reserve_gb||4)+'" style="width:52px;background:#0b1120;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:0 3px;font-size:11px" data-cmd="reserve"> GB min headroom · fleet budget '
-  +'<input type="number" min="1" max="28" step="1" value="'+(lim.fleet_budget_gb||12)+'" style="width:52px;background:#0b1120;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:0 3px;font-size:11px" data-cmd="budget"> GB cap</span>'
-  +'<canvas id="memspark" width="620" height="54" style="display:block;margin-top:5px;background:#0b1120;border-radius:4px"></canvas>'
-  +'<div class="dim" style="font-size:10px;margin-top:1px">green = free GB · orange = fleet RSS GB · last 30 min</div></div>';
- const resPanel='<div style="margin-top:8px;border-top:1px solid #1e293b;padding-top:6px">'
-  +'<b>RESEARCHERS</b> <span style="color:#e2e8f0">'+resAlive+' running / '+(R.total||16)+'</span>'
-  +' · <button style="'+BTN+';padding:1px 8px;font-size:11px;'+(R.mode!=='manual'?'border-color:#34d399':'opacity:.5')+'" data-cmd="mode-auto">Auto</button>'
-  +'<button style="'+BTN+';padding:1px 8px;font-size:11px;'+(R.mode==='manual'?'border-color:#34d399':'opacity:.5')+'" data-cmd="mode-manual">Manual</button>'
-  +' <button style="'+BTN+';padding:1px 7px;font-size:12px" '+(R.max<=0?'disabled ':'')+'data-cmd="max-dec">−</button>'
-  +' <b id="resmax" style="font-size:13px">'+(R.max!=null?R.max:16)+'</b>'
-  +' <button style="'+BTN+';padding:1px 7px;font-size:12px" '+(R.max>=16?'disabled ':'')+'data-cmd="max-inc">+</button>'
-  +(R.mode==='manual'?'<span class="dim" style="font-size:11px"> · requested '+(R.max||0)+' · memory allows '+(R.memory_allows!=null?R.memory_allows:'?')+'</span>':'<span class="dim" style="font-size:11px"> · auto limit '+(R.allowed||0)+' (your cap '+(R.max!=null?R.max:16)+')</span>')
-  +'<span class="dim" style="font-size:11px"> · avg RSS '+(R.avg_rss_mb||'?')+' MB</span>'
-  +((R.disabled||[]).length?' <span class="dim" style="font-size:11px;color:#fbbf24"> · user-stopped: '+esc(R.disabled.join(', '))+'</span>':'')
-  +((R.mem_blocked||[]).length?' <span class="dim" style="font-size:11px;color:#fb923c"> · memory-blocked: '+esc(R.mem_blocked.slice(0,6).join(', '))+((R.mem_blocked.length>6)?' +'+(R.mem_blocked.length-6)+' more':'')+'</span>':'')
-  +'</div>';
- const actions=(g.actions||[]).slice(-4).reverse();
- const actHtml=actions.length?'<div class="dim" style="font-size:10px;margin-top:6px">guard: '+actions.map(a=>esc(a.detail).slice(0,110)).join(' · ')+'</div>':'';
- // ── Verification progress panel (ledger summary via /status) ──────────
- const vp=s.verification_progress;
- let vpHtml='';
- if(vp){
-  const o=vp.offices||{},j=vp.jurisdictions||{};
-  const pct=o.total?Math.round(100*(o.staff_verified||0)/o.total):0;
-  const gaps=Object.entries(vp.gap_reasons||{}).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const p=vp.promotions||{},eta=vp.eta||{};
-  vpHtml='<div style="margin-top:8px;border-top:1px solid #1e293b;padding-top:6px">'
-   +'<b>VERIFICATION PROGRESS</b> <span class="dim" style="font-size:11px">'+(vp.at?esc(vp.at).slice(0,19).replace('T',' ')+' UTC':'')+'</span>'
-   +'<div style="height:8px;background:#1e293b;border-radius:4px;margin:4px 0;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:#34d399"></div></div>'
-   +'<span class="dim" style="font-size:11px">offices <b style="color:#e2e8f0">'+(o.staff_verified||0)+'/'+(o.total||0)+'</b> verified ('+pct+'%) · '+(o.needs_verification||0)+' pending · '+(o.needs_review||0)+' need review · jurisdictions all '+(j.all_verified||0)+' · some '+(j.some_verified||0)+' · none '+(j.none_verified||0)+' · no offices '+(j.no_offices||0)+'</span>'
-   +'<div class="dim" style="font-size:11px;margin-top:2px">promotions '+(p.last_hour||0)+'/h · '+(p.last_24h||0)+'/24h · ETA '+(eta.hours!=null?eta.hours+'h':'—')+' · held relinks '+(vp.held_relinks||0)+'</div>'
-   +(gaps.length?'<table style="margin-top:4px;font-size:11px">'+gaps.map(g=>'<tr><td style="padding:0 8px" class="dim">'+esc(g[0])+'</td><td style="padding:0 8px">'+g[1]+'</td></tr>').join('')+'</table>':'');
-  if((vp.needs_review_total||0)+(vp.held_relinks||0)>0){
-   const lg=await fetchLedger();
-   if(lg){
-    const nr=(lg.needs_review||[]).slice(0,15),hr=(lg.held_relinks||[]).slice(0,10);
-    if(nr.length||hr.length){
-     vpHtml+='<div style="margin-top:4px;font-size:11px"><b class="warn">Needs a person</b><table>'
-      +nr.map(r=>'<tr><td style="padding:0 8px">'+esc(r.jurisdiction||'')+'</td><td style="padding:0 8px" class="dim">'+esc(r.office||'')+'</td><td style="padding:0 8px" class="dim">'+esc((r.reasons||[]).join(',')||'')+'</td><td style="padding:0 8px" class="dim">x'+(r.attempts||0)+'</td></tr>').join('')
-      +hr.map(r=>'<tr><td style="padding:0 8px">'+esc((r.name||'')+', '+(r.state||''))+'</td><td style="padding:0 8px" class="dim" colspan="2">relink held: '+esc(r.reason||'')+'</td></tr>').join('')
-      +'</table>'+((vp.needs_review_total||0)>15?'<div class="dim">+'+(vp.needs_review_total-15)+' more in .audit-work/verification-ledger.json</div>':'')+'</div>';
-    }
-   }
+// — state —
+let srv=null,srvAt=0,ledger=null,ledgerAt=0,promos=null,promosAt=0,legacy=null,legacyAt=0,feedFilter='all';
+let pendingMax=null;
+const TABS=['overview','researchers','verification','memory','activity','advanced'];
+let tab=(location.hash||'').replace('#/','')||'overview';if(!TABS.includes(tab))tab='overview';
+function showTab(t){tab=t;location.hash='#/'+t;document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t?'true':'false'));TABS.forEach(x=>$('tab-'+x).hidden=x!==t);render();}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+// — polling (≤ every 3s, single cached build server-side) —
+let offline=false;
+async function pollSrv(){try{const r=await fetch('/api/server/status',{cache:'no-store'});if(r.ok){srv=await r.json();srvAt=Date.now();if(offline){offline=false;$('banner').classList.remove('show');}}}catch(e){}if(!srv||Date.now()-srvAt>8000){if(!offline){offline=true;$('banner').classList.add('show');}}}
+async function pollLegacy(){try{const r=await fetch('/status.json',{cache:'no-store'});if(r.ok){legacy=await r.json();legacyAt=Date.now();}}catch(e){}}
+async function pollLedger(){if(Date.now()-ledgerAt<15000)return;try{const r=await fetch('/api/verification-ledger',{cache:'no-store'});if(r.ok){ledger=await r.json();ledgerAt=Date.now();}}catch(e){}}
+async function pollPromos(){if(Date.now()-promosAt<15000)return;try{const r=await fetch('/api/promotions',{cache:'no-store'});if(r.ok){promos=await r.json();promosAt=Date.now();}}catch(e){}}
+// — shared derivations —
+const workers=()=>srv&&srv.workers||[];
+const resList=()=>workers().filter(w=>/^local-res-[0-9]+$/.test(w.name));
+const resAlive=()=>resList().filter(w=>w.alive);
+const resBusy=()=>resList().filter(w=>w.alive&&w.last_heartbeat&&w.last_heartbeat.state==='busy').length;
+const findW=n=>workers().find(w=>w.name===n);
+const vp=()=>srv&&srv.verification_progress;
+function outboxDepth(){const w=findW('write-flusher');const m=w&&w.last_event&&String(w.last_event.detail||'').match(/depth ([0-9]+)/);return m?Number(m[1]):null;}
+function rightNow(){
+ if(!srv)return 'Connecting…';
+ if(srv.state==='stopped')return 'The server is stopped. Press Start to begin again.';
+ if(srv.state==='paused')return 'Everything is paused. Press Resume to continue.';
+ const parts=[];
+ const nb=resBusy(),na=resAlive().length;
+ if(nb)parts.push(nb+' researcher'+(nb>1?'s are':' is')+' reading town websites');
+ else if(na)parts.push(na+' researcher'+(na>1?'s are':' is')+' standing by');
+ const v=findW('authority-verifier');
+ if(v&&v.alive&&v.last_heartbeat&&v.last_heartbeat.state==='busy')parts.push('the checker is reviewing evidence');
+ const od=outboxDepth();
+ if(od!=null&&od>0)parts.push(num(od)+' change'+(od>1?'s':'')+' waiting to save to the app');
+ return parts.length?parts.join('; ')+'.':'Everything is caught up right now.';
+}
+function etaText(){
+ const e=vp()&&vp().eta;if(!e)return '—';
+ if(e.hours==null)return 'Can’t estimate yet';
+ const h=e.hours;if(h<48)return 'about '+Math.max(1,Math.round(h))+' hours at this pace';
+ return 'about '+Math.round(h/24)+' days at this pace';
+}
+function needsYou(){
+ const out=[];const seen={};
+ if(ledger){
+  for(const h of (ledger.held_relinks||[])){
+   const loc=((h.name||'?')+(h.state?', '+h.state:'')).replace(/ *[(][^)]*[)]/g,'');
+   const reason=h.candidates>1?num(h.candidates)+' possible matches for this jurisdiction — a person needs to pick the right profile':'No matching profile found — a person needs to check';
+   const k=loc.toLowerCase();if(seen[k]){seen[k].extra++;continue;}
+   seen[k]={loc,reason,extra:0,kind:'link'};out.push(seen[k]);
   }
-  vpHtml+='</div>';
+  for(const r of (ledger.needs_review||[])){
+   const loc=String(r.jurisdiction||'?');const k=loc.toLowerCase();if(seen[k]){seen[k].extra++;continue;}
+   const rs=(r.reasons||[]).map(x=>GAP_LABEL[x]||x).join('; ')||'verification stuck after several tries';
+   seen[k]={loc,office:r.office,reason:rs,extra:0,kind:'review'};out.push(seen[k]);
+  }
  }
- if(Date.now()>=srvHoldUntil)setH('srv',
-  '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-  +'<b>PERMIT SERVER</b> <b style="color:'+stCol+'">'+esc(s.state).toUpperCase()+'</b>'
-  +'<span class="dim">'+running+'/'+((s.workers||[]).length-1)+' workers · free '+mem.free_gb+'/'+mem.total_gb+' GB'+gtxt+'</span>'
-  +'<span style="flex:1"></span>'+btns+'</div>'
-  +resPanel
-  +memPanel
-  +'<table style="margin-top:8px"><tr class="dim" style="font-size:10px"><td style="padding:0 8px">worker</td><td style="padding:0 8px">group</td><td style="padding:0 8px">status</td><td style="padding:0 8px">pid</td><td style="padding:0 8px">rss</td><td style="padding:0 8px">uptime</td><td style="padding:0 8px">restarts</td><td style="padding:0 8px">doing</td><td style="padding:0 8px">last event</td><td></td></tr>'+(s.workers||[]).map(wrow).join('')+'</table>'
-  +actHtml
-  +vpHtml);
- const cv=document.getElementById('memspark');
- if(cv&&hist.length>1&&Date.now()>=srvHoldUntil){
-  const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
-  const mx=Math.max((mem.total_gb||32)*1.02,...hist.map(h=>Math.max(h.free_gb||0,h.fleet_gb||0)));
-  const draw=(key,col)=>{ctx.strokeStyle=col;ctx.lineWidth=1.4;ctx.beginPath();hist.forEach((h,i)=>{const x=i/(hist.length-1)*cv.width;const y=cv.height-3-((h[key]||0)/mx)*(cv.height-8);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();};
-  draw('free_gb','#34d399');draw('fleet_gb','#fb923c');
- }
+ return out;
 }
-// Interaction hold: #srv re-renders every 3s, which swaps nodes mid-gesture —
-// clicks can land on a detached element and number inputs get wiped while
-// typing. Suppress the re-render briefly after any interaction inside #srv.
-let srvHoldUntil=0;
-document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('#srv'))srvHoldUntil=Date.now()+1200;},true);
-document.addEventListener('focusin',e=>{if(e.target.closest&&e.target.closest('#srv'))srvHoldUntil=Date.now()+2500;},true);
-document.addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('#srv'))srvHoldUntil=Date.now()+2500;},true);
-// data-cmd button wiring — keeps onclick attributes free of quote escaping.
-if(!window._srvCmdWired){window._srvCmdWired=1;document.addEventListener('click',(e)=>{
- const b=e.target.closest('[data-cmd]');if(!b)return;
- const c=b.dataset.cmd,R=(lastSrv&&lastSrv.guard&&lastSrv.guard.researchers)||{};
- // Stepper reads the pending (optimistic) value first — lastSrv only refreshes
- // every 3s, so without it a quick second click re-sends the same target.
- const max=(window._pendingMax&&window._pendingMax.v!=null)?window._pendingMax.v:(R.max!=null?R.max:16);
- if(c==='start'||c==='pause'||c==='resume'||c==='stop')srvCmd(c);
- else if(c==='verification')srvCmd('verification',{on:b.dataset.on==='1'});
- else if(c==='expansion')srvCmd('expansion',{on:b.dataset.on==='1'});
- else if(c==='killres')srvCmd('researchers',{max:0});
- else if(c==='mode-auto')srvCmd('researchers',{mode:'auto'});
- else if(c==='mode-manual')srvCmd('researchers',{mode:'manual'});
- else if(c==='max-dec'||c==='max-inc'){
-  const v=c==='max-dec'?Math.max(0,max-1):Math.min(16,max+1);
-  window._pendingMax={v,at:Date.now()};
-  const el=document.getElementById('resmax');if(el)el.textContent=v;
-  srvCmd('researchers',{mode:'manual',max:v});
- }
- else if(c==='wstop')srvCmd('worker',{name:b.dataset.name,action:'stop'});
- else if(c==='wstart')srvCmd('worker',{name:b.dataset.name,action:'start'});
-});document.addEventListener('change',(e)=>{
- const i=e.target.closest('input[data-cmd]');if(!i)return;
- if(i.dataset.cmd==='reserve')srvCmd('limits',{reserve_gb:Number(i.value)});
- if(i.dataset.cmd==='budget')srvCmd('limits',{fleet_budget_gb:Number(i.value)});
-});}
-srvTick();setInterval(srvTick,3000);
-tick();setInterval(tick,2000);
-// Live elapsed counters — every in-flight line ticks its own age every second.
-setInterval(()=>{const n=Date.now();document.querySelectorAll('.el').forEach(el=>{const s=Math.max(0,Math.round((n-Number(el.dataset.t||0))/1000));el.textContent=s<60?s+'s':Math.floor(s/60)+'m '+String(s%60).padStart(2,'0')+'s';});},1000);
-</script>`;
+// — header —
+function renderHeader(){
+ const on=!!srv&&!offline;
+ const st=!on?null:srv.state;
+ const pill=$('pill');
+ const map={running:['Running','on'],paused:['Paused','pause'],stopped:['Stopped','off']};
+ const p=on?(map[st]||['…','off']):['Offline','down'];
+ pill.className='pill '+p[1];pill.innerHTML='<i></i>'+p[0];
+ $('btnStart').textContent=st==='paused'?'Resume':'Start';
+ $('btnStart').disabled=!(on&&(st==='stopped'||st==='paused'));
+ $('btnPause').disabled=!(on&&st==='running');
+ $('btnStop').disabled=!(on&&(st==='running'||st==='paused'));
+ const sw=$('swVerify');sw.disabled=!on||st==='stopped';sw.checked=on&&!!srv.verification;
+ $('swVerifyTxt').textContent=on?(srv.verification?'On':'Off'):'';
+ const badge=$('expBadge');
+ if(on&&srv.expansion_locked===false){badge.textContent='Expansion unlocked';badge.title='New jurisdictions are being added.';}
+ else{badge.innerHTML='🔒 Expansion locked';badge.title='Adding new jurisdictions unlocks automatically once every current one is verified.';}
+}
+$('btnStart').addEventListener('click',async()=>{try{await srvCmd(srv&&srv.state==='paused'?'resume':'start');}catch(e){alert(e.message);}});
+$('btnPause').addEventListener('click',async()=>{try{await srvCmd('pause');}catch(e){alert(e.message);}});
+$('btnStop').addEventListener('click',async()=>{if(!confirm('Stop the whole permit server? All workers will shut down (the saver finishes its current batch first).'))return;try{await srvCmd('stop');}catch(e){alert(e.message);}});
+$('swVerify').addEventListener('change',async e=>{const on=e.target.checked;try{await srvCmd('verification',{on});}catch(err){e.target.checked=!on;alert(err.message);}});
+// — Overview tab —
+function renderOverview(){
+ const o=vp()&&vp().offices||{},j=vp()&&vp().jurisdictions||{};
+ const pct=o.total?Math.round(100*(o.staff_verified||0)/o.total):0;
+ const mem=srv&&srv.memory||{};
+ const res=resAlive().length;
+ const ny=needsYou();
+ setH('tab-overview',
+ '<div class="card"><h2>Verification progress</h2>'
+ +'<div style="font:700 26px var(--mono);margin-bottom:8px">'+num(o.staff_verified||0)+' of '+num(o.total||0)+' offices verified <span class="dim" style="font-size:15px">('+pct+'%)</span></div>'
+ +'<div class="bar"><i style="width:'+pct+'%;background:var(--green)"></i></div>'
+ +'<div class="dim small" style="margin-top:8px">Right now: '+esc(rightNow())+'</div>'
+ +'<div class="dim small" style="margin-top:3px"><span class="blue">Auto-scaling:</span> running '+res+' researcher'+(res===1?'':'s')+' — scales up and down automatically with free memory.</div></div>'
+ +'<div class="tiles">'
+ +'<div class="tile"><div class="t">Verified in the last hour</div><div class="v ok">'+num((vp()&&vp().promotions&&vp().promotions.last_hour)||0)+'</div><div class="s">'+num((vp()&&vp().promotions&&vp().promotions.last_24h)||0)+' in the last 24 hours</div></div>'
+ +'<div class="tile"><div class="t">Left to verify</div><div class="v">'+num(o.needs_verification||0)+'</div><div class="s">'+num(o.needs_review||0)+' need a person</div></div>'
+ +'<div class="tile"><div class="t">Estimated finish</div><div class="v" style="font-size:16px;line-height:1.35">'+esc(etaText())+'</div><div class="s">at the current pace</div></div>'
+ +'<div class="tile"><div class="t">Memory</div><div class="v" style="font-size:16px;line-height:1.35">'+gb(mem.free_gb)+' free</div><div class="s">of '+gb(mem.total_gb)+' total · the server uses '+gb(mem.fleet_rss_gb)+'</div></div></div>'
+ +'<div class="card"><h2>Needs you <span class="dim" style="font-weight:400">('+ny.length+')</span></h2>'
+ +(ny.length?'<table>'+ny.slice(0,12).map(x=>'<tr><td style="width:260px"><b>'+esc(x.loc)+'</b>'+(x.office?'<div class="dim small">'+esc(x.office)+'</div>':'')+(x.extra?'<div class="dim small">+'+x.extra+' more item'+(x.extra>1?'s':'')+' here</div>':'')+'</td><td class="dim">'+esc(x.reason)+'</td></tr>').join('')+'</table>'+(ny.length>12?'<div class="dim small" style="margin-top:6px">+'+(ny.length-12)+' more — see the Verification tab</div>':''):'<div class="empty">Nothing needs you right now.</div>')
+ +'</div>');
+}
+// — Researchers tab —
+function renderResearchers(){
+ const R=(srv&&srv.guard&&srv.guard.researchers)||{};
+ const max=pendingMax&&Date.now()-pendingMax.at<10000?pendingMax.v:(R.max!=null?R.max:16);
+ const mode=R.mode||'auto';
+ const memAllows=R.memory_allows!=null?R.memory_allows:null;
+ const cards=resList().sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})).map(w=>{
+  const m=w.name.match(/([0-9]+)$/);const label='Researcher '+(Number(m[1])+1);
+  const hb=w.last_heartbeat||{};
+  // Only show the town when the worker is actually alive — a dead slice
+  // keeps its last heartbeat file and would lie about still working.
+  const town=w.alive&&hb.state==='busy'&&hb.item?hb.item:'';
+  const mem=w.alive&&w.rss_mb?w.rss_mb+' MB':'—';
+  const onIt=w.alive&&hb.at&&hb.state==='busy'?'for '+agoT(hb.at):'';
+  const btn=w.alive
+   ?'<button data-cmd="wstop" data-name="'+esc(w.name)+'">Stop</button>'
+   :'<button data-cmd="wstart" data-name="'+esc(w.name)+'">Start</button>';
+  return '<div class="rcard"><div class="rn">'+label+'</div>'+chip(w)
+   +'<div class="town">'+(town?esc(town):'<span class="dim">'+(w.status==='idle'?'between tasks':'not running')+'</span>')+'</div>'
+   +'<div class="meta">'+(onIt?esc(onIt)+' · ':'')+mem+'</div>'+btn+'</div>';
+ }).join('');
+ const disList=(R.disabled||[]).length?' · <span class="warn">you stopped: '+esc((R.disabled||[]).map(friendlyName).join(', '))+'</span>':'';
+ const blockedList=(R.mem_blocked||[]).length?' · <span class="dim">waiting for memory: '+esc((R.mem_blocked||[]).slice(0,4).map(friendlyName).join(', '))+((R.mem_blocked||[]).length>4?' +'+(R.mem_blocked.length-4):'')+'</span>':'';
+ setH('tab-researchers',
+ '<div class="card"><h2>Researchers</h2>'
+ +'<div class="dim small" style="margin-bottom:12px">Researchers visit official town websites to collect evidence. More researchers = faster, but each uses about 0.5 GB of memory.</div>'
+ +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+ +'<span class="seg"><button data-cmd="mode-auto" class="'+(mode!=='manual'?'on':'')+'">Auto</button><button data-cmd="mode-manual" class="'+(mode==='manual'?'on':'')+'">Manual</button></span>'
+ +'<span class="dim small">'+(mode==='manual'?'You pick the count — memory still caps it for safety.':'The server picks the count from free memory, up to your maximum.')+'</span></div>'
+ +'<div style="margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+ +'<span class="dim small">Maximum:</span><span class="stepper"><button data-cmd="max-dec"'+(max<=0?' disabled':'')+'>−</button><b id="resmax">'+max+'</b><button data-cmd="max-inc"'+(max>=16?' disabled':'')+'>+</button></span>'
+ +(memAllows!=null?'<span class="dim small">Memory allows <b class="num" style="color:var(--txt)">'+memAllows+'</b> right now'+(mode==='manual'&&max>memAllows?' — capped':'')+'</span>':'')
+ +'<span style="flex:1"></span><button class="danger" data-cmd="killres">Stop all researchers</button></div>'
+ +'<div class="dim small" style="margin-top:8px">'+resAlive().length+' of '+(R.total||16)+' running'+(R.avg_rss_mb?' · about '+R.avg_rss_mb+' MB each':'')+disList+blockedList+'</div></div>'
+ +'<div class="rgrid">'+cards+'</div>');
+}
+// — Verification tab —
+function renderVerification(){
+ const v=vp(),o=v&&v.offices||{},j=v&&v.jurisdictions||{};
+ const tot=Math.max(1,(j.all_verified||0)+(j.some_verified||0)+(j.none_verified||0)+(j.no_offices||0));
+ const seg=(n,c)=>'<i style="width:'+Math.round(1000*n/tot)/10+'%;background:'+c+'"></i>';
+ const legend=[['Fully verified',j.all_verified,'var(--green)'],['Partly verified',j.some_verified,'#86efac'],['Not yet verified',j.none_verified,'var(--amber)'],['No offices yet',j.no_offices,'#3b4a6b']];
+ const gaps=Object.entries((v&&v.gap_reasons)||{}).sort((a,b)=>b[1]-a[1]);
+ const roles=Object.entries((v&&v.missing_roles)||{}).sort((a,b)=>b[1]-a[1]).slice(0,12);
+ const plist=(promos&&promos.items)||[];
+ const ny=needsYou();
+ setH('tab-verification',
+ '<div class="card"><h2>Jurisdictions</h2>'
+ +'<div class="bar" style="height:18px">'+seg(j.all_verified||0,'var(--green)')+seg(j.some_verified||0,'#86efac')+seg(j.none_verified||0,'var(--amber)')+seg(j.no_offices||0,'#3b4a6b')+'</div>'
+ +'<div class="legend" style="margin-top:8px">'+legend.map(l=>'<span><i style="background:'+l[2]+'"></i>'+l[0]+' <b class="num" style="color:var(--txt)">'+num(l[1]||0)+'</b></span>').join('')+'</div></div>'
+ +'<div class="card"><h2>Why offices aren’t verified yet</h2>'
+ +(gaps.length?'<table><tr><th>Reason</th><th style="width:90px">Offices</th><th>What happens next</th></tr>'+gaps.map(g=>'<tr><td>'+esc(GAP_LABEL[g[0]]||g[0])+'</td><td class="num">'+num(g[1])+'</td><td class="dim">'+esc(GAP_NEXT[g[0]]||'The checker will try again.')+'</td></tr>').join('')+'</table>':'<div class="empty">No gaps recorded yet.</div>')+'</div>'
+ +(roles.length?'<div class="card"><h2>Most-missing office jobs</h2><div class="dim small" style="margin-bottom:8px">Roles researchers still need evidence for, across all jurisdictions.</div>'
+  +'<table>'+roles.map(r=>'<tr><td>'+esc(roleLabel(r[0]))+'</td><td class="num" style="width:90px">'+num(r[1])+'</td></tr>').join('')+'</table></div>':'')
+ +'<div class="card"><h2>Recently verified</h2>'
+ +(plist.length?'<table><tr><th>Jurisdiction</th><th>Office</th><th>What was verified</th><th style="width:110px">When</th></tr>'+plist.slice(0,20).map(p=>'<tr><td>'+esc(p.jurisdiction||'?')+'</td><td class="dim">'+esc(p.office||'—')+'</td><td>'+esc((p.roles||[]).map(roleLabel).join(', ')||'office verified')+'</td><td class="dim small">'+agoT(p.at)+'</td></tr>').join('')+'</table>':'<div class="empty">Nothing verified yet — recent verifications will appear here.</div>')+'</div>'
+ +(ny.length?'<div class="card"><h2>Needs a person ('+ny.length+')</h2><table>'+ny.map(x=>'<tr><td style="width:260px"><b>'+esc(x.loc)+'</b>'+(x.office?'<div class="dim small">'+esc(x.office)+'</div>':'')+'</td><td class="dim">'+esc(x.reason)+'</td></tr>').join('')+'</table></div>':''));
+}
+// — Memory tab —
+function renderMemory(){
+ const mem=srv&&srv.memory||{};const lim=srv&&srv.limits||{};
+ const acts=(srv&&srv.guard&&srv.guard.actions||[]).slice(-12).reverse();
+ setH('tab-memory',
+ '<div class="card"><h2>Memory — last 30 minutes</h2>'
+ +'<canvas id="memchart" class="chart" width="1100" height="240"></canvas>'
+ +'<div class="legend"><span><i style="background:var(--green)"></i>Free memory (GB)</span><span><i style="background:var(--amber)"></i>Used by this server (GB)</span><span><i style="background:var(--purple)"></i>Windows memory headroom (GB)</span></div>'
+ +'<div class="dim small" style="margin-top:8px">'+gb(mem.free_gb)+' free of '+gb(mem.total_gb)+' total · the server is using '+gb(mem.fleet_rss_gb)+(mem.commit_headroom_gb!=null?' · Windows can still hand out '+gb(mem.commit_headroom_gb):'')+'</div></div>'
+ +'<div class="card"><h2>Limits</h2>'
+ +'<div class="setrow"><div><label for="inReserve">Keep free for other programs (GB)</label><input id="inReserve" type="number" min="2" max="10" step="0.5" value="'+(lim.reserve_gb!=null?lim.reserve_gb:4)+'"></div>'
+ +'<div class="ex">The server always keeps at least this much memory free for you and other apps. It slows itself down first.</div></div>'
+ +'<div class="setrow"><div><label for="inBudget">Server memory limit (GB)</label><input id="inBudget" type="number" min="1" max="28" step="1" value="'+(lim.fleet_budget_gb!=null?lim.fleet_budget_gb:12)+'"></div>'
+ +'<div class="ex">The most this whole server is allowed to use. If it goes over, researchers are stopped until it fits.</div></div>'
+ +'<div class="setrow"><button id="btnSaveLim" class="primary">Save</button><span id="saveMsg"></span></div></div>'
+ +'<div class="card"><h2>Recent memory actions</h2>'
+ +(acts.length?'<div class="feed">'+acts.map(a=>'<div class="row"><span class="msg">'+esc(plainAction(a.detail))+'</span><span class="when">'+agoT(a.at)+'</span></div>').join('')+'</div>':'<div class="empty">No memory actions yet — the server hasn’t needed to slow anything down.</div>')+'</div>');
+ drawChart(mem);
+}
+function drawChart(mem){
+ const cv=$('memchart');if(!cv)return;const ctx=cv.getContext('2d');const W=cv.width,H=cv.height,padL=44,padB=22,padT=10;
+ ctx.clearRect(0,0,W,H);
+ const hist=(mem.history||[]).slice();
+ const mx=Math.max(mem.total_gb||32,...hist.map(h=>Math.max(h.free_gb||0,h.fleet_gb||0,h.headroom_gb||0)))*1.05;
+ ctx.strokeStyle='#24304d';ctx.fillStyle='#5b6b8c';ctx.font='11px '+getComputedStyle(document.body).fontFamily;ctx.lineWidth=1;
+ for(let i=0;i<=4;i++){const v=mx*i/4,y=padT+(H-padB-padT)*(1-i/4);ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(W-8,y);ctx.stroke();ctx.fillText(Math.round(v),8,y+4);}
+ if(hist.length>1){
+  const t0=hist[0].t,t1=hist[hist.length-1].t||t0+1;
+  ['−30 min','−15 min','now'].forEach((l,i)=>{ctx.fillText(l,padL+i*(W-8-padL-40)/2,H-6);});
+  const draw=(key,col)=>{ctx.strokeStyle=col;ctx.lineWidth=1.8;ctx.beginPath();hist.forEach((h,i)=>{const x=padL+(h.t-t0)/Math.max(1,t1-t0)*(W-8-padL);const y=padT+(H-padB-padT)*(1-(h[key]||0)/mx);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();};
+  draw('free_gb','#34d399');draw('fleet_gb','#fbbf24');draw('headroom_gb','#a78bfa');
+ }else{ctx.fillStyle='#8b9bb8';ctx.font='13px sans-serif';ctx.fillText('Collecting data — the chart fills in over the next 30 minutes.',padL+20,H/2);}
+}
+// — Activity tab —
+const FEED_CLASS=e=>{
+ const s=String(e.stage||'');
+ if(/auth_verify_|verify/.test(s))return 'verifications';
+ if(/error|fail|crash|stall/.test(s)||(e.ok===false))return 'problems';
+ if(/office_res_|gap_res_|seed_office_|sweep_|research_|office_created|profile_|mirror_|relink/.test(s))return 'research';
+ return 'other';
+};
+function feedLine(e){
+ const w=String(e.worker||''),s=String(e.stage||''),d=String(e.detail||'');
+ const who=w==='permit-server'?'Server':(w?friendlyName(w):'Server');
+ let msg;
+ if(s==='auth_verify_ok')msg='Verified: '+d;
+ else if(s==='auth_verify_done')msg='Check pass complete — '+d;
+ else if(/^office_res_step/.test(s))msg='Reading: '+d;
+ else if(s==='office_res_done')msg='Finished research: '+d;
+ else if(s==='office_res_idle')msg='Standing by — queue empty';
+ else if(/^office_res_/.test(s))msg=d||s;
+ else if(/^gap_res_/.test(s))msg='Gap research: '+d;
+ else if(s==='outbox_pass')msg='Saved a batch of changes to the app';
+ else if(/^mirror_/.test(s))msg='Updated the local copy of app data';
+ else if(/^seed_office_/.test(s))msg=d||s;
+ else if(/^queue_hygiene_/.test(s))msg='Tidied the work queue — '+d;
+ else if(/relink/.test(s))msg='Linker: '+d;
+ else if(s==='guard')msg=plainAction(d);
+ else if(/^worker_(spawn|exit|stop)/.test(s))msg=d;
+ else msg=d||s;
+ return {who,msg:String(msg).replace(/local-res-([0-9]+)/g,resWord).slice(0,140)};
+}
+function renderActivity(){
+ const evs=(legacy&&legacy.events)||[];
+ const filtered=evs.filter(e=>feedFilter==='all'||FEED_CLASS(e)==feedFilter).slice(0,60);
+ const mk=(k,label)=>'<button data-feed="'+k+'" class="'+(feedFilter===k?'on':'')+'">'+label+'</button>';
+ setH('tab-activity',
+ '<div class="card"><h2>Activity</h2>'
+ +'<div class="fchips">'+mk('all','All')+mk('verifications','Verifications')+mk('research','Research')+mk('problems','Problems')+'</div>'
+ +'<div class="feed">'+(filtered.length?filtered.map(e=>{const l=feedLine(e);const bad=FEED_CLASS(e)==='problems';return '<div class="row"><span class="who">'+esc(l.who)+'</span><span class="msg'+(bad?' bad':'')+'">'+esc(l.msg)+'</span><span class="when">'+agoT(e.t)+'</span></div>';}).join(''):'<div class="empty">Nothing to show yet.</div>')+'</div></div>'
+ +'<details class="mored" id="mored"><summary>More details — raw numbers and background panels</summary><div id="legacyPanels"></div></details>');
+ renderLegacy();
+}
+document.addEventListener('click',e=>{const b=e.target&&e.target.closest?e.target.closest('button[data-feed]'):null;if(b){feedFilter=b.dataset.feed;renderActivity();}});
+// Legacy panels — same data as before, only rendered inside More details.
+function renderLegacy(){
+ const s=legacy;if(!s||!$('legacyPanels'))return;
+ const mb=n=>n>1048576?(n/1048576).toFixed(1)+' MB':n>1024?(n/1024).toFixed(0)+' KB':n+' B';
+ const d=s.downloads||{active:[],done:[],errors:[],filesToday:0,bytesToday:0,doneTotal:0,errTotal:0};
+ const of=s.officeFiles||{offices:[],totals:{offices:0,files:0,stages:{}}};
+ const lw=(s.liveWorkers||[]).slice(0,14);
+ setH('legacyPanels',
+ '<h3>Key numbers</h3><div class="dim small">'
+ +'Offices in the app: <b class="num" style="color:var(--txt)">'+num(s.totalOffices||0)+'</b> · verified: <b class="num ok">'+num(s.verifiedOffices||0)+'</b> · apply-ready jurisdictions: <b class="num ok">'+num(s.applyReady||0)+'</b> of '+num(s.locTotal||0)
+ +'<br>Changes waiting to save: <b class="num'+(s.outboxDepth?' warn':' ok')+'">'+num(s.outboxDepth||0)+'</b> · landed: '+num(s.outboxDone||0)+(s.outboxErrDepth?' · <span class="bad">'+num(s.outboxErrDepth)+' dropped</span>':'')
+ +'<br>Address lookups (expansion): '+num(s.fixtureDone||s.done||0)+' done · '+num(s.inQueue||0)+' queued · flagged: '+num(s.needsReview||0)+'</div>'
+ +'<h3>Address feeder</h3><div class="dim small">queue: <b>'+num(s.inQueue||0)+'</b> addresses waiting'+(s.mirror?' · local copy: '+esc(s.mirror.detail||'')+' '+agoT(s.mirror.at):'')+'</div>'
+ +'<h3>Worker fleet <span class="dim" style="text-transform:none">(from event log)</span></h3>'+(lw.length?'<table>'+lw.map(w=>'<tr><td class="dim" style="width:200px">'+esc(w.label)+'</td><td style="width:110px">'+(w.alive?'<span class="ok small">● live</span>':'<span class="dim small">idle</span>')+'</td><td class="dim small">'+esc(String(w.detail||w.stage||'—').slice(0,80))+'</td><td class="dim small" style="width:80px">'+agoT(w.at)+'</td></tr>').join('')+'</table>':'<div class="empty">No worker events.</div>')
+ +'<h3>Downloads</h3><div class="dim small">'+(d.active.filter(a=>!a.stalled).length)+' in flight · '+num(d.doneTotal||0)+' files · '+mb(d.totalBytes||0)+' total · '+(d.filesToday||0)+' today'+(d.errTotal?' · <span class="bad">'+d.errTotal+' failed</span>':'')+'</div>'
+ +(d.active.length?'<table>'+d.active.slice(0,8).map(a=>'<tr><td class="small">'+esc(String(a.name||a.url||'?').slice(0,70))+'</td><td class="dim small" style="width:140px">'+(a.stalled?'stalled · ':'')+mb(a.bytes||0)+'</td></tr>').join('')+'</table>':'')
+ +'<h3>Office files</h3><div class="dim small">'+num(of.totals.offices)+' offices · '+num(of.totals.files)+' files</div>'
+ +(of.offices.length?'<table>'+of.offices.slice(0,10).map(o=>'<tr><td class="small" style="width:280px">'+esc(o.jurisdiction||'')+'</td><td class="dim small">'+esc(o.office||'')+'</td><td class="dim small">'+esc(Object.keys(o.stages||{}).join(', ')||'dossier only')+'</td></tr>').join('')+'</table>':''));
+}
+// — Advanced tab —
+function renderAdvanced(){
+ const g=srv&&srv.guard||{};const mem=srv&&srv.memory||{};
+ const rows=workers().map(w=>{
+  const canCtl=['stopped-by-user','stopped','culled-by-memory','blocked-by-memory'].includes(w.status);
+  const btn=w.group==='core'||w.group==='dashboard'?'':(w.alive?'<button data-cmd="wstop" data-name="'+esc(w.name)+'" style="padding:2px 10px;font-size:11px">stop</button>':canCtl?'<button data-cmd="wstart" data-name="'+esc(w.name)+'" style="padding:2px 10px;font-size:11px">start</button>':'');
+  const ev=w.last_event?(w.last_event.stage||'')+(w.last_event.detail?' · '+String(w.last_event.detail).slice(0,60):''):'—';
+  return '<tr><td><b>'+esc(friendlyName(w.name))+'</b> <span class="dim small">'+esc(w.name)+'</span><div class="dim small">'+esc(friendlyDesc(w.name))+'</div></td>'
+   +'<td class="dim small">'+esc(w.group)+'</td><td>'+chip(w)+'</td>'
+   +'<td class="num small">'+(w.pid||'—')+'</td><td class="num small">'+(w.rss_mb!=null?w.rss_mb+' MB':'—')+'</td>'
+   +'<td class="num small">'+(w.uptime_s!=null?(w.uptime_s>3600?Math.floor(w.uptime_s/3600)+'h '+Math.floor(w.uptime_s%3600/60)+'m':Math.floor(w.uptime_s/60)+'m'):'—')+'</td>'
+   +'<td class="num small">'+(w.restarts||0)+'</td><td class="dim small">'+esc(ev)+'</td><td>'+btn+'</td></tr>';
+ }).join('');
+ setH('tab-advanced',
+ '<div class="card"><h2>All workers</h2><table><tr><th>Worker</th><th>Group</th><th>Status</th><th>PID</th><th>Memory</th><th>Uptime</th><th>Restarts</th><th>Last event</th><th></th></tr>'+rows+'</table></div>'
+ +'<div class="card"><h2>Memory guard (technical)</h2><div class="dim small">'
+ +'Level '+(g.level!=null?g.level:'—')+' — researchers are stopped whenever free memory nears the reserve; below <b class="num" style="color:var(--txt)">1.5 GB</b> free all background workers pause except the Saver.'
+ +' Currently: '+gb(mem.free_gb)+' free · server using '+gb(mem.fleet_rss_gb)+' · keep-free reserve '+(srv&&srv.limits?srv.limits.reserve_gb:'—')+' GB · server limit '+(srv&&srv.limits?srv.limits.fleet_budget_gb:'—')+' GB.'
+ +((g.paused||[]).length?'<br>Paused by the guard: '+esc(g.paused.join(', ')):'')+'</div></div>');
+}
+// — shared click wiring (data-cmd buttons + memory save) —
+document.addEventListener('click',async e=>{
+ const b=e.target&&e.target.closest?e.target.closest('button[data-cmd],#btnSaveLim'):null;if(!b||b.disabled)return;
+ const R=(srv&&srv.guard&&srv.guard.researchers)||{};
+ const cur=pendingMax&&Date.now()-pendingMax.at<10000?pendingMax.v:(R.max!=null?R.max:16);
+ try{
+  if(b.id==='btnSaveLim'){
+   const rv=Number($('inReserve').value),bv=Number($('inBudget').value);
+   const msg=$('saveMsg');
+   try{await srvCmd('limits',{reserve_gb:rv,fleet_budget_gb:bv});msg.innerHTML='<span class="ok">Saved ✓</span>';setTimeout(()=>{if(msg.textContent.includes('Saved'))msg.textContent='';},4000);}
+   catch(err){msg.innerHTML='<span class="bad">'+esc(err.message)+'</span>';}
+   return;
+  }
+  const c=b.dataset.cmd;
+  if(c==='mode-auto')await srvCmd('researchers',{mode:'auto'});
+  else if(c==='mode-manual')await srvCmd('researchers',{mode:'manual'});
+  else if(c==='max-inc'||c==='max-dec'){const v=c==='max-inc'?Math.min(16,cur+1):Math.max(0,cur-1);pendingMax={v,at:Date.now()};const el=$('resmax');if(el)el.textContent=v;await srvCmd('researchers',{mode:'manual',max:v});}
+  else if(c==='killres'){if(!confirm('Stop all researchers now? They restart automatically when you raise the count or switch back to Auto.'))return;await srvCmd('researchers',{max:0});}
+  else if(c==='wstop')await srvCmd('worker',{name:b.dataset.name,action:'stop'});
+  else if(c==='wstart')await srvCmd('worker',{name:b.dataset.name,action:'start'});
+ }catch(err){alert(err.message);}
+});
+// — render dispatch —
+function render(){
+ renderHeader();
+ if(held())return;
+ if(tab==='overview')renderOverview();
+ else if(tab==='researchers')renderResearchers();
+ else if(tab==='verification')renderVerification();
+ else if(tab==='memory')renderMemory();
+ else if(tab==='activity')renderActivity();
+ else if(tab==='advanced')renderAdvanced();
+}
+async function cycle(){await pollSrv();await pollLedger();if(tab==='verification'||tab==='overview')await pollPromos();render();}
+async function legacyCycle(){await pollLegacy();if(tab==='activity'&&!held())renderActivity();}
+document.addEventListener('keydown',e=>{if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&document.activeElement===document.body){const i=TABS.indexOf(tab);showTab((i+(e.key==='ArrowRight'?1:-1)+TABS.length)%TABS.length);}});
+TABS.forEach(x=>$('tab-'+x).hidden=x!==tab);
+document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab?'true':'false'));
+cycle();setInterval(cycle,3000);legacyCycle();setInterval(legacyCycle,3000);
+</script></body></html>`;
 let lastGoodStatus=null,lastStatusAt=0;
 // status() is heavy (~6s at fleet scale) — compute it in the background and
 // serve the last payload instantly. Previously the page polled /status.json
@@ -666,6 +865,12 @@ http.createServer((req,res)=>{
     }
     if(req.url==='/api/verification-ledger'){
       res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(rd('.audit-work/verification-ledger.json')||'{"error":"no ledger yet"}');return;
+    }
+    if(req.url==='/api/promotions'){
+      // Tail of the verifier's promotions log — the "recently verified" list.
+      const t=tailRead('.audit-work/verify-promotions.jsonl',256*1024)||'';
+      const items=t.trim().split('\n').filter(Boolean).slice(-20).reverse().map(l=>{try{return JSON.parse(l);}catch{return null;}}).filter(Boolean);
+      res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify({items}));return;
     }
     if(req.url.startsWith('/status.json')){
       const payload=lastGoodStatus||'{"error":"status building"}';
