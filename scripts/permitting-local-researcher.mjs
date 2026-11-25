@@ -10,7 +10,9 @@
 // Output is a needs_verification research draft in the SAME shape the LLM
 // produced — the evidence-gated verifier still decides what gets promoted,
 // so weak extractions stay needs_verification, never wrong-verified.
-import { openSync, writeFileSync, readFileSync } from 'node:fs';
+import { openSync, writeFileSync, readFileSync, appendFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { getMirror, mirrorApply } from './lib/entity-mirror.mjs';
 import { enqueue } from './lib/outbox.mjs';
 import { normalizeOfficeResearch } from '../base44/shared/permittingOfficeResearch.mjs';
@@ -42,9 +44,17 @@ try { claims = JSON.parse(readFileSync(CLAIMS_FILE, 'utf8')); } catch {}
 const saveClaims = () => { try { writeFileSync(CLAIMS_FILE, JSON.stringify(claims)); } catch {} };
 const claimKey = (r) => r.id || `${r.jurisdiction_name}|${r.state}`;
 
-async function research(row, profile, profiles) {
+// Research an office_research pool for one jurisdiction.
+// opts.wanted — Set of role names the extraction should aim at (gap-target
+// research passes the office's missing roles; queue research passes null).
+// opts.queueClose === false skips the SourceCollectionQueue close-write —
+// synthetic gap targets aren't queue rows.
+// opts.merge === true unions new roles into the profile's existing
+// office_research (gap research never drops evidence already there).
+const roleKey = (r) => `${r?.role}|${String(r?.official_source_url || '').trim().toLowerCase()}|${String(r?.responsibility_quote || '').replace(/\s+/g, ' ').trim().toLowerCase().slice(0, 120)}`;
+async function research(row, profile, profiles, opts = {}) {
   const label = `${row.jurisdiction_name}, ${row.state}`;
-  emit({ stage: 'office_res_step', address: label, start: true, detail: 'local research — discovering official site' });
+  emit({ stage: 'office_res_step', address: label, start: true, detail: `local research — discovering official site${opts.wanted ? ` (aiming at ${[...opts.wanted].join(', ')})` : ''}` });
   const name = String(row.jurisdiction_name || '').replace(/\s+(city|village|township|county)$/i, '');
   const { site, countyFallback, roster } = await discoverSite({ name, state: row.state, type: row.jurisdiction_type, county: row.parent_county_name, profile, profiles });
   if (!site) {
@@ -72,7 +82,7 @@ async function research(row, profile, profiles) {
         emit({ stage: 'office_res_step', address: label, step: true, detail: `no site — regional provider ${rps[0].name} covers ${row.parent_county_name || 'county'}` });
       }
     }
-    emit({ stage: 'office_res_review', address: label, ok: false, detail: 'no official site found (profile + guesses + wikidata + search + county + roster)' }); return 'no_site';
+    emit({ stage: 'office_res_review', address: label, ok: false, detail: 'no official site found (profile + guesses + wikidata + search + county + roster)' }); return { result: 'no_site', added: 0 };
   }
 
   emit({ stage: 'office_res_step', address: label, step: true, detail: `site: ${site}${countyFallback ? ' (county fallback)' : ''}` });
@@ -81,13 +91,13 @@ async function research(row, profile, profiles) {
   // 9-page default reaches.
   const deep = Number(row.demand_weight || 0) >= 10 || /city/i.test(String(row.jurisdiction_type || ''));
   const crawl = await crawlSite(site, { maxPages: deep ? 15 : 9, deep });
-  if (!crawl) { emit({ stage: 'office_res_review', address: label, ok: false, detail: `site unreachable: ${site}` }); return 'no_site'; }
+  if (!crawl) { emit({ stage: 'office_res_review', address: label, ok: false, detail: `site unreachable: ${site}` }); return { result: 'no_site', added: 0 }; }
   emit({ stage: 'office_res_step', address: label, step: true, detail: `crawled ${crawl.crawled} page(s) · ${crawl.pdf.length} permit PDF(s)` });
 
   // MP-3.1 — PDF text joins extraction: permit PDFs carry office names, fees,
   // and form titles that filename matching alone can't see.
   const pdfPgs = await pdfPages(crawl.pdf);
-  const roles = extract([...crawl.pages, ...pdfPgs]);
+  const roles = extract([...crawl.pages, ...pdfPgs], opts.wanted || null);
   // PDF evidence: a sign-permit PDF on the official site ⇒ that role applies,
   // office = site owner when no name extracted.
   for (const p of crawl.pdf) {
@@ -107,7 +117,7 @@ async function research(row, profile, profiles) {
     if (csite && csite !== site) {
       const ccrawl = await crawlSite(csite);
       if (ccrawl) {
-        roles.push(...extract(ccrawl.pages));
+        roles.push(...extract(ccrawl.pages, opts.wanted || null));
         for (const p of ccrawl.pdf) {
           if (roles.find((r) => r.role === p.role)) continue;
           roles.push({ role: p.role, office_name: `${row.parent_county_name} offices`, official_source_url: p.url, applicability: 'potentially_applicable', responsibility_quote: `Official site hosts "${p.name}" — the issuing office publishes this form.`, service_area: 'county-administered', delegation_quote: null, contact_info: {}, research_fields: {} });
@@ -117,7 +127,7 @@ async function research(row, profile, profiles) {
       }
     }
   }
-  if (!roles.length) { emit({ stage: 'office_res_review', address: label, ok: false, detail: `site found but no office evidence on ${crawl.crawled} page(s)` }); return 'no_evidence'; }
+  if (!roles.length) { emit({ stage: 'office_res_review', address: label, ok: false, detail: `site found but no office evidence on ${crawl.crawled} page(s)` }); return { result: 'no_evidence', added: 0 }; }
   // MP-3.2 — application-form links attach to sign_permit (the filing the
   // user actually submits); first match wins, name from anchor text.
   const form = (crawl.forms || [])[0];
@@ -132,15 +142,25 @@ async function research(row, profile, profiles) {
   // countyFallback path produced zero research despite succeeding).
   const targetProfile = profile;
   const normalized = normalizeOfficeResearch({ roles }, { jurisdiction: { id: targetProfile?.id, name: row.jurisdiction_name, state: row.state, type: row.jurisdiction_type } });
+  let out = normalized, added = normalized.roles.length;
+  if (opts.merge && targetProfile) {
+    const prev = targetProfile.office_research?.roles || [];
+    const seen = new Set(prev.map(roleKey));
+    const fresh = normalized.roles.filter((r) => !seen.has(roleKey(r)));
+    added = fresh.length;
+    out = { ...(targetProfile.office_research || {}), ...normalized, roles: [...prev, ...fresh] };
+  }
   if (targetProfile?.id) {
-    enqueue({ entity: 'JurisdictionProfile', op: 'update', id: targetProfile.id, data: { office_research: normalized }, mirror: `profiles-${String(targetProfile.state || row.state).toLowerCase()}`, note: `local research — ${label}` });
-    mirrorApply(`profiles-${String(targetProfile.state || row.state).toLowerCase()}`, { id: targetProfile.id, office_research: normalized });
+    enqueue({ entity: 'JurisdictionProfile', op: 'update', id: targetProfile.id, data: { office_research: out }, mirror: `profiles-${String(targetProfile.state || row.state).toLowerCase()}`, note: `local research — ${label}` });
+    mirrorApply(`profiles-${String(targetProfile.state || row.state).toLowerCase()}`, { id: targetProfile.id, office_research: out });
   }
   const covered = roles.length;
-  enqueue({ entity: 'SourceCollectionQueue', op: 'update', id: row.id, data: { status: covered >= 3 ? 'sources_found' : 'partial_gaps', missing_next: covered >= 3 ? null : `local research — ${covered}/7 roles found; thin evidence${countyFallback ? ' (county-level)' : ''}` }, note: `research close — ${label}` });
-  mirrorApply('queue', { id: row.id, status: covered >= 3 ? 'sources_found' : 'partial_gaps' });
-  emit({ stage: 'office_res_done', address: label, ok: true, detail: `LOCAL research — ${covered}/7 roles${countyFallback ? ' (county-administered)' : ''} from ${site} → ${covered >= 3 ? 'sources_found' : 'partial_gaps'}` });
-  return 'researched';
+  if (opts.queueClose !== false) {
+    enqueue({ entity: 'SourceCollectionQueue', op: 'update', id: row.id, data: { status: covered >= 3 ? 'sources_found' : 'partial_gaps', missing_next: covered >= 3 ? null : `local research — ${covered}/7 roles found; thin evidence${countyFallback ? ' (county-level)' : ''}` }, note: `research close — ${label}` });
+    mirrorApply('queue', { id: row.id, status: covered >= 3 ? 'sources_found' : 'partial_gaps' });
+  }
+  emit({ stage: 'office_res_done', address: label, ok: true, detail: `LOCAL research — ${covered}/7 roles${opts.merge ? ` (+${added} new)` : ''}${countyFallback ? ' (county-administered)' : ''} from ${site} → ${covered >= 3 ? 'sources_found' : 'partial_gaps'}` });
+  return { result: 'researched', added };
 }
 
 // ── Office fulfillment — when the research queue is dry, fill offices that
@@ -250,12 +270,93 @@ async function fulfillPass(profiles) {
   return true;
 }
 
+// ── Verification gap targeting (§1E) — the verifier's office-state file
+// records WHY each office stayed needs_verification; researchers chase
+// those gaps directly instead of only draining the discovery queue.
+const OFFICE_STATE = '.audit-work/verify-office-state.json';
+const VERIFY_FIRST = '.audit-work/verify-first.jsonl';
+const GAP_REASONS = new Set(['no_research', 'no_quote', 'no_role_match']);
+const REVIEW_ATTEMPTS = 3; // held offices belong to a person, not this pass
+// Cooldowns: a 'new' claim re-queues soon so the verifier re-judges fresh
+// evidence; a 'none' claim cools 24h — re-crawling the same site the same
+// week produces the same evidence.
+export const GAP_CD = { new: 45 * 60e3, none: 24 * 3600e3 };
+export function gapTargets(state, locs, slice, slices, claims, now = Date.now()) {
+  const byLoc = new Map();
+  for (const rec of Object.values(state?.offices || {})) {
+    if (!rec || rec.status !== 'needs_verification') continue;
+    if ((rec.attempts || 0) >= REVIEW_ATTEMPTS) continue;
+    if (!(rec.reasons || []).some((r) => GAP_REASONS.has(r))) continue;
+    const t = byLoc.get(rec.locality_id) || { count: 0, roles: new Set() };
+    t.count++;
+    for (const r of rec.missing_roles || []) t.roles.add(r);
+    byLoc.set(rec.locality_id, t);
+  }
+  const locById = new Map((locs || []).map((l) => [l.id, l]));
+  const out = [];
+  for (const [locId, t] of byLoc) {
+    if (sliceOf(locId) !== slice) continue;
+    const c = claims[`gap-${locId}`];
+    if (c && now - new Date(c.at).getTime() < (GAP_CD[c.result] ?? GAP_CD.none)) continue;
+    const loc = locById.get(locId);
+    if (!loc || loc.duplicate_of) continue;
+    out.push({ locality_id: locId, loc, gap_offices: t.count, missing_roles: [...t.roles] });
+  }
+  out.sort((a, b) => b.gap_offices - a.gap_offices);
+  return out;
+}
+const readJSON = (f, d) => { try { return JSON.parse(readFileSync(f, 'utf8')); } catch { return d; } };
+const readControl = () => readJSON('.audit-work/server-control.json', {});
+
+async function gapPass(profiles, profById, budget = 8) {
+  if (readControl().verification === false) return 0;
+  const locs = getMirror('localities')?.rows || [];
+  const state = readJSON(OFFICE_STATE, { offices: {} });
+  const targets = gapTargets(state, locs, SLICE, SLICES, claims);
+  if (!targets.length) return 0;
+  emit({ stage: 'gap_target_pass', detail: `${targets.length} localities with verification gaps this slice` });
+  let worked = 0;
+  for (const t of targets.slice(0, budget)) {
+    const { loc } = t;
+    const label = `${loc.name}, ${loc.state}`;
+    await waitWhilePaused(`local-res-${SLICE}`, { item: label });
+    try {
+      const profile = profById.get(loc.jurisdiction_profile_id);
+      if (!profile || profile.verification_status === 'historical') {
+        claims[`gap-${loc.id}`] = { result: 'none', at: new Date().toISOString() }; // profile gap belongs to relink/sweep
+        saveClaims();
+        continue;
+      }
+      const row = {
+        id: `gap-${loc.id}`, jurisdiction_name: loc.name, state: loc.state,
+        jurisdiction_type: loc.jurisdiction_type, parent_county_name: loc.parent_county_name || profile.parent_county?.name || profile.county_name,
+        demand_weight: 10, // deep crawl — these localities block verification
+      };
+      emit({ stage: 'gap_target', address: label, detail: `${t.gap_offices} office(s) failing — missing ${t.missing_roles.join(', ') || 'research'}` });
+      const { result, added } = await research(row, profile, profiles, { wanted: new Set(t.missing_roles), queueClose: false, merge: true });
+      claims[`gap-${loc.id}`] = { result: added > 0 ? 'new' : 'none', result_detail: result, at: new Date().toISOString() };
+      saveClaims();
+      if (added > 0) {
+        try { appendFileSync(VERIFY_FIRST, JSON.stringify({ name: loc.name, state: loc.state, at: Date.now() }) + '\n'); } catch {}
+        emit({ stage: 'gap_target_done', address: label, ok: true, detail: `+${added} role evidence → verify-first` });
+      }
+      worked++;
+    } catch (e) { emit({ stage: 'gap_target_error', address: label, ok: false, detail: String(e?.message || e).slice(0, 140) }); }
+    await sleep(SLEEP);
+  }
+  return worked;
+}
+
 async function main() {
   emit({ stage: 'office_res_boot', address: 'local researcher', ok: true, start: true, detail: 'deterministic local research v2 — sitemap + PDF evidence + directory parse + county fallback · ZERO spend' });
   do {
     await waitWhilePaused(`local-res-${SLICE}`, { item: 'research pass' });
     const queue = getMirror('queue')?.rows || [];
     const profiles = [...(getMirror('profiles-oh')?.rows || []), ...(getMirror('profiles-ky')?.rows || [])];
+    const profById = new Map(profiles.map((p) => [p.id, p]));
+    // Verification gap targeting comes FIRST — unblocking needs_verification
+    // offices outranks widening the discovery queue.
+    await gapPass(profiles, profById).catch((e) => emit({ stage: 'gap_target_error', detail: String(e?.message || e).slice(0, 140) }));
     const base = (n) => String(n || '').toLowerCase().replace(/\s+(city|village|township|county)$/i, '').trim();
     const profileOf = (row) => profiles.find((p) => base(p.name) === base(row.jurisdiction_name) && String(p.state || '').toUpperCase() === String(row.state || '').toUpperCase());
     const NO_SITE_COOLDOWN = 12 * 60 * 60 * 1000;
@@ -287,7 +388,7 @@ async function main() {
     for (const row of pending.slice(0, 200)) {
       await waitWhilePaused(`local-res-${SLICE}`, { item: row.jurisdiction_name });
       try {
-        const result = await research(row, profileOf(row), profiles);
+        const { result } = await research(row, profileOf(row), profiles);
         claims[claimKey(row)] = { result, at: new Date().toISOString() };
         saveClaims();
       } catch (e) { emit({ stage: 'office_res_error', address: `${row.jurisdiction_name}, ${row.state}`, ok: false, detail: String(e?.message || e).slice(0, 140) }); }
@@ -296,4 +397,5 @@ async function main() {
     if (ONCE) break;
   } while (true);
 }
-main().catch((e) => { emit({ stage: 'office_res_error', address: 'local researcher', ok: false, detail: String(e?.message || e).slice(0, 160) }); process.exit(1); });
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
+if (isMain) main().catch((e) => { emit({ stage: 'office_res_error', address: 'local researcher', ok: false, detail: String(e?.message || e).slice(0, 160) }); process.exit(1); });
