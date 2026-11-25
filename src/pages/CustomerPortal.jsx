@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { buildStatement } from "@/components/statements/statementModel";
 import StatementView from "@/components/statements/StatementView";
 import ProductStatusPanel from "@/components/portal/ProductStatusPanel";
+import LinkHelpPanel from "@/components/portal/LinkHelpPanel";
 import {
   Receipt,
   ShieldCheck,
   Clock,
-  Ban,
   FileText,
   Hammer,
   MessageSquare,
@@ -668,6 +668,7 @@ export default function CustomerPortal() {
   const [tab, setTab] = useState("overview");
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
+  const [shopContact, setShopContact] = useState({ phone: "", email: "" });
   const [statement, setStatement] = useState(null);
   const [dismissed, setDismissed] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem(ANNOUNCEMENT_DISMISS_KEY) || "[]")); }
@@ -680,19 +681,37 @@ export default function CustomerPortal() {
     try {
       const data = await call({ action: "bootstrap", token });
       setState({ loading: false, data, error: "" });
-    } catch (error) {
-      setState({ loading: false, data: null, error: error?.message || "This portal link is invalid, expired, or revoked." });
+    } catch {
+      // Never show the raw failure (status codes, transport text) to a
+      // customer — the help panel explains it in plain words.
+      setState({ loading: false, data: null, error: "link_unusable" });
     }
   }, [token]);
 
   useEffect(() => {
     document.title = "Customer Portal | CCS Signage";
     if (!token) {
-      setState({ loading: false, data: null, error: "This portal link is incomplete. Please use the link exactly as it was sent to you." });
+      setState({ loading: false, data: null, error: "link_unusable" });
       return;
     }
     load();
   }, [token, load]);
+
+  // Shop phone/email for the "link doesn't work" panel — public info only.
+  useEffect(() => {
+    if (!state.error) return undefined;
+    let cancelled = false;
+    base44.functions
+      .invoke("customerPortalAction", { action: "contact_info" })
+      .then((response) => {
+        const info = response?.data || response;
+        if (!cancelled && info?.success) {
+          setShopContact({ phone: info.phone || "", email: info.email || "" });
+        }
+      })
+      .catch(() => null);
+    return () => { cancelled = true; };
+  }, [state.error]);
 
   useEffect(() => {
     if (!toast) return;
@@ -872,12 +891,7 @@ export default function CustomerPortal() {
         )}
 
         {!state.loading && state.error && (
-          <div className="rounded-2xl border border-red-200 bg-white p-10 text-center">
-            <Ban className="mx-auto mb-3 h-8 w-8 text-red-400" />
-            <p className="font-medium text-slate-900">Link unavailable</p>
-            <p className="mt-1 text-sm text-slate-500">{state.error}</p>
-            <p className="mt-4 text-xs text-slate-400">If you believe this is a mistake, contact CCS Signage for a new link.</p>
-          </div>
+          <LinkHelpPanel phone={shopContact.phone} email={shopContact.email} brokenToken={token} />
         )}
 
         {!state.loading && data && !isCustomer && (
