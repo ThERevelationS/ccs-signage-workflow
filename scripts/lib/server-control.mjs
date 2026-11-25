@@ -12,7 +12,7 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 export const AUDIT = process.env.PERMIT_AUDIT_DIR || path.join(ROOT, '.audit-work');
 export const CONTROL_FILE = path.join(AUDIT, 'server-control.json');
 export const HEARTBEAT_DIR = path.join(AUDIT, 'heartbeats');
-export const DEFAULT_CONTROL = { state: 'running', verification: true, expansion: false, expansion_locked: true, guard_paused: [] };
+export const DEFAULT_CONTROL = { state: 'running', verification: true, expansion: false, expansion_locked: true, guard_paused: [], researchers: { mode: 'auto', max: 16, disabled: [] }, stopped_workers: [], limits: { reserve_gb: 4, fleet_budget_gb: 12 } };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let cache = { file: '', mtimeMs: -1, data: null };

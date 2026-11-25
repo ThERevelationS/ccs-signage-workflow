@@ -10,7 +10,7 @@ const tmp = mkdtempSync(path.join(tmpdir(), 'permit-server-test-'));
 process.env.PERMIT_AUDIT_DIR = tmp; // must land before the lib imports
 
 const { readControl, waitWhilePaused, heartbeat, heartbeatFile, DEFAULT_CONTROL, HEARTBEAT_DIR } = await import('./lib/server-control.mjs');
-const { activeSetFor, guardLevelFor, guardPausedNames, guardNextLevel, researcherTarget, researcherStep, researcherWindow, nextBackoff, lockStale, rotateIfBig } = await import('./permit-server.mjs');
+const { activeSetFor, guardLevelFor, guardPausedNames, guardNextLevel, researcherStep, researcherWindow, researcherAllowance, memoryAllowance, admitResearcher, cullOrder, reserveBytesOf, fleetBudgetBytesOf, nextBackoff, lockStale, rotateIfBig } = await import('./permit-server.mjs');
 
 const ctl = path.join(tmp, 'server-control.json');
 const writeCtl = (o) => writeFileSync(ctl, JSON.stringify({ ...DEFAULT_CONTROL, ...o, updated_at: new Date().toISOString() }));
@@ -107,18 +107,46 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ── adaptive researcher window ───────────────────────────────────────────
 {
   const GB = 1024 ** 3, MB = 1024 ** 2;
-  // clamp(floor((free−4GB)/avgRss), 2, 16)
-  assert.equal(researcherTarget(12 * GB, 400 * MB), 16);              // 8GB/400MB=20 → cap
-  assert.equal(researcherTarget(6 * GB, 400 * MB), 5);                // 2GB/400MB=5
-  assert.equal(researcherTarget(4.1 * GB, 400 * MB), 2);              // ~0 → floor 2
-  assert.equal(researcherTarget(9 * GB, NaN), Math.floor(5 * GB / (500 * MB))); // unmeasured → 500MB default
-  // ±2/min rate limit toward target, clamped to [2,16]
+  const ctl = { researchers: { mode: 'auto', max: 16, disabled: [] }, limits: { reserve_gb: 4 } };
+  // memoryAllowance = floor((free−reserve)/avgRss), clamped [0,16]
+  assert.equal(memoryAllowance(12 * GB, 400 * MB, 4 * GB), 16);   // 8GB/400MB=20 → cap
+  assert.equal(memoryAllowance(6 * GB, 400 * MB, 4 * GB), 5);     // 2GB/400MB=5
+  assert.equal(memoryAllowance(4.1 * GB, 400 * MB, 4 * GB), 0);   // ~0 → floor 0 (admission blocks)
+  assert.equal(memoryAllowance(9 * GB, NaN, 4 * GB), 10);         // unmeasured → 500MB default
+  // auto = clamp(memN, RES_MIN, user max); user max caps the formula
+  assert.equal(researcherAllowance(ctl, 12 * GB, 400 * MB), 16);
+  assert.equal(researcherAllowance(ctl, 6 * GB, 400 * MB), 5);
+  assert.equal(researcherAllowance(ctl, 4.1 * GB, 400 * MB), 2);  // auto floors at 2
+  assert.equal(researcherAllowance({ ...ctl, researchers: { ...ctl.researchers, max: 6 } }, 12 * GB, 400 * MB), 6);
+  assert.equal(researcherAllowance({ ...ctl, researchers: { ...ctl.researchers, max: 0 } }, 12 * GB, 400 * MB), 0); // kill-all
+  assert.equal(researcherAllowance({ ...ctl, researchers: { ...ctl.researchers, max: 1 } }, 12 * GB, 400 * MB), 1);
+  // manual = exactly the user's count, still memory-capped ("requested 8 · memory allows 3")
+  const man = { ...ctl, researchers: { mode: 'manual', max: 8, disabled: [] } };
+  assert.equal(researcherAllowance(man, 12 * GB, 400 * MB), 8);
+  assert.equal(researcherAllowance(man, 5.4 * GB, 400 * MB), 3);  // (5.4−4)/0.4=3.5→3
+  assert.equal(researcherAllowance(man, 3 * GB, 400 * MB), 0);    // under reserve → 0
+  // configurable reserve shifts the memory allowance
+  assert.equal(researcherAllowance({ ...man, limits: { reserve_gb: 2 } }, 5.4 * GB, 400 * MB), 8);
+  assert.equal(reserveBytesOf({ limits: { reserve_gb: 6 } }), 6 * GB);
+  assert.equal(reserveBytesOf({ limits: { reserve_gb: 99 } }), 10 * GB); // clamped
+  assert.equal(reserveBytesOf({}), 4 * GB);
+  assert.equal(fleetBudgetBytesOf({}), 12 * GB);
+  // spawn admission: free − projected RSS must hold the reserve
+  assert.equal(admitResearcher(5 * GB, 400 * MB, 4 * GB), true);   // 5−0.4 ≥ 4
+  assert.equal(admitResearcher(4.2 * GB, 400 * MB, 4 * GB), false); // 4.2−0.4 < 4
+  assert.equal(admitResearcher(4.5 * GB, NaN, 4 * GB), true);       // 500MB default
+  assert.equal(admitResearcher(4.4 * GB, NaN, 4 * GB), false);
+  // ±2/min rate limit toward target, now clamped to [0,16] so kill-all reaches 0
   assert.equal(researcherStep(16, 6), 14);
   assert.equal(researcherStep(2, 16), 4);
   assert.equal(researcherStep(14, 14), 14);
-  assert.equal(researcherStep(3, 1), 2);   // can't go below the floor
+  assert.equal(researcherStep(2, 0), 0);   // can reach 0 (kill-all / memory floor)
+  assert.equal(researcherStep(1, 0), 0);
   assert.equal(researcherStep(15, 99), 16); // can't exceed total
   assert.equal(researcherStep(undefined, 7), 14); // unmeasured starts at total, steps ±2
+  // newest-first cull order (budget + emergency drains)
+  const rs = (n, t) => ({ spec: { name: `local-res-${n}` }, startedAt: t });
+  assert.deepEqual(cullOrder([rs(0, 100), rs(5, 400), rs(9, 200)]).map((r) => r.spec.name), ['local-res-5', 'local-res-9', 'local-res-0']);
   // rotation: contiguous wrap-around window, start advances by allowed per epoch
   const E = 10 * 60 * 1000;
   const w1 = researcherWindow(7 * E, 5);
@@ -133,6 +161,30 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const covered = new Set();
   for (let e = 0; e < 16; e++) researcherWindow(e * E, 5).names.forEach((n) => covered.add(n));
   assert.equal(covered.size, 16);
+  // disabled slices are skipped by the window — rotation reaches past them
+  const w3 = researcherWindow(7 * E, 5, 16, ['local-res-4', 'local-res-6']);
+  assert.deepEqual(w3.names, ['local-res-3', 'local-res-5', 'local-res-7', 'local-res-8', 'local-res-9']);
+  const w4 = researcherWindow(7 * E, 5, 16, ['local-res-3', 'local-res-4', 'local-res-5', 'local-res-6', 'local-res-7', 'local-res-8', 'local-res-9', 'local-res-10', 'local-res-11', 'local-res-12', 'local-res-13', 'local-res-14']);
+  assert.equal(w4.names.length, 4); // only 4 enabled slices exist → window shrinks
+}
+
+// ── user-stopped workers excluded from the active set ────────────────────
+{
+  const run = { state: 'running', verification: true, expansion: false, expansion_locked: true };
+  const stopped = activeSetFor({ ...run, stopped_workers: ['seed-scan', 'queue-hygiene'] });
+  assert.ok(!stopped.includes('seed-scan') && !stopped.includes('queue-hygiene') && stopped.includes('authority-verifier'));
+}
+
+// ── control file: researcher/limit fields persist ────────────────────────
+{
+  writeCtl({ researchers: { mode: 'manual', max: 7, disabled: ['local-res-3'] }, stopped_workers: ['seed-scan'], limits: { reserve_gb: 6, fleet_budget_gb: 8 } });
+  await sleep(20);
+  const c = readControl(ctl);
+  assert.equal(c.researchers.mode, 'manual'); assert.equal(c.researchers.max, 7);
+  assert.deepEqual(c.researchers.disabled, ['local-res-3']);
+  assert.deepEqual(c.stopped_workers, ['seed-scan']);
+  assert.equal(c.limits.reserve_gb, 6); assert.equal(c.limits.fleet_budget_gb, 8);
+  writeCtl({ researchers: { mode: 'auto', max: 16, disabled: [] }, stopped_workers: [], limits: { reserve_gb: 4, fleet_budget_gb: 12 } }); // restore
 }
 
 // ── restart backoff ──────────────────────────────────────────────────────

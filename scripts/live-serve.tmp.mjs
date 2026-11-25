@@ -479,7 +479,7 @@ async function tick(){
 
 }
 // ── permit-server control bar (proxied to 127.0.0.1:4175) ──────────────
-let lastLedger=null,lastLedgerAt=0;
+let lastLedger=null,lastLedgerAt=0,lastSrv=null;
 async function fetchLedger(){const n=Date.now();if(n-lastLedgerAt<15000&&lastLedger)return lastLedger;try{const r=await fetch('/api/verification-ledger',{cache:'no-store'});if(r.ok){lastLedger=await r.json();lastLedgerAt=n;}}catch(e){}return lastLedger;}
 async function srvCmd(p,body){try{const r=await fetch('/api/server/'+p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body||{})});if(r.status===409){const j=await r.json().catch(()=>({}));alert(j.error||'conflict');}}catch(e){}}
 function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -490,28 +490,71 @@ async function srvTick(){
  const el=document.getElementById('srv');if(!el)return;
  if(!s){setH('srv','<div class="dim"><b style="color:#f87171">permit-server controller OFFLINE</b> — start it with the CCS Permit Server desktop icon or <span style="color:#94a3b8">node scripts/permit-server.mjs</span></div>');return;}
  const stCol={running:'#34d399',paused:'#fbbf24',stopped:'#f87171'}[s.state]||'#94a3b8';
- const g=s.guard||{level:0};
- const mem=s.memory||{};
- const gtxt=s.state==='stopped'?'':(g.level===2?' · <b class="bad">memory guard: all workers paused except flusher</b>':g.level===1?' · <b class="warn">memory guard: researchers paused</b>':' · guard ok');
+ const g=s.guard||{level:0},mem=s.memory||{},lim=s.limits||{},R=g.researchers||{};
+ const gtxt=s.state==='stopped'?'':(g.level===2?' · <b class="bad">memory guard L2: workers paused · researchers draining</b>':g.level===1?' · <b class="warn">memory guard L1: draining researchers until free recovers</b>':' · guard ok');
+ lastSrv=s;
+ if(window._pendingMax){const rm=(s.guard&&s.guard.researchers&&s.guard.researchers.max);if(rm===window._pendingMax.v||Date.now()-window._pendingMax.at>10000)window._pendingMax=null;}
  let btns='';
- if(s.state!=='running')btns+='<button style="'+BTN+';border-color:#34d399" onclick="srvCmd(\'start\')">▶ Start</button> ';
- if(s.state==='running')btns+='<button style="'+BTN+';border-color:#fbbf24" onclick="srvCmd(\'pause\')">⏸ Pause</button> ';
- if(s.state==='paused')btns+='<button style="'+BTN+';border-color:#34d399" onclick="srvCmd(\'resume\')">▶ Resume</button> ';
- if(s.state!=='stopped')btns+='<button style="'+BTN+';border-color:#f87171" onclick="srvCmd(\'stop\')">■ Stop</button> ';
- btns+='<button style="'+BTN+';border-color:'+(s.verification?'#34d399':'#475569')+'" onclick="srvCmd(\'verification\',{on:'+!s.verification+'})">Verification '+(s.verification?'ON':'OFF')+'</button> ';
- if(s.expansion_locked)btns+='<button style="'+BTN+';opacity:.5" disabled title="locked until verification is done">Expansion 🔒</button> <span class="dim" style="font-size:11px">locked until verification is done</span> ';
- else btns+='<button style="'+BTN+';border-color:'+(s.expansion?'#34d399':'#475569')+'" onclick="srvCmd(\'expansion\',{on:'+!s.expansion+'})">Expansion '+(s.expansion?'ON':'OFF')+'</button> ';
+ if(s.state!=='running')btns+='<button style="'+BTN+';border-color:#34d399" data-cmd="start">▶ Start</button> ';
+ if(s.state==='running')btns+='<button style="'+BTN+';border-color:#fbbf24" data-cmd="pause">⏸ Pause</button> ';
+ if(s.state==='paused')btns+='<button style="'+BTN+';border-color:#34d399" data-cmd="resume">▶ Resume</button> ';
+ if(s.state!=='stopped')btns+='<button style="'+BTN+';border-color:#f87171" data-cmd="stop">■ Stop</button> ';
+ btns+='<button style="'+BTN+';border-color:'+(s.verification?'#34d399':'#475569')+'" data-cmd="verification" data-on="'+(s.verification?0:1)+'">Verification '+(s.verification?'ON':'OFF')+'</button> ';
+ if(s.expansion_locked)btns+='<button style="'+BTN+';opacity:.5" disabled title="locked until verification is done">Expansion 🔒</button> ';
+ else btns+='<button style="'+BTN+';border-color:'+(s.expansion?'#34d399':'#475569')+'" data-cmd="expansion" data-on="'+(s.expansion?0:1)+'">Expansion '+(s.expansion?'ON':'OFF')+'</button> ';
+ btns+='<button style="'+BTN+';background:#7f1d1d;border-color:#f87171" title="Stop every researcher immediately — sets researchers max to 0" data-cmd="killres">⛔ Kill all researchers</button> ';
  const grpBadge={core:'#38bdf8',verification:'#a78bfa',expansion:'#f472b6',dashboard:'#64748b'};
+ const stColor={'running':'#34d399','idle':'#6ee7b7','paused-by-guard':'#fbbf24','culled-by-memory':'#fb923c','blocked-by-memory':'#fb923c','stopped-by-user':'#94a3b8','done':'#38bdf8','stopped':'#64748b'};
+ const noCtl={'write-flusher':1,'mirror-sync':1,'dashboard':1};
+ const rowBtn=(w)=>{
+  if(noCtl[w.name])return '<span class="dim" style="font-size:10px">core</span>';
+  if(w.alive)return '<button style="'+BTN+';padding:1px 7px;font-size:10px" data-cmd="wstop" data-name="'+esc(w.name)+'">stop</button>';
+  if(['stopped-by-user','stopped','culled-by-memory','blocked-by-memory'].includes(w.status))return '<button style="'+BTN+';padding:1px 7px;font-size:10px;border-color:#34d399" data-cmd="wstart" data-name="'+esc(w.name)+'">start</button>';
+  return '';
+ };
  const wrow=(w)=>{
   const hb=w.last_heartbeat||{};
   const hbAge=hb.at?Math.round((Date.now()-new Date(hb.at).getTime())/1000):null;
+  const st=w.status||(w.alive?'running':'stopped');
   const dot=w.alive?'<span class="ok">●</span>':'<span class="bad">■</span>';
-  const hbTxt=hb.state?esc(hb.state)+(hb.item?' · '+esc(hb.item).slice(0,50):'')+(hbAge!=null?' ('+hbAge+'s)':''):'—';
-  const ev=w.last_event?esc(w.last_event.stage||'')+' '+esc(w.last_event.detail||'').slice(0,60):'—';
+  const hbTxt=hb.state?esc(hb.state)+(hb.item?' · '+esc(hb.item).slice(0,44):'')+(hbAge!=null?' ('+hbAge+'s)':''):'—';
+  const ev=w.last_event?esc(w.last_event.stage||'')+' '+esc(w.last_event.detail||'').slice(0,52):'—';
   const loop=w.crash_looping?' <span class="bad">CRASH-LOOP</span>':'';
-  return '<tr style="font-size:11px"><td style="padding:1px 8px">'+dot+' '+esc(w.name)+loop+'</td><td style="padding:1px 8px"><span style="color:'+(grpBadge[w.group]||'#64748b')+'">'+esc(w.group)+'</span></td><td style="padding:1px 8px" class="dim">'+(w.pid||'—')+'</td><td style="padding:1px 8px" class="dim">'+(w.rss_mb!=null?w.rss_mb+' MB':'—')+'</td><td style="padding:1px 8px" class="dim">'+(w.restarts||0)+'</td><td style="padding:1px 8px" class="dim">'+hbTxt+'</td><td style="padding:1px 8px" class="dim">'+ev+'</td></tr>';
+  const up=w.uptime_s!=null?(w.uptime_s>3600?Math.floor(w.uptime_s/3600)+'h'+Math.floor(w.uptime_s%3600/60)+'m':w.uptime_s>60?Math.floor(w.uptime_s/60)+'m':w.uptime_s+'s'):'—';
+  return '<tr style="font-size:11px"><td style="padding:1px 8px">'+dot+' '+esc(w.name)+loop+'</td>'
+   +'<td style="padding:1px 8px"><span style="color:'+(grpBadge[w.group]||'#64748b')+'">'+esc(w.group)+'</span></td>'
+   +'<td style="padding:1px 8px"><span style="color:'+(stColor[st]||'#94a3b8')+'">'+esc(st)+'</span></td>'
+   +'<td style="padding:1px 8px" class="dim">'+(w.pid||'—')+'</td>'
+   +'<td style="padding:1px 8px" class="dim">'+(w.rss_mb!=null?w.rss_mb+' MB':'—')+'</td>'
+   +'<td style="padding:1px 8px" class="dim">'+up+'</td>'
+   +'<td style="padding:1px 8px" class="dim">'+(w.restarts||0)+'</td>'
+   +'<td style="padding:1px 8px" class="dim">'+hbTxt+'</td>'
+   +'<td style="padding:1px 8px" class="dim">'+ev+'</td>'
+   +'<td style="padding:1px 8px">'+rowBtn(w)+'</td></tr>';
  };
  const running=(s.workers||[]).filter(w=>w.alive).length;
+ const resAlive=(s.workers||[]).filter(w=>/^local-res-\d+$/.test(w.name)&&w.alive).length;
+ const hist=mem.history||[];
+ const memPanel='<div style="margin-top:8px;border-top:1px solid #1e293b;padding-top:6px">'
+  +'<b>MEMORY</b> <span class="dim" style="font-size:11px">free <b style="color:#e2e8f0">'+mem.free_gb+'</b>/'+mem.total_gb+' GB · fleet RSS <b style="color:#e2e8f0">'+(mem.fleet_rss_gb||0)+'</b> GB · guard level '+(g.level||0)+' (L1 &lt;3.5GB free · L2 &lt;1.5GB) · reserve '
+  +'<input type="number" min="2" max="10" step="0.5" value="'+(lim.reserve_gb||4)+'" style="width:52px;background:#0b1120;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:0 3px;font-size:11px" data-cmd="reserve"> GB min headroom · fleet budget '
+  +'<input type="number" min="1" max="28" step="1" value="'+(lim.fleet_budget_gb||12)+'" style="width:52px;background:#0b1120;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:0 3px;font-size:11px" data-cmd="budget"> GB cap</span>'
+  +'<canvas id="memspark" width="620" height="54" style="display:block;margin-top:5px;background:#0b1120;border-radius:4px"></canvas>'
+  +'<div class="dim" style="font-size:10px;margin-top:1px">green = free GB · orange = fleet RSS GB · last 30 min</div></div>';
+ const resPanel='<div style="margin-top:8px;border-top:1px solid #1e293b;padding-top:6px">'
+  +'<b>RESEARCHERS</b> <span style="color:#e2e8f0">'+resAlive+' running / '+(R.total||16)+'</span>'
+  +' · <button style="'+BTN+';padding:1px 8px;font-size:11px;'+(R.mode!=='manual'?'border-color:#34d399':'opacity:.5')+'" data-cmd="mode-auto">Auto</button>'
+  +'<button style="'+BTN+';padding:1px 8px;font-size:11px;'+(R.mode==='manual'?'border-color:#34d399':'opacity:.5')+'" data-cmd="mode-manual">Manual</button>'
+  +' <button style="'+BTN+';padding:1px 7px;font-size:12px" '+(R.max<=0?'disabled ':'')+'data-cmd="max-dec">−</button>'
+  +' <b id="resmax" style="font-size:13px">'+(R.max!=null?R.max:16)+'</b>'
+  +' <button style="'+BTN+';padding:1px 7px;font-size:12px" '+(R.max>=16?'disabled ':'')+'data-cmd="max-inc">+</button>'
+  +(R.mode==='manual'?'<span class="dim" style="font-size:11px"> · requested '+(R.max||0)+' · memory allows '+(R.memory_allows!=null?R.memory_allows:'?')+'</span>':'<span class="dim" style="font-size:11px"> · auto limit '+(R.allowed||0)+' (your cap '+(R.max!=null?R.max:16)+')</span>')
+  +'<span class="dim" style="font-size:11px"> · avg RSS '+(R.avg_rss_mb||'?')+' MB</span>'
+  +((R.disabled||[]).length?' <span class="dim" style="font-size:11px;color:#fbbf24"> · user-stopped: '+esc(R.disabled.join(', '))+'</span>':'')
+  +((R.mem_blocked||[]).length?' <span class="dim" style="font-size:11px;color:#fb923c"> · memory-blocked: '+esc(R.mem_blocked.slice(0,6).join(', '))+((R.mem_blocked.length>6)?' +'+(R.mem_blocked.length-6)+' more':'')+'</span>':'')
+  +'</div>';
+ const actions=(g.actions||[]).slice(-4).reverse();
+ const actHtml=actions.length?'<div class="dim" style="font-size:10px;margin-top:6px">guard: '+actions.map(a=>esc(a.detail).slice(0,110)).join(' · ')+'</div>':'';
  // ── Verification progress panel (ledger summary via /status) ──────────
  const vp=s.verification_progress;
  let vpHtml='';
@@ -540,20 +583,70 @@ async function srvTick(){
   }
   vpHtml+='</div>';
  }
- setH('srv',
+ if(Date.now()>=srvHoldUntil)setH('srv',
   '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
   +'<b>PERMIT SERVER</b> <b style="color:'+stCol+'">'+esc(s.state).toUpperCase()+'</b>'
   +'<span class="dim">'+running+'/'+((s.workers||[]).length-1)+' workers · free '+mem.free_gb+'/'+mem.total_gb+' GB'+gtxt+'</span>'
   +'<span style="flex:1"></span>'+btns+'</div>'
-  +'<table style="margin-top:6px">'+(s.workers||[]).map(wrow).join('')+'</table>'
+  +resPanel
+  +memPanel
+  +'<table style="margin-top:8px"><tr class="dim" style="font-size:10px"><td style="padding:0 8px">worker</td><td style="padding:0 8px">group</td><td style="padding:0 8px">status</td><td style="padding:0 8px">pid</td><td style="padding:0 8px">rss</td><td style="padding:0 8px">uptime</td><td style="padding:0 8px">restarts</td><td style="padding:0 8px">doing</td><td style="padding:0 8px">last event</td><td></td></tr>'+(s.workers||[]).map(wrow).join('')+'</table>'
+  +actHtml
   +vpHtml);
+ const cv=document.getElementById('memspark');
+ if(cv&&hist.length>1&&Date.now()>=srvHoldUntil){
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
+  const mx=Math.max((mem.total_gb||32)*1.02,...hist.map(h=>Math.max(h.free_gb||0,h.fleet_gb||0)));
+  const draw=(key,col)=>{ctx.strokeStyle=col;ctx.lineWidth=1.4;ctx.beginPath();hist.forEach((h,i)=>{const x=i/(hist.length-1)*cv.width;const y=cv.height-3-((h[key]||0)/mx)*(cv.height-8);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();};
+  draw('free_gb','#34d399');draw('fleet_gb','#fb923c');
+ }
 }
+// Interaction hold: #srv re-renders every 3s, which swaps nodes mid-gesture —
+// clicks can land on a detached element and number inputs get wiped while
+// typing. Suppress the re-render briefly after any interaction inside #srv.
+let srvHoldUntil=0;
+document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('#srv'))srvHoldUntil=Date.now()+1200;},true);
+document.addEventListener('focusin',e=>{if(e.target.closest&&e.target.closest('#srv'))srvHoldUntil=Date.now()+2500;},true);
+document.addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('#srv'))srvHoldUntil=Date.now()+2500;},true);
+// data-cmd button wiring — keeps onclick attributes free of quote escaping.
+if(!window._srvCmdWired){window._srvCmdWired=1;document.addEventListener('click',(e)=>{
+ const b=e.target.closest('[data-cmd]');if(!b)return;
+ const c=b.dataset.cmd,R=(lastSrv&&lastSrv.guard&&lastSrv.guard.researchers)||{};
+ // Stepper reads the pending (optimistic) value first — lastSrv only refreshes
+ // every 3s, so without it a quick second click re-sends the same target.
+ const max=(window._pendingMax&&window._pendingMax.v!=null)?window._pendingMax.v:(R.max!=null?R.max:16);
+ if(c==='start'||c==='pause'||c==='resume'||c==='stop')srvCmd(c);
+ else if(c==='verification')srvCmd('verification',{on:b.dataset.on==='1'});
+ else if(c==='expansion')srvCmd('expansion',{on:b.dataset.on==='1'});
+ else if(c==='killres')srvCmd('researchers',{max:0});
+ else if(c==='mode-auto')srvCmd('researchers',{mode:'auto'});
+ else if(c==='mode-manual')srvCmd('researchers',{mode:'manual'});
+ else if(c==='max-dec'||c==='max-inc'){
+  const v=c==='max-dec'?Math.max(0,max-1):Math.min(16,max+1);
+  window._pendingMax={v,at:Date.now()};
+  const el=document.getElementById('resmax');if(el)el.textContent=v;
+  srvCmd('researchers',{mode:'manual',max:v});
+ }
+ else if(c==='wstop')srvCmd('worker',{name:b.dataset.name,action:'stop'});
+ else if(c==='wstart')srvCmd('worker',{name:b.dataset.name,action:'start'});
+});document.addEventListener('change',(e)=>{
+ const i=e.target.closest('input[data-cmd]');if(!i)return;
+ if(i.dataset.cmd==='reserve')srvCmd('limits',{reserve_gb:Number(i.value)});
+ if(i.dataset.cmd==='budget')srvCmd('limits',{fleet_budget_gb:Number(i.value)});
+});}
 srvTick();setInterval(srvTick,3000);
-tick();setInterval(tick,100);
+tick();setInterval(tick,2000);
 // Live elapsed counters — every in-flight line ticks its own age every second.
 setInterval(()=>{const n=Date.now();document.querySelectorAll('.el').forEach(el=>{const s=Math.max(0,Math.round((n-Number(el.dataset.t||0))/1000));el.textContent=s<60?s+'s':Math.floor(s/60)+'m '+String(s%60).padStart(2,'0')+'s';});},1000);
 </script>`;
 let lastGoodStatus=null,lastStatusAt=0;
+// status() is heavy (~6s at fleet scale) — compute it in the background and
+// serve the last payload instantly. Previously the page polled /status.json
+// every 100ms and stampeded the single-threaded server: every section on the
+// page stayed empty because requests queued behind the storm.
+let statusBuilding=false;
+setInterval(()=>{if(statusBuilding)return;statusBuilding=true;try{lastGoodStatus=JSON.stringify(status());lastStatusAt=Date.now();}catch(e){try{console.error('status build:',e?.message||e)}catch{}}finally{statusBuilding=false;}},2000).unref();
+try{lastGoodStatus=JSON.stringify(status());lastStatusAt=Date.now();}catch{}
 // Cumulative scanned counter — a persistent set of every address ever seen
 // so "scanned" grows across event-log rotation instead of resetting to the
 // current pool. Seeded from .audit-work/scan-total.json; flushed on change.
@@ -575,9 +668,7 @@ http.createServer((req,res)=>{
       res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(rd('.audit-work/verification-ledger.json')||'{"error":"no ledger yet"}');return;
     }
     if(req.url.startsWith('/status.json')){
-      let payload=lastGoodStatus;
-      if(Date.now()-lastStatusAt>120){try{payload=JSON.stringify(status());lastGoodStatus=payload;lastStatusAt=Date.now();}catch{}}
-      if(!payload)payload='{"error":"status unavailable"}';
+      const payload=lastGoodStatus||'{"error":"status building"}';
       res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(payload);return;
     }
     res.writeHead(200,{'content-type':'text/html'});res.end(page);
