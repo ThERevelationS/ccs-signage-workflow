@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { AlertTriangle } from 'lucide-react';
 import { usePolling } from '@/lib/usePolling';
+import { claimPollLeadership, broadcastPollResult, onPollResult } from '@/lib/pollLeader';
 import { isFleetCoolingDown } from '@/components/fleet/fleetInvoke';
 
 // The count call used to fire every 30s per open tab. Cache one answer for
@@ -37,10 +38,14 @@ export default function SyncConflictAlert({currentUser,sessionToken}) {
   // call lands ~75s once the gate opens.
   useEffect(()=>{ const t=setTimeout(()=>setAmbientGate(true),15000); return ()=>clearTimeout(t); },[]);
   useEffect(()=>{ if(currentUser?.role!=='admin')setCount(0); },[currentUser?.role]);
+  // Cross-tab leader election — the count is a global admin stat, so sibling
+  // tabs consume the leader's broadcast instead of polling per tab.
   usePolling(async()=>{
     if(isFleetCoolingDown())return;
-    try{const v=await loadConflictCount(sessionToken);setCount(v.count);setRecords(v.records);setError('');}catch{setError('Conflict alerts unavailable');}
+    if(!claimPollLeadership('sync-conflicts',60000))return;
+    try{const v=await loadConflictCount(sessionToken);setCount(v.count);setRecords(v.records);setError('');broadcastPollResult('sync-conflicts',v);}catch{setError('Conflict alerts unavailable');}
   },60000,{enabled:currentUser?.role==='admin'&&ambientGate});
+  useEffect(()=>onPollResult('sync-conflicts',(v)=>{if(v&&typeof v.count==='number'){setCount(v.count);setRecords(v.records||0);setError('');}}),[]);
   if(currentUser?.role!=='admin'||!count&&!error)return null;
   return <Link to="/AdminSettings?tab=sync_conflicts" role="status" className="fixed bottom-20 right-3 z-40 flex min-h-11 max-w-xs items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm font-medium shadow-lg"><AlertTriangle className="h-4 w-4 shrink-0"/>{error||`${count} value differences across ${records} record${records===1?'':'s'} — not write errors`}</Link>;
 }
