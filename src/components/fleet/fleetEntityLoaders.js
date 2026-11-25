@@ -62,17 +62,94 @@ function readError(err) {
   return wrapped;
 }
 
+async function directFleetPage(entityName, { query, sort, limit, skip }) {
+  const res = await invokeFleet("fleetDataRead", {
+    entity: entityName,
+    ...(query ? { query } : {}),
+    ...(sort ? { sort } : {}),
+    limit,
+    skip,
+  });
+  const data = res?.data || res;
+  return Array.isArray(data?.items) ? data.items : [];
+}
+
+// Mount-storm coalescing — a page mount fires many parallel single-entity
+// reads; previously each became its own fleetDataRead invoke on the shared
+// service budget (~9 invokes at FleetOverview mount). Calls made in the same
+// synchronous burst now coalesce into one batch invoke (the gateway supports
+// up to 16 entities per call, rows keyed by entity name).
+const BATCH_WINDOW_MS = 30;
+const pendingBatch = new Map();
+let flushScheduled = false;
+
+async function flushBatch() {
+  flushScheduled = false;
+  const entries = [...pendingBatch.values()];
+  pendingBatch.clear();
+  if (entries.length === 0) return;
+  const batchable = [];
+  const individual = [];
+  const seen = new Set();
+  for (const entry of entries) {
+    // The batch response is keyed by entity name, so an entity can appear at
+    // most once per batch; extras fall back to direct reads.
+    if (seen.has(entry.entity)) individual.push(entry);
+    else { seen.add(entry.entity); batchable.push(entry); }
+  }
+  for (let i = 0; i < batchable.length; i += 16) {
+    const chunk = batchable.slice(i, i + 16);
+    try {
+      const res = await invokeFleet("fleetDataRead", {
+        entities: chunk.map((e) => ({ entity: e.entity, ...e.args })),
+      });
+      const data = res?.data || res;
+      const out = data?.entities || {};
+      const errs = data?.errors || {};
+      // A 429 inside a batch still means the shared budget is saturated — the
+      // invoke resolved, so the caller's rate-limit handling never saw it.
+      const limited = Object.values(errs).find((d) => Number(d?.status) === 429);
+      if (limited) throw Object.assign(new Error(String(limited.error || 'Rate limit exceeded')), { status: 429 });
+      chunk.forEach((e) => {
+        if (errs[e.entity]) {
+          const detail = errs[e.entity];
+          e.reject(Object.assign(new Error(detail.error || 'Fleet read failed'), { status: detail.status }));
+        } else {
+          e.resolve(Array.isArray(out[e.entity]) ? out[e.entity] : []);
+        }
+      });
+    } catch (err) {
+      // Rate-limited batch: fanning out into ~16 individual reads would amplify
+      // the very saturation that caused the 429 — reject so callers degrade.
+      if (Number(err?.status ?? err?.response?.status) === 429) {
+        chunk.forEach((e) => e.reject(err));
+      } else {
+        individual.push(...chunk);
+      }
+    }
+  }
+  individual.forEach((e) => directFleetPage(e.entity, e.args).then(e.resolve, e.reject));
+}
+
+function batchedFleetRead(entityName, args) {
+  const key = `${entityName}|${JSON.stringify(args)}`;
+  const existing = pendingBatch.get(key);
+  if (existing) return existing.promise;
+  let resolveRef, rejectRef;
+  const promise = new Promise((resolve, reject) => { resolveRef = resolve; rejectRef = reject; });
+  pendingBatch.set(key, { entity: entityName, args, resolve: resolveRef, reject: rejectRef, promise });
+  if (!flushScheduled) { flushScheduled = true; setTimeout(flushBatch, BATCH_WINDOW_MS); }
+  return promise;
+}
+
 async function fetchFleetPage(entityName, { query, sort, limit, skip }) {
   try {
-    const res = await invokeFleet("fleetDataRead", {
-      entity: entityName,
+    return await batchedFleetRead(entityName, {
       ...(query ? { query } : {}),
       ...(sort ? { sort } : {}),
       limit,
       skip,
     });
-    const data = res?.data || res;
-    return Array.isArray(data?.items) ? data.items : [];
   } catch (err) {
     throw readError(err);
   }
