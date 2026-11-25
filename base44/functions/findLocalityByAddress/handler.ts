@@ -73,7 +73,7 @@ async function kickOfficeResearch(base44:any,matched:any,_profiles:any[]){
  }catch{return{state:'unknown'};}
 }
 function addressResponse(data:any,init:any={}){
- const response=Response.json({...data,lookup_revision:ADDRESS_LOOKUP_REVISION,address_runtime:'slim-profiles-1'},init);
+ const response=Response.json({...data,lookup_revision:ADDRESS_LOOKUP_REVISION,address_runtime:'slim-profiles-2'},init);
  response.headers.set('X-CCS-Address-Revision',ADDRESS_LOOKUP_REVISION);
  return response;
 }

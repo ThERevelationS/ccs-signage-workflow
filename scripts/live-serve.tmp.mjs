@@ -372,6 +372,7 @@ table{border-collapse:collapse;width:100%}td{padding:4px 8px;border-bottom:1px s
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .feed{max-height:calc(100vh - 340px);min-height:420px;overflow-y:auto}</style>
 <h1>Permitting — live address resolution</h1>
+<div class="card" id="srv" style="margin-bottom:10px;border:1px solid #334155"></div>
 <div class="dim" id="t"></div>
 <div class="grid" id="cards"></div>
 <div class="card"><div class="dim">address feeder — keeps the queue stocked</div><div id="fix"></div></div>
@@ -477,6 +478,77 @@ async function tick(){
  }).join(''):'<div class="dim" style="padding:8px">waiting for lookups…</div>');
 
 }
+// ── permit-server control bar (proxied to 127.0.0.1:4175) ──────────────
+let lastLedger=null,lastLedgerAt=0;
+async function fetchLedger(){const n=Date.now();if(n-lastLedgerAt<15000&&lastLedger)return lastLedger;try{const r=await fetch('/api/verification-ledger',{cache:'no-store'});if(r.ok){lastLedger=await r.json();lastLedgerAt=n;}}catch(e){}return lastLedger;}
+async function srvCmd(p,body){try{const r=await fetch('/api/server/'+p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body||{})});if(r.status===409){const j=await r.json().catch(()=>({}));alert(j.error||'conflict');}}catch(e){}}
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+const BTN='cursor:pointer;background:#334155;color:#e2e8f0;border:1px solid #475569;border-radius:5px;padding:3px 10px;font:12px ui-monospace,monospace';
+async function srvTick(){
+ let s=null;
+ try{const r=await fetch('/api/server/status',{cache:'no-store'});if(r.ok)s=await r.json();}catch(e){}
+ const el=document.getElementById('srv');if(!el)return;
+ if(!s){setH('srv','<div class="dim"><b style="color:#f87171">permit-server controller OFFLINE</b> — start it with the CCS Permit Server desktop icon or <span style="color:#94a3b8">node scripts/permit-server.mjs</span></div>');return;}
+ const stCol={running:'#34d399',paused:'#fbbf24',stopped:'#f87171'}[s.state]||'#94a3b8';
+ const g=s.guard||{level:0};
+ const mem=s.memory||{};
+ const gtxt=s.state==='stopped'?'':(g.level===2?' · <b class="bad">memory guard: all workers paused except flusher</b>':g.level===1?' · <b class="warn">memory guard: researchers paused</b>':' · guard ok');
+ let btns='';
+ if(s.state!=='running')btns+='<button style="'+BTN+';border-color:#34d399" onclick="srvCmd(\'start\')">▶ Start</button> ';
+ if(s.state==='running')btns+='<button style="'+BTN+';border-color:#fbbf24" onclick="srvCmd(\'pause\')">⏸ Pause</button> ';
+ if(s.state==='paused')btns+='<button style="'+BTN+';border-color:#34d399" onclick="srvCmd(\'resume\')">▶ Resume</button> ';
+ if(s.state!=='stopped')btns+='<button style="'+BTN+';border-color:#f87171" onclick="srvCmd(\'stop\')">■ Stop</button> ';
+ btns+='<button style="'+BTN+';border-color:'+(s.verification?'#34d399':'#475569')+'" onclick="srvCmd(\'verification\',{on:'+!s.verification+'})">Verification '+(s.verification?'ON':'OFF')+'</button> ';
+ if(s.expansion_locked)btns+='<button style="'+BTN+';opacity:.5" disabled title="locked until verification is done">Expansion 🔒</button> <span class="dim" style="font-size:11px">locked until verification is done</span> ';
+ else btns+='<button style="'+BTN+';border-color:'+(s.expansion?'#34d399':'#475569')+'" onclick="srvCmd(\'expansion\',{on:'+!s.expansion+'})">Expansion '+(s.expansion?'ON':'OFF')+'</button> ';
+ const grpBadge={core:'#38bdf8',verification:'#a78bfa',expansion:'#f472b6',dashboard:'#64748b'};
+ const wrow=(w)=>{
+  const hb=w.last_heartbeat||{};
+  const hbAge=hb.at?Math.round((Date.now()-new Date(hb.at).getTime())/1000):null;
+  const dot=w.alive?'<span class="ok">●</span>':'<span class="bad">■</span>';
+  const hbTxt=hb.state?esc(hb.state)+(hb.item?' · '+esc(hb.item).slice(0,50):'')+(hbAge!=null?' ('+hbAge+'s)':''):'—';
+  const ev=w.last_event?esc(w.last_event.stage||'')+' '+esc(w.last_event.detail||'').slice(0,60):'—';
+  const loop=w.crash_looping?' <span class="bad">CRASH-LOOP</span>':'';
+  return '<tr style="font-size:11px"><td style="padding:1px 8px">'+dot+' '+esc(w.name)+loop+'</td><td style="padding:1px 8px"><span style="color:'+(grpBadge[w.group]||'#64748b')+'">'+esc(w.group)+'</span></td><td style="padding:1px 8px" class="dim">'+(w.pid||'—')+'</td><td style="padding:1px 8px" class="dim">'+(w.rss_mb!=null?w.rss_mb+' MB':'—')+'</td><td style="padding:1px 8px" class="dim">'+(w.restarts||0)+'</td><td style="padding:1px 8px" class="dim">'+hbTxt+'</td><td style="padding:1px 8px" class="dim">'+ev+'</td></tr>';
+ };
+ const running=(s.workers||[]).filter(w=>w.alive).length;
+ // ── Verification progress panel (ledger summary via /status) ──────────
+ const vp=s.verification_progress;
+ let vpHtml='';
+ if(vp){
+  const o=vp.offices||{},j=vp.jurisdictions||{};
+  const pct=o.total?Math.round(100*(o.staff_verified||0)/o.total):0;
+  const gaps=Object.entries(vp.gap_reasons||{}).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const p=vp.promotions||{},eta=vp.eta||{};
+  vpHtml='<div style="margin-top:8px;border-top:1px solid #1e293b;padding-top:6px">'
+   +'<b>VERIFICATION PROGRESS</b> <span class="dim" style="font-size:11px">'+(vp.at?esc(vp.at).slice(0,19).replace('T',' ')+' UTC':'')+'</span>'
+   +'<div style="height:8px;background:#1e293b;border-radius:4px;margin:4px 0;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:#34d399"></div></div>'
+   +'<span class="dim" style="font-size:11px">offices <b style="color:#e2e8f0">'+(o.staff_verified||0)+'/'+(o.total||0)+'</b> verified ('+pct+'%) · '+(o.needs_verification||0)+' pending · '+(o.needs_review||0)+' need review · jurisdictions all '+(j.all_verified||0)+' · some '+(j.some_verified||0)+' · none '+(j.none_verified||0)+' · no offices '+(j.no_offices||0)+'</span>'
+   +'<div class="dim" style="font-size:11px;margin-top:2px">promotions '+(p.last_hour||0)+'/h · '+(p.last_24h||0)+'/24h · ETA '+(eta.hours!=null?eta.hours+'h':'—')+' · held relinks '+(vp.held_relinks||0)+'</div>'
+   +(gaps.length?'<table style="margin-top:4px;font-size:11px">'+gaps.map(g=>'<tr><td style="padding:0 8px" class="dim">'+esc(g[0])+'</td><td style="padding:0 8px">'+g[1]+'</td></tr>').join('')+'</table>':'');
+  if((vp.needs_review_total||0)+(vp.held_relinks||0)>0){
+   const lg=await fetchLedger();
+   if(lg){
+    const nr=(lg.needs_review||[]).slice(0,15),hr=(lg.held_relinks||[]).slice(0,10);
+    if(nr.length||hr.length){
+     vpHtml+='<div style="margin-top:4px;font-size:11px"><b class="warn">Needs a person</b><table>'
+      +nr.map(r=>'<tr><td style="padding:0 8px">'+esc(r.jurisdiction||'')+'</td><td style="padding:0 8px" class="dim">'+esc(r.office||'')+'</td><td style="padding:0 8px" class="dim">'+esc((r.reasons||[]).join(',')||'')+'</td><td style="padding:0 8px" class="dim">x'+(r.attempts||0)+'</td></tr>').join('')
+      +hr.map(r=>'<tr><td style="padding:0 8px">'+esc((r.name||'')+', '+(r.state||''))+'</td><td style="padding:0 8px" class="dim" colspan="2">relink held: '+esc(r.reason||'')+'</td></tr>').join('')
+      +'</table>'+((vp.needs_review_total||0)>15?'<div class="dim">+'+(vp.needs_review_total-15)+' more in .audit-work/verification-ledger.json</div>':'')+'</div>';
+    }
+   }
+  }
+  vpHtml+='</div>';
+ }
+ setH('srv',
+  '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+  +'<b>PERMIT SERVER</b> <b style="color:'+stCol+'">'+esc(s.state).toUpperCase()+'</b>'
+  +'<span class="dim">'+running+'/'+((s.workers||[]).length-1)+' workers · free '+mem.free_gb+'/'+mem.total_gb+' GB'+gtxt+'</span>'
+  +'<span style="flex:1"></span>'+btns+'</div>'
+  +'<table style="margin-top:6px">'+(s.workers||[]).map(wrow).join('')+'</table>'
+  +vpHtml);
+}
+srvTick();setInterval(srvTick,3000);
 tick();setInterval(tick,100);
 // Live elapsed counters — every in-flight line ticks its own age every second.
 setInterval(()=>{const n=Date.now();document.querySelectorAll('.el').forEach(el=>{const s=Math.max(0,Math.round((n-Number(el.dataset.t||0))/1000));el.textContent=s<60?s+'s':Math.floor(s/60)+'m '+String(s%60).padStart(2,'0')+'s';});},1000);
@@ -492,6 +564,16 @@ process.on('uncaughtException',(e)=>{try{console.error('uncaught:',e?.message||e
 process.on('unhandledRejection',(e)=>{try{console.error('unhandled:',e?.message||e)}catch{}});
 http.createServer((req,res)=>{
   try{
+    if(req.url.startsWith('/api/server/')){
+      // Same-origin proxy to the permit-server control API (127.0.0.1:4175).
+      const p=req.url.slice('/api/server'.length);
+      const pr=http.request({host:'127.0.0.1',port:4175,path:p,method:req.method,headers:{'content-type':'application/json'}},(r)=>{res.writeHead(r.statusCode,{'content-type':'application/json','cache-control':'no-store'});r.pipe(res);});
+      pr.on('error',()=>{res.writeHead(503,{'content-type':'application/json'});res.end('{"error":"permit-server offline"}');});
+      req.pipe(pr);return;
+    }
+    if(req.url==='/api/verification-ledger'){
+      res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(rd('.audit-work/verification-ledger.json')||'{"error":"no ledger yet"}');return;
+    }
     if(req.url.startsWith('/status.json')){
       let payload=lastGoodStatus;
       if(Date.now()-lastStatusAt>120){try{payload=JSON.stringify(status());lastGoodStatus=payload;lastStatusAt=Date.now();}catch{}}

@@ -29,3 +29,23 @@ test('corrected state/ZIP and missing municipal county cannot silently match',as
 test('automatic research does not use a same-named township in another county',async()=>{let searched=false;const r=await discoverUnmatchedAddress({address:'123 Main St',resolution:{state:'OH',targets:[{name:'Union Township',state:'OH',county:'Example County',type:'township'}]},profiles:[{name:'Union Township',state:'Ohio',parent_county:{name:'Other County'},permitting_url:'https://wrong.gov/forms'}],research:async prompt=>{searched=true;assert.match(prompt,/County: Example County/);return {permitting_url:'https://right.gov/forms'};},fetchPage:async url=>{assert.equal(new URL(url).hostname,'right.gov');return {html:'<p>Permit office</p>',finalUrl:url};}});assert.equal(searched,true);assert.equal(r.scans[0].pages[0].url,'https://right.gov/forms');});
 
 test('corrected postal city cannot silently select another same-street address',()=>{assert.equal(strictGeocode([g],'123 Main St, Other City, OH'),false);assert.equal(strictGeocode([{...g,formatted_address:'123 Main St, Mailing City, OH'}],'123 Main St, Mailing City, OH'),true);});
+
+test('county_name field and multi-county lists match non-county targets',()=>{
+ const mason={status:'location_verified',target:{name:'Mason',type:'municipality',state:'OH',geoid:'3948188',county:'Warren County'}};
+ // county_name-only row — the field the PermitLocality catalog actually stores.
+ assert.equal(exactConfiguredLocality([{id:'m',name:'Mason',state:'OH',county_name:'Warren County'}],mason)?.id,'m');
+ // Slash/semicolon county lists match when ANY part matches the target county.
+ assert.equal(exactConfiguredLocality([{id:'m',name:'Mason',state:'OH',county_name:'Bracken County / Warren County'}],mason)?.id,'m');
+ const mc={status:'location_verified',target:{name:'Example',type:'municipality',state:'KY',county:'Mason County'}};
+ assert.equal(exactConfiguredLocality([{id:'e',name:'Example',state:'KY',county_name:'Bracken County / Mason County'}],mc)?.id,'e');
+ assert.equal(exactConfiguredLocality([{id:'e',name:'Example',state:'KY',county_name:'Bracken County ; Mason County'}],mc)?.id,'e');
+ // Wrong county still fails closed; duplicates never match.
+ assert.equal(exactConfiguredLocality([{id:'m',name:'Mason',state:'OH',county_name:'Butler County'}],mason),null);
+ assert.equal(exactConfiguredLocality([{id:'m',name:'Mason',state:'OH',county_name:'Warren County',duplicate_of:'tombstone'}],mason),null);
+ // Same-name rows in different counties: only the right county survives.
+ assert.equal(exactConfiguredLocality([{id:'a',name:'Mason',state:'OH',county_name:'Butler County'},{id:'b',name:'Mason',state:'OH',county_name:'Warren County'}],mason)?.id,'b');
+ // Legacy county / parent_county_name fields and the profile fallback still work.
+ assert.equal(exactConfiguredLocality([{id:'m',name:'Mason',state:'OH',county:'Warren County'}],mason)?.id,'m');
+ assert.equal(exactConfiguredLocality([{id:'m',name:'Mason',state:'OH',parent_county_name:'Warren County'}],mason)?.id,'m');
+ assert.equal(exactConfiguredLocality([{id:'m',name:'Mason',state:'OH',jurisdiction_profile_id:'p'}],mason,[{id:'p',parent_county:{name:'Warren County'}}])?.id,'m');
+});

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   UserPlus, 
   Save, 
@@ -47,6 +48,8 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   const [cameraKey, setCameraKey] = useState(0);
   const [saveError, setSaveError] = useState("");
   const [mergeInfo, setMergeInfo] = useState(null);
+  // Consent must be given before any face template is saved.
+  const [consentChecked, setConsentChecked] = useState(false);
   const saveSeqRef = useRef(0);
   const capturedForRef = useRef("");
   const completionTimerRef = useRef(null);
@@ -58,6 +61,7 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   useEffect(() => {
     if (isOpen) {
       setCameraKey(prev => prev + 1);
+      setConsentChecked(false);
     }
   }, [isOpen]);
 
@@ -93,6 +97,10 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   const handleSave = async () => {
     const recordEmail = String(user?.email || "").toLowerCase();
     if (faceDescriptors.length < 3 || !recordEmail) return;
+    if (!consentChecked) {
+      setSaveError("Please check the consent box before saving face data.");
+      return;
+    }
     // Never bind a face captured for one employee to another record.
     if (capturedForRef.current !== recordEmail) {
       setSaveError("The captured face data was recorded for a different employee. Close and recapture before saving.");
@@ -159,6 +167,7 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
     setEnrollGrade(null);
     setMergeInfo(null);
     setSaved(false);
+    setConsentChecked(false);
     onClose();
   };
 
@@ -220,13 +229,40 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
               );
             })()}
 
+            <div className="flex items-start gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
+              <Checkbox
+                id="face-enrollment-consent"
+                checked={consentChecked}
+                onCheckedChange={(value) => setConsentChecked(value === true)}
+                className="mt-0.5"
+                aria-label="Consent to save face data"
+              />
+              <div
+                className="cursor-pointer text-xs leading-relaxed text-gray-600"
+                onClick={() => setConsentChecked((value) => !value)}
+              >
+                I agree to CCS saving a numeric face template from these captures so I can clock in
+                with facial recognition. It is used only by the time clock, and I can ask an
+                administrator to remove it at any time.{" "}
+                <a
+                  href="/PrivacyPolicy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(event) => event.stopPropagation()}
+                  className="font-medium text-purple-700 underline"
+                >
+                  Read the privacy policy
+                </a>
+              </div>
+            </div>
+
             <div className="flex gap-3 pt-4">
               <Button variant="outline" onClick={handleClose} className="flex-1">
                 Cancel
               </Button>
               <Button 
                 onClick={handleSave} 
-                disabled={faceDescriptors.length < 3 || isSaving}
+                disabled={faceDescriptors.length < 3 || isSaving || !consentChecked}
                 className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
               >
                 {isSaving ? (

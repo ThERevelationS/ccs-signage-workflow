@@ -297,7 +297,7 @@ function LocalityPickerSession({
     // actions and must not register rows in Scan activity.
     const invoke=(name,payload)=>base44.functions.invoke(name,payload);
     try {
-      const lookup=payload=>invoke('resolvePermittingAddressV2',payload,`Looking up ${address.trim()}`);
+      const lookup=payload=>invoke('resolvePermittingAddressV3',payload,`Looking up ${address.trim()}`);
       let data;
       // Patient retry: the app shares one function budget, so 429s come in
       // bursts. Wait out a burst (up to ~22s) before giving up on the user.
@@ -325,7 +325,7 @@ function LocalityPickerSession({
         try {
           const hint = await geocodeInBrowser(address);
           if (hint) {
-            const retry = await invoke('resolvePermittingAddressV2', {
+            const retry = await invoke('resolvePermittingAddressV3', {
               address: normalizeAddress(address), session_token: sessionToken, census_hint: hint,
             },`Looking up ${address.trim()}`);
             if (retry?.data?.success !== false) data = retry.data;
@@ -354,7 +354,7 @@ function LocalityPickerSession({
         try{
           const hint=await geocodeInBrowser(address);
           if(hint){
-            const retry=await invoke('resolvePermittingAddressV2',{address:normalizeAddress(address),session_token:sessionToken,census_hint:hint},`Looking up ${address.trim()}`);
+            const retry=await invoke('resolvePermittingAddressV3',{address:normalizeAddress(address),session_token:sessionToken,census_hint:hint},`Looking up ${address.trim()}`);
             const d=retry?.data;
             if(d&&d.success!==false){
               setResult(d);setError("");serviceFails.current=0;
@@ -759,7 +759,7 @@ function LocalityPickerSession({
                   const results = [];
                   for (const line of lines) {
                     try {
-                      const res = await base44.functions.invoke("resolvePermittingAddressV2", { address: line });
+                      const res = await base44.functions.invoke("resolvePermittingAddressV3", { address: line });
                       const data = res?.data || res || {};
                       const sug = data.suggested_locality || null;
                       const loc = sug?.name || data.locality_name || data.locality?.name || data.candidates?.[0]?.locality_name || data.candidates?.[0]?.name || "";

@@ -19,11 +19,12 @@ import { summarizeMatchedLocalityAuthority } from "@/shared/permittingAddressLoc
 import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./permitWorkflowDesigner";
 import {
   EXTRA_LABELS, SIGN_SCOPES, SIGN_TYPE_MAP, SIGN_TYPES,
-  addWorkingDays, ensureUnitIds, legacyInputsFromSigns, mapAiError, mergeScannedSigns,
-  parseLocalDate, preBuildWarnings, profileLimits, setTypeCount, totalUnitCount,
-  unitAreaSqFt, unitRuleFlags, workingDaysBetween,
+  addWorkingDays, backfillProofSizes, ensureUnitIds, legacyInputsFromSigns, mapAiError,
+  mergeScannedSigns, parseLocalDate, preBuildWarnings, profileLimits, setTypeCount,
+  totalUnitCount, unitAreaSqFt, unitRuleFlags, workingDaysBetween,
 } from "./permitSigns";
 import { buildSignScanPrompt, SIGN_SCAN_JSON_SCHEMA } from "./permitPlanPrompt";
+import { loadProofSizes } from "./proofSizes";
 import { withRateLimitRetry } from "@/lib/loadAllEntityRows";
 
 const ROLE_LABELS = {
@@ -686,7 +687,7 @@ export default function PermitSetupWizard({
       let data;
       for (let attempt = 0; ; attempt++) {
         try {
-          ({ data } = await base44.functions.invoke("resolvePermittingAddressV2", { address: normalizeAddress(q), session_token: sessionToken }));
+          ({ data } = await base44.functions.invoke("resolvePermittingAddressV3", { address: normalizeAddress(q), session_token: sessionToken }));
           break;
         } catch (e) {
           if (!/status code (429|5\d\d)/.test(String(e?.message || "")) || attempt >= 2) throw e;
@@ -764,23 +765,32 @@ export default function PermitSetupWizard({
         estimateIds.map(id => staffEntities.AllInOneEstimate.get(id).catch(() => null)),
       )).filter(Boolean);
       if (!estimates.length) { setPlanError("Couldn't load the linked estimate."); return; }
+      const proofSizes = await loadProofSizes();
+      // name → proof sizes entry, for the deterministic post-merge backstop.
+      const nameToProof = new Map();
       const results = [];
       let allCached = true;
       for (const est of estimates) {
-        const cacheKey = `permit-sign-scan:v2:${est.id}:${est.updated_date || ""}`;
+        const cacheKey = `permit-sign-scan:v3:${est.id}:${est.updated_date || ""}`;
         let result = null;
         if (!rescan) { try { result = JSON.parse(localStorage.getItem(cacheKey) || "null"); } catch { result = null; } }
         if (!result) {
           allCached = false;
           const lines = (Array.isArray(est.line_items) ? est.line_items : [])
             .filter(li => li?.include_in_customer !== false)
-            .map(li => ({
-              name: stripHtml(li.client_product_name || li.builder_name || li.project_name || "Line item"),
-              category: li.product_category || "",
-              quantity: li.customer_quantity ?? 1,
-              description: stripHtml(li.customer_description || ""),
-              product_notes: String(li.product_notes || ""),
-            }));
+            .map(li => {
+              const proof = li.line_id ? proofSizes[li.line_id] : undefined;
+              const proofName = String(li.builder_name || li.client_product_name || "").trim().toLowerCase();
+              if (proofName && proof && Number(proof.w) > 0 && Number(proof.h) > 0) nameToProof.set(proofName, proof);
+              return {
+                name: stripHtml(li.client_product_name || li.builder_name || li.project_name || "Line item"),
+                category: li.product_category || "",
+                quantity: li.customer_quantity ?? 1,
+                description: stripHtml(li.customer_description || ""),
+                product_notes: String(li.product_notes || ""),
+                proof,
+              };
+            });
           let ai;
           try {
             ai = await base44.integrations.Core.InvokeLLM({
@@ -805,7 +815,7 @@ export default function PermitSetupWizard({
         }
         results.push(result);
       }
-      const merged = mergeScannedSigns(results.flatMap(r => (r?.signs || [])));
+      const merged = backfillProofSizes(mergeScannedSigns(results.flatMap(r => (r?.signs || []))), nameToProof);
       updateSigns(merged);
       const found = totalUnitCount(merged);
       const skipped = results.flatMap(r => (r?.skipped_lines || []).map(String));
@@ -1372,7 +1382,9 @@ export default function PermitSetupWizard({
                               {unit.source_line ? (
                                 <p className="truncate pl-6 text-[9px] text-gray-400">from "{unit.source_line}"</p>
                               ) : null}
-                              {unit.size_basis === "stated" && unit.size_source ? (
+                              {unit.size_basis === "proof" && unit.size_source ? (
+                                <p className="truncate pl-6 text-[9px] font-medium text-emerald-700">Size from approved proof "{unit.size_source}"</p>
+                              ) : unit.size_basis === "stated" && unit.size_source ? (
                                 <p className="truncate pl-6 text-[9px] text-gray-400">Size from "{unit.size_source}"</p>
                               ) : unit.size_basis === "material" && unit.size_source ? (
                                 <p className="pl-6 text-[9px] font-medium text-amber-700">Size from material sheet "{unit.size_source}" — check the real sign size</p>

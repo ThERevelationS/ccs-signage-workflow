@@ -49,6 +49,31 @@ const linkDays = (body: any) => Math.min(365, Math.max(7, whole(body?.link_days,
 const linkExpiry = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 const MESSAGE_MAX = 4000;
 
+// "I need a new link" requests come from a public surface (the customer's link
+// is already broken), so they are throttled per client address to keep the
+// shop inbox from being flooded by a scripted caller.
+const LINK_REQUEST_WINDOW_MS = 10 * 60 * 1000;
+const LINK_REQUEST_MAX = 3;
+const linkRequestHits = new Map<string, number[]>();
+function linkRequestAllowed(key: string) {
+  const now = Date.now();
+  const hits = (linkRequestHits.get(key) || []).filter((t) => now - t < LINK_REQUEST_WINDOW_MS);
+  if (hits.length >= LINK_REQUEST_MAX) {
+    linkRequestHits.set(key, hits);
+    return false;
+  }
+  hits.push(now);
+  linkRequestHits.set(key, hits);
+  if (linkRequestHits.size > 500) {
+    for (const [k, v] of linkRequestHits) if (!v.some((t) => now - t < LINK_REQUEST_WINDOW_MS)) linkRequestHits.delete(k);
+  }
+  return true;
+}
+const escapeHtml = (value: any) => clean(value)
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;");
+
 function linkIsUsable(link: any) {
   if (!link?.id || link.revoked === true) return false;
   const expiresAt = Date.parse(clean(link.expires_at));
@@ -439,6 +464,64 @@ Deno.serve(async (req) => {
       const requests = await loadAllEntityRows({ entity: EstimatingRequest, query: { estimate_id: estimateId }, sort: "-created_date", label: "Portal estimating requests" }).catch(() => []);
       return clean((Array.isArray(requests) ? requests : [])[0]?.opportunity_id);
     };
+
+    // ---------- Public link-help actions (the token is missing or dead) ----------
+
+    // Shop contact details for the "this link doesn't work" screen. Only the
+    // company's own public phone/email leave here — no customer data.
+    if (action === "contact_info") {
+      const quoteDefaults = await loadAllEntityRows({ entity: base44.asServiceRole.entities.QuoteDefaults, query: { config_name: "default" }, label: "Portal shop contact" }).catch(() => []);
+      const qd = (Array.isArray(quoteDefaults) ? quoteDefaults : [])[0] || {};
+      return Response.json({
+        success: true,
+        action,
+        company_name: clean(qd?.company_name) || "CCS Signage",
+        phone: clean(qd?.company_phone),
+        email: clean(qd?.company_email),
+      });
+    }
+
+    // A customer whose link is incomplete/expired asks the shop for a new one.
+    // Emails the shop only (never the caller) and carries no customer records.
+    if (action === "request_new_link") {
+      const clientKey = clean(req.headers.get("x-forwarded-for")).split(",")[0].trim()
+        || clean(req.headers.get("x-real-ip"))
+        || "unknown";
+      if (!linkRequestAllowed(clientKey)) throw bad("Too many link requests from this connection — please call us instead.", 429);
+
+      const contactLine = clean(body?.contact).slice(0, 200);
+      const attemptedToken = clean(body?.token).slice(0, 128);
+      const pageUrl = clean(body?.page_url).slice(0, 300);
+
+      const quoteDefaults = await loadAllEntityRows({ entity: base44.asServiceRole.entities.QuoteDefaults, query: { config_name: "default" }, label: "Portal shop contact" }).catch(() => []);
+      const qd = (Array.isArray(quoteDefaults) ? quoteDefaults : [])[0] || {};
+      const admins = await base44.asServiceRole.entities.AuthorizedEmail.filter({ role: "admin" }).catch(() => []);
+      const recipients = Array.from(new Set([
+        ...(Array.isArray(admins) ? admins : []).map((u: any) => clean(u?.email)),
+        clean(qd?.company_email),
+      ].filter((e: string) => e.includes("@")))).slice(0, 10);
+      if (!recipients.length) throw bad("No shop email is configured to receive link requests.", 503);
+
+      const companyName = clean(qd?.company_name) || "CCS Signage";
+      const subject = `${companyName} — customer needs a new portal link`;
+      const rows = [
+        "A customer opened their portal link and it did not work.",
+        "",
+        `Customer contact: ${escapeHtml(contactLine) || "(not provided)"}`,
+        `Link token tried: ${escapeHtml(attemptedToken) || "(none — the link was incomplete)"}`,
+        `Page: ${escapeHtml(pageUrl) || "(unknown)"}`,
+        `When: ${new Date().toISOString()}`,
+        "",
+        "Reply to the customer with a fresh portal link from the customer record.",
+      ];
+      const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;color:#1e293b">${rows.map((line) => `<p style="margin:4px 0">${line || "&nbsp;"}</p>`).join("")}</div>`;
+      for (const to of recipients) {
+        await base44.asServiceRole.integrations.Core.SendEmail({ to, subject, body: html }).catch((e: any) => {
+          console.error("portal link request email failed:", e?.message || e);
+        });
+      }
+      return Response.json({ success: true, action, notified: recipients.length });
+    }
 
     // ---------- Public token actions (the bearer token IS the credential) ----------
 

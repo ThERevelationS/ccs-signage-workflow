@@ -11,9 +11,9 @@ const {
   SIGN_TYPES, SIGN_SCOPES, newUnit, setTypeCount, unitAreaSqFt,
   mergeScannedSigns, legacyInputsFromSigns, describeSignsForPrompt, totalUnitCount,
   addWorkingDays, workingDaysBetween, profileLimits, unitRuleFlags, preBuildWarnings,
-  parseLocalDate,
+  parseLocalDate, backfillProofSizes,
 } = signs;
-const { buildSignScanPrompt, buildPermitPlanPrompt, estimatePartsText } = prompts;
+const { buildSignScanPrompt, buildPermitPlanPrompt, estimatePartsText, proofSegment } = prompts;
 
 // ── setTypeCount: grow / shrink / 0 / clone-from-last ──
 {
@@ -127,6 +127,62 @@ const { buildSignScanPrompt, buildPermitPlanPrompt, estimatePartsText } = prompt
     { type: "cabinet", count: 1, width_in: 10, height_in: 10, size_basis: "bogus" },
   ]);
   assert.equal(badBasis[0].units[0].size_basis, null);
+  const proofBasis = mergeScannedSigns([
+    { type: "cabinet", count: 1, width_in: 55, height_in: 46.3, size_basis: "proof", size_source: "CoreBridge proof: 55\"W x 46.3\"H" },
+  ]);
+  assert.equal(proofBasis[0].units[0].size_basis, "proof");
+}
+
+// ── proofSegment: title size / drawn dims / empty ──
+{
+  assert.equal(proofSegment({ w: 55, h: 46.3, q: 1, s: 1 }), 'proof size: 55"W x 46.3"H, qty 1, single-sided');
+  assert.equal(proofSegment({ w: 48, h: 96, s: 2 }), 'proof size: 48"W x 96"H, double-sided');
+  assert.equal(proofSegment({ w: 10, h: 10 }), 'proof size: 10"W x 10"H');
+  assert.equal(proofSegment({ d: ['DS 105"x 47"', '24" RETURN'] }), 'dimensions drawn on proof: DS 105"x 47"; 24" RETURN');
+  assert.equal(proofSegment({}), "");
+  assert.equal(proofSegment(null), "");
+  assert.equal(proofSegment({ w: 0, d: [] }), "");
+  // Long drawn lists cap at 300 chars.
+  const long = proofSegment({ d: Array(30).fill('DS 105"x 47"') });
+  assert.ok(long.length <= 300 + "dimensions drawn on proof: ".length);
+}
+
+// ── backfillProofSizes: title-block proof fills unsized units only ──
+{
+  const proofEntry = { w: 55, h: 46.3, q: 1, s: 1, t: '55"W x 46.3"H', f: "proof_11016_34812_0.jpg" };
+  const nameToProof = new Map([["panel face replacement", proofEntry]]);
+  const signs = mergeScannedSigns([
+    { type: "cabinet", count: 1, source_line: "Panel Face Replacement" },                       // unsized → backfilled
+    { type: "blade", count: 1, width_in: 12, height_in: 24, source_line: "Panel Face Replacement" }, // sized → untouched
+    { type: "other", count: 1, source_line: "Some other line" },                                // no match → untouched
+  ]);
+  const out = backfillProofSizes(signs, nameToProof);
+  assert.equal(out[0].units[0].width_in, 55);
+  assert.equal(out[0].units[0].height_in, 46.3);
+  assert.equal(out[0].units[0].faces, 1);
+  assert.equal(out[0].units[0].size_basis, "proof");
+  assert.equal(out[0].units[0].size_source, 'CoreBridge proof: 55"W x 46.3"H');
+  assert.equal(out[1].units[0].width_in, 12);           // not overwritten
+  assert.equal(out[1].units[0].size_basis, null);
+  assert.equal(out[2].units[0].width_in, null);          // no match
+  // s=2 flips faces; d-only entries never fill.
+  const two = backfillProofSizes(
+    mergeScannedSigns([{ type: "cabinet", count: 1, source_line: "x" }]),
+    new Map([["x", { w: 10, h: 20, s: 2, t: "10x20" }]]));
+  assert.equal(two[0].units[0].faces, 2);
+  const same = backfillProofSizes(signs, new Map());
+  assert.equal(same, signs); // empty map → passthrough
+}
+
+// ── proof-sizes.json fixture sanity (deployed data must contain cb-34812) ──
+{
+  const proof = JSON.parse(readFileSync(resolve(here, "../public/permitting/proof-sizes.json"), "utf8"));
+  assert.equal(proof.version, 1);
+  const e = proof.sizes["cb-34812"];
+  assert.equal(e.w, 55);
+  assert.equal(e.h, 46.3);
+  assert.equal(e.q, 1);
+  assert.equal(e.s, 1);
 }
 
 // ── legacyInputsFromSigns ──
@@ -269,6 +325,14 @@ const { buildSignScanPrompt, buildPermitPlanPrompt, estimatePartsText } = prompt
   assert.ok(p2.includes("ACM - Aluminum Composite 6mm, 4'x8', white"));
   assert.ok(p2.includes("CoreBridge category: Monument Signs"));
   assert.ok(p2.includes("Vinyl - 3M IJ175CV3"));
+
+  // Proof segment on the fixture's first line reaches the prompt verbatim.
+  const withProof = buildSignScanPrompt({
+    estimate_number: "INV-14504",
+    lines: fix1.lines.map(l => ({ ...l, proof: { w: 55, h: 46.3, q: 1, s: 1 } })),
+  });
+  assert.ok(withProof.includes('proof size: 55"W x 46.3"H, qty 1, single-sided'));
+  assert.ok(withProof.includes("size_basis"));
 }
 
 // ── parseLocalDate: date-only strings are local midnight, not UTC ──

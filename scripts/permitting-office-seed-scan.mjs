@@ -25,6 +25,8 @@ import { jurisdictionToPermitLocality, normalizePermitJurisdictionName } from '.
 import { normalizeAddressState } from '../src/shared/permittingAddressState.js';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
+import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
+import { buildIdentityIndex, withUnionResearch } from './lib/profile-identity.mjs';
 
 const FN = 'https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions';
 const EVENTS = '.live-events.jsonl';
@@ -195,6 +197,10 @@ async function sweep(onlyNames = null) {
       .map((q) => `${normName(q.jurisdiction_name)}|${normalizeAddressState(q.state)}`)
   );
   const profById = new Map(profs.map((p) => [p.id, p]));
+  // Research union index — ALL profiles incl. historical/duplicate_of: an
+  // identity-equal sibling's office_research is evidence about the same
+  // jurisdiction and pools into verification/seeding.
+  const profIdentity = buildIdentityIndex(profs);
   const profByNameState = new Map();
   for (const p of profs) {
     if (String(p.verification_status || '').toLowerCase() === 'historical' || String(p.duplicate_of || '').trim()) continue;
@@ -214,6 +220,7 @@ async function sweep(onlyNames = null) {
   let done = 0;
   for (const loc of targets) {
     const label = `${loc.name}, ${loc.state}`;
+    await waitWhilePaused('seed-scan', { item: label });
     try {
       // Find the profile in the local index first: explicit link, else a
       // UNIQUE normalized name+state match — seeding offices from an
@@ -229,7 +236,7 @@ async function sweep(onlyNames = null) {
       // applicable research role not yet carried by ANY office is work too
       // (county-administered providers land as their own office rows).
       const researchRoles = new Set(
-        (profile?.office_research?.roles || [])
+        (withUnionResearch(profIdentity, profile)?.office_research?.roles || [])
           .filter((r) => r?.role && APPL.test(String(r?.applicability)))
           .map((r) => r.role)
       );
@@ -244,9 +251,10 @@ async function sweep(onlyNames = null) {
         done++;
         continue;
       }
-      const roles = profile?.office_research?.roles || [];
-      if (profile && roles.length) {
-        const rebuilt = jurisdictionToPermitLocality(profile);
+      const researchProfile = withUnionResearch(profIdentity, profile);
+      const roles = researchProfile?.office_research?.roles || [];
+      if (researchProfile && roles.length) {
+        const rebuilt = jurisdictionToPermitLocality(researchProfile);
         const { offices, filled, added } = mergeOffices(loc.offices || [], rebuilt.offices || []);
         if (filled + added > 0) {
           // Local-first: enqueue the update, mirrorApply now so later passes
@@ -304,7 +312,9 @@ async function sweep(onlyNames = null) {
 // happen in seconds, not at the next poll.
 async function main() {
   for (;;) {
+    await waitWhilePaused('seed-scan', { item: 'seed sweep' });
     await sweep().catch((e) => { emit({ stage: 'seed_office_error', address: 'office seed scan', ok: false, detail: `sweep failed: ${String(e?.message || e).slice(0, 140)}` }); });
+    heartbeat('seed-scan', 'idle', 'between sweeps');
     await idleWait(10 * 60 * 1000, 'seed', async (hints) => {
       emit({ stage: 'seed_office_trigger', detail: `${hints.length} hint(s) — targeted merge now` });
       await sweep(hints);

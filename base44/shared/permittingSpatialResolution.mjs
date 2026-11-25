@@ -282,11 +282,15 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
 export function exactConfiguredLocality(localities,resolution,profiles=[]){
  if(resolution?.status!=='location_verified'||!resolution.target)return null;const target=resolution.target;
  const matches=localities.filter(row=>{if(normalizeAddressState(row.state).toUpperCase()!==target.state)return false;
+  if(row.duplicate_of)return false;
   // Alias-aware: records filed under a source layer's stale name (e.g. OGRIP's
   // pre-rename township names) still match the fresher canonical target.
   if(!sameJ(row.name,target.name)&&!(target.aliases||[]).some(a=>sameJ(row.name,a)))return false;
   const township=/township/i.test(row.name),county=/county$/i.test(String(row.name).trim());if(target.type==='county'&&!county||target.type!=='county'&&county)return false;if(target.type==='township'&&!township||target.type!=='township'&&township)return false;
   if(row.geographic_identity?.geoid)return row.geographic_identity.geoid===target.geoid;
-  if(target.type!=='county'){const profile=profiles.find(p=>p.id===row.jurisdiction_profile_id),county=row.county || row.parent_county?.name || profile?.parent_county?.name;return sameJ(county,target.county);}
+  if(target.type!=='county'){const profile=profiles.find(p=>p.id===row.jurisdiction_profile_id),county=row.county || row.county_name || row.parent_county?.name || row.parent_county_name || profile?.parent_county?.name;
+   // County identity can hold several counties ('Bracken County / Mason County');
+   // any part matching the target's county is a valid county attribution.
+   return String(county||'').split(/[\/;]/).map(p=>p.trim()).filter(Boolean).some(part=>sameJ(part,target.county));}
   return true;});return matches.length===1?matches[0]:null;
 }

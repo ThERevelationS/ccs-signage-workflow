@@ -22,6 +22,7 @@ import { mirrorRead, mirrorApply } from './lib/entity-mirror.mjs';
 import { enqueue } from './lib/outbox.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
+import { waitWhilePaused } from './lib/server-control.mjs';
 
 const APP = '68dfcc5e57bbbc35387da97c';
 const FN = `https://base44.app/api/apps/${APP}/functions`;
@@ -289,6 +290,7 @@ console.log(`sweep ${SLICE}/${SLICES}: ${mine.length} of ${all} jurisdictions â€
 if (DRY) { mine.slice(0, 30).forEach((t) => console.log('  ', t.state, t.type.padEnd(12), t.name.padEnd(32), t.county || '')); process.exit(0); }
 let n = 0;
 for (const t of mine) {
+  await waitWhilePaused(`office-sweep-${SLICE}`, { item: t.name });
   await processTarget(t);
   if (++n % 25 === 0) emit({ stage: 'sweep_progress', address: `slice ${SLICE}/${SLICES}`, ok: true, detail: `${n}/${mine.length} processed` });
 }

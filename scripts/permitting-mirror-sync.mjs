@@ -10,6 +10,7 @@ import { appendFileSync } from 'node:fs';
 import { putMirrorSnapshot, getMirror } from './lib/entity-mirror.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
+import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 
 const APP = '68dfcc5e57bbbc35387da97c';
 const FN = `https://base44.app/api/apps/${APP}/functions`;
@@ -72,6 +73,7 @@ let pass = 0;
 emit({ stage: 'mirror_boot', address: 'mirror sync', ok: true, detail: `mirror-sync live — ${SOURCES.length} sources · cycle ${SYNC_MS / 1000}s` });
 while (true) {
   pass++;
+  await waitWhilePaused('mirror-sync', { item: 'mirror pass' });
   if (!token && !(await login())) { emit({ stage: 'mirror_error', address: 'mirror sync', ok: false, detail: 'login failed — retrying' }); await sleep(SYNC_MS); continue; }
   for (const s of SOURCES) {
     const cur = getMirror(s.name);
@@ -87,5 +89,6 @@ while (true) {
   }
   emit({ stage: 'mirror_cycle', address: 'mirror sync', ok: true, detail: `pass ${pass} complete` });
   if (ONCE) break;
+  heartbeat('mirror-sync', 'idle', 'cycle gap');
   await sleep(SYNC_MS);
 }
