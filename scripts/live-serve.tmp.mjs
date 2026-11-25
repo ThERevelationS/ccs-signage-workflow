@@ -691,7 +691,7 @@ function renderVerification(){
  const roles=Object.entries((v&&v.missing_roles)||{}).sort((a,b)=>b[1]-a[1]).slice(0,12);
  const plist=(promos&&promos.items)||[];
  const ny=needsYou();
- const np=(v&&v.not_permitting)||[];
+ const np=(ledger&&ledger.not_permitting)||[];
  setH('tab-verification',
  '<div class="card"><h2>Jurisdictions</h2>'
  +'<div class="bar" style="height:18px">'+seg(j.all_verified||0,'var(--green)')+seg(j.some_verified||0,'#86efac')+seg(j.none_verified||0,'var(--amber)')+seg(j.no_offices||0,'#3b4a6b')+'</div>'
