@@ -237,6 +237,7 @@ export default function QuickClockSection({
   const recognitionLockedRef = useRef(false);
   const modelsLoadedRef = useRef(false);
   const faceRunRef = useRef(0);
+  const faceRetryDelayRef = useRef(1200);
   // null = probe unanswered yet (optimistic); a count comes back from the
   // server-side identify_face probe since templates never reach the client.
   const [faceEnrolledCount, setFaceEnrolledCount] = useState(null);
@@ -1038,11 +1039,17 @@ export default function QuickClockSection({
 
   const identifyCapturedFace = async (descriptors, faceRun) => {
     const stillCurrent = () => faceRun === faceRunRef.current && !recognitionLockedRef.current;
-    const retryLater = (message) => {
+    // Failed calls (429/5xx) back off 1.2s -> 30s and wait out the shared
+    // rate-limit cooldown; a clean no-match retries at the normal pace.
+    const retryLater = (message, failed = false) => {
       setRecognitionStatus(message);
-      setTimeout(() => {
-        if (stillCurrent() && canUseFaceRef.current && !faceScanSessionRef.current?.isRunning?.()) startFaceScanSession(faceRun);
-      }, 1200);
+      faceRetryDelayRef.current = failed ? Math.min(faceRetryDelayRef.current * 2, 30000) : 1200;
+      const attempt = () => {
+        if (!stillCurrent() || !canUseFaceRef.current || faceScanSessionRef.current?.isRunning?.()) return;
+        if (isFleetCoolingDown()) { setTimeout(attempt, 5000); return; }
+        startFaceScanSession(faceRun);
+      };
+      setTimeout(attempt, faceRetryDelayRef.current);
     };
     setRecognitionStatus("Verifying your face...");
     try {
@@ -1064,7 +1071,7 @@ export default function QuickClockSection({
       retryLater("Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.");
     } catch {
       if (!stillCurrent()) return;
-      retryLater("Face check is having trouble right now - hold still and keep looking at the camera.");
+      retryLater("Face check is having trouble right now - hold still and keep looking at the camera.", true);
     }
   };
 
