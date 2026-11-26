@@ -147,6 +147,9 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
               {office.authority_verification_status === "staff_verified" && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-700"><ShieldCheck className="w-3 h-3" /> Staff verified</span>
               )}
+              {office.authority_verification_status === "needs_recheck" && (
+                <span title={office.recheck_reason || ""} className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-700"><ShieldCheck className="w-3 h-3" /> Verified — needs re-check</span>
+              )}
             </div>
             {(office.authority_roles || []).some(role => !LOCALITY_AUTHORITY_ROLES.some(([value]) => value === role)) && (
               <div className="rounded border border-amber-200 bg-amber-50 p-2">
