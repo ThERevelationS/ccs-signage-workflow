@@ -64,9 +64,16 @@ const scanCache = new Map<string, { rows: any[]; expires: number }>();
 async function cachedScan<T>(key: string, loader: () => Promise<T[]>): Promise<T[]> {
   const hit = scanCache.get(key);
   if (hit && hit.expires > Date.now()) return hit.rows as T[];
-  const rows = (await loader().catch(() => [] as T[])) as T[];
-  scanCache.set(key, { rows: Array.isArray(rows) ? rows : [], expires: Date.now() + SCAN_CACHE_MS });
-  return rows;
+  try {
+    const rows = (await loader()) as T[];
+    scanCache.set(key, { rows: Array.isArray(rows) ? rows : [], expires: Date.now() + SCAN_CACHE_MS });
+    return rows;
+  } catch {
+    // A failed scan (rate saturation) must NOT cache its empty fallback —
+    // otherwise one saturation wave poisons every detector for 5 minutes and
+    // evaluations report zero candidates until the cache expires.
+    return [] as T[];
+  }
 }
 
 const iso = (d = new Date()) => d.toISOString();
