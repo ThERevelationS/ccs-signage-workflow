@@ -167,15 +167,16 @@ async function applyPass() {
 
   let done = 0, officesChanged = 0, skipped = 0;
   // Below normal traffic: enqueues are FIFO (no priority lane) behind the
-  // whole existing backlog, paced ~50 loc/min. The yield is relative — a
-  // fixed depth gate would deadlock against the system's standing backlog;
-  // instead refuse to run if the backlog is GROWING well past where the
-  // pass started.
-  let depthBaseline = await outboxDepth();
+  // whole existing backlog, paced ~50 loc/min. The yield is on TREND not
+  // depth — a fixed gate deadlocks against the system's standing backlog.
+  // Relabel waits only while the outbox is actively RISING between checks;
+  // a plateau means the flusher is keeping up and FIFO pacing keeps
+  // relabel writes below normal traffic regardless of absolute depth.
+  let prevDepth = await outboxDepth();
   for (const t of liveTargets) {
     await waitWhilePaused(WORKER, { item: `relabel ${t.loc.name}` });
     if (readControl().needs_recheck === false) { emit({ stage: 'recheck_paused', detail: 'needs_recheck flag off — stopping', ok: true }); break; }
-    while (await outboxDepth() > depthBaseline + 500) { heartbeat(WORKER, 'idle', `outbox growing — waiting`); await sleep(15000); }
+    for (;;) { const d = await outboxDepth(); if (d <= prevDepth) { prevDepth = d; break; } prevDepth = d; heartbeat(WORKER, 'idle', `outbox rising (${d}) — waiting`); await sleep(15000); }
     const r = await relabelLoc(t);
     done++;
     if (r.changed) {
