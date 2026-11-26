@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, BadgeCheck, ChevronDown, ChevronRight, FileKey2 } from "lucide-react";
+import { AlertTriangle, BadgeCheck, FileKey2 } from "lucide-react";
 import { differenceInCalendarDays, format, isValid } from "date-fns";
 import { getPermitLineHandoffReadiness, getPermitLineLifecycleSummary, isPermitLineEffectivelyComplete } from "./permitQueue";
 import PermitLineHistory from "./PermitLineHistory";
@@ -140,6 +140,15 @@ function DateField({ label, value, disabled, onCommit, today = "", showTodayShor
   );
 }
 
+function DetailSection({ section, title, hint, children }) {
+  const [visited, setVisited] = useState(false);
+  return <details className="mt-2 rounded-md border border-slate-200 bg-white px-3 py-1"
+    onToggle={event => { if (event.target === event.currentTarget && event.currentTarget.open) setVisited(true); }}>
+    <summary data-permit-section={section} className="cursor-pointer rounded py-2 text-sm font-semibold text-slate-800 focus-visible:outline-purple-600">{title}</summary>
+    {visited && <div className="border-t pb-2 pt-2"><p className="mb-2 text-xs text-slate-600">{hint}</p>{children}</div>}
+  </details>;
+}
+
 export default function PermitLineLifecycleDetails({ lineItem, locality = null, onUpdateField, isRegistered, today }) {
   const lifecycleSummary = useMemo(() => getPermitLineLifecycleSummary(lineItem), [lineItem]);
   const handoffReadiness = useMemo(() => getPermitLineHandoffReadiness(lineItem, today), [lineItem, today]);
@@ -151,49 +160,6 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
     && lineItem?.status !== "completed"
     && !handoffReadiness.hasBlockers
     && !hasActiveCorrections;
-  const hasAdditionalDetails = useMemo(() => [
-    lineItem?.correction_status,
-    lineItem?.corrections_received_date,
-    lineItem?.resubmitted_date,
-    lineItem?.closeout_status,
-    lineItem?.inspection_date,
-    lineItem?.closeout_date,
-    lineItem?.jurisdiction_fee_amount,
-    lineItem?.jurisdiction_fee_status,
-    lineItem?.jurisdiction_fee_paid_date,
-    lineItem?.application_reference_number,
-    lineItem?.permit_number,
-    lineItem?.permit_document_url,
-    lineItem?.application_document_url,
-    lineItem?.site_photo_url,
-    lineItem?.note_attachment_url,
-    lineItem?.submission_method,
-    lineItem?.confirmation_number,
-    lineItem?.urgent,
-    lineItem?.application_revision,
-    lineItem?.denial_date,
-    lineItem?.denial_reason,
-    lineItem?.appeal_deadline,
-    lineItem?.fee_payment_link,
-    lineItem?.expected_response_date,
-    lineItem?.variance_required,
-    lineItem?.variance_status,
-    lineItem?.variance_hearing_date,
-    lineItem?.correction_required,
-    lineItem?.correction_deadline,
-    lineItem?.correction_resolved_date,
-    lineItem?.office_contacted_date,
-    lineItem?.office_responded_date,
-    lineItem?.inspector_contact,
-    lineItem?.approval_date,
-    lineItem?.expiration_date,
-  ].some((value) => value !== null && value !== undefined && value !== "" && value !== false), [lineItem]);
-  const [showAdditionalDetails, setShowAdditionalDetails] = useState(handoffReadiness.hasIssues);
-
-  useEffect(() => {
-    if (handoffReadiness.hasIssues) setShowAdditionalDetails(true);
-  }, [handoffReadiness.hasIssues]);
-
   const expirationState = useMemo(() => {
     const expiration = parseLocalDate(lineItem?.expiration_date);
     const todayDate = parseLocalDate(today);
@@ -287,21 +253,7 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
         />
       </div>
 
-      <button
-        type="button"
-        onClick={() => setShowAdditionalDetails((open) => !open)}
-        className="mt-2 inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold text-slate-600 hover:bg-white hover:text-slate-900"
-        aria-expanded={showAdditionalDetails}
-      >
-        {showAdditionalDetails ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-        {showAdditionalDetails ? "Hide application fields, corrections & fees" : "Show all application fields, corrections & fees"}
-        {hasAdditionalDetails && !showAdditionalDetails && (
-          <span className="ml-1 rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] text-blue-700">Recorded info</span>
-        )}
-      </button>
-
-      {showAdditionalDetails && (
-        <>
+      <DetailSection section="application" title="Application record" hint="Reference numbers, documents, filing information, and related dates.">
       <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <CommitTextField
           label="Application / Reference #"
@@ -497,12 +449,8 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
           onCommit={(value) => update("expiration_date", value)}
         />
       </div>
-
-      <div className="mt-3 border-t border-slate-200 pt-2">
-        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Fixes the office asked for</span>
-          <span className="text-[10px] text-slate-500">The office wants something changed — track it here.</span>
-        </div>
+      </DetailSection>
+      <DetailSection section="corrections" title="Office corrections" hint="Record the changes requested by the office and when they were resubmitted.">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <label className="min-w-0">
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Fix status</span>
@@ -539,13 +487,8 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
             showTodayShortcut={String(lineItem.correction_status || "").toLowerCase() === "resubmitted"}
           />
         </div>
-      </div>
-
-      <div className="mt-3 border-t border-slate-200 pt-2">
-        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Inspection + wrap-up</span>
-          <span className="text-[10px] text-slate-500">Only fill this in if the office requires an inspection after the permit is issued.</span>
-        </div>
+      </DetailSection>
+      <DetailSection section="inspection" title="Inspection & wrap-up" hint="Schedule the inspection, record its outcome, or enter a closeout date.">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <label className="min-w-0">
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Wrap-up status</span>
@@ -592,13 +535,8 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
             showTodayShortcut={String(lineItem.closeout_status || "").toLowerCase() === "closed_out"}
           />
         </div>
-      </div>
-
-      <div className="mt-3 border-t border-slate-200 pt-2">
-        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Jurisdiction fee</span>
-          <span className="text-[10px] text-slate-500">Type the real fee the office charged — don't copy the estimate.</span>
-        </div>
+      </DetailSection>
+      <DetailSection section="fee" title="Jurisdiction fee" hint="Record the actual charge and payment status, not the estimate.">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <CommitMoneyField
             label="Actual fee amount"
@@ -633,12 +571,10 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
             showTodayShortcut={String(lineItem.jurisdiction_fee_status || "").toLowerCase() === "paid"}
           />
         </div>
-      </div>
-        </>
-      )}
+      </DetailSection>
 
       {handoffReadiness.applicable && (
-        <div className={`mt-3 rounded-md border px-3 py-2 ${handoffReadiness.hasBlockers ? "border-red-200 bg-red-50/80" : handoffReadiness.hasIssues ? "border-amber-200 bg-amber-50/80" : "border-emerald-200 bg-emerald-50/70"}`}>
+        <div data-permit-section="handoff" role="region" aria-label="Permit handoff review" tabIndex={-1} className={`mt-3 rounded-md border px-3 py-2 focus-visible:outline-purple-600 ${handoffReadiness.hasBlockers ? "border-red-200 bg-red-50/80" : handoffReadiness.hasIssues ? "border-amber-200 bg-amber-50/80" : "border-emerald-200 bg-emerald-50/70"}`}>
           <div className="flex items-start gap-2">
             {handoffReadiness.hasIssues ? (
               <AlertTriangle className={`mt-0.5 h-4 w-4 flex-shrink-0 ${handoffReadiness.hasBlockers ? "text-red-600" : "text-amber-600"}`} />
