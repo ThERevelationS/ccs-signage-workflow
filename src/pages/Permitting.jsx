@@ -107,7 +107,7 @@ export default function Permitting() {
   const [assignedToMeOnly, setAssignedToMeOnly] = useState(false);
   const [issuesOnly, setIssuesOnly] = useState(false);
   const [viewName, setViewName] = useState("");
-  const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => new Set());
+  const [expandedGroupIds, setExpandedGroupIds] = useState(() => new Set(woFilter ? [woFilter] : []));
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
   // Page-level styled confirm — replaces window.confirm for the send-stamp
@@ -1054,7 +1054,7 @@ export default function Permitting() {
   }, [woFilter, workOrders, lineItems]);
   const hasActiveFilters = !!searchTerm.trim() || assignedToMeOnly || issuesOnly || queueFilter !== "all" || !!woFilter;
   const allVisibleGroupsCollapsed = visibleGroups.length > 0
-    && visibleGroups.every((group) => collapsedGroupIds.has(group.work_order_id));
+    && visibleGroups.every((group) => !expandedGroupIds.has(group.work_order_id));
 
   const clearWoFilter = () => {
     setWoFilter("");
@@ -1069,25 +1069,17 @@ export default function Permitting() {
     if (woFilter) clearWoFilter();
   };
 
-  const setGroupExpanded = (workOrderId, expanded) => {
-    setCollapsedGroupIds((previous) => {
-      const next = new Set(previous);
-      if (expanded) next.delete(workOrderId);
-      else next.add(workOrderId);
-      return next;
-    });
-  };
+  const setGroupExpanded = (id, open) => setExpandedGroupIds(previous => {
+    const next = new Set(previous);
+    if (open) next.add(id); else next.delete(id);
+    return next;
+  });
 
-  const setAllVisibleGroupsExpanded = (expanded) => {
-    setCollapsedGroupIds((previous) => {
-      const next = new Set(previous);
-      visibleGroups.forEach((group) => {
-        if (expanded) next.delete(group.work_order_id);
-        else next.add(group.work_order_id);
-      });
-      return next;
-    });
-  };
+  const setAllVisibleGroupsExpanded = (open) => setExpandedGroupIds(previous => {
+    const next = new Set(previous);
+    visibleGroups.forEach(({ work_order_id: id }) => { if (open) next.add(id); else next.delete(id); });
+    return next;
+  });
 
   // ?line=<permitLineItemId> deep link: expand the line's group, then scroll to
   // and ring the matching row (rows have no per-line detail view of their own).
@@ -1098,12 +1090,7 @@ export default function Permitting() {
 
   useEffect(() => {
     if (!highlightWorkOrderId) return;
-    setCollapsedGroupIds((previous) => {
-      if (!previous.has(highlightWorkOrderId)) return previous;
-      const next = new Set(previous);
-      next.delete(highlightWorkOrderId);
-      return next;
-    });
+    setGroupExpanded(highlightWorkOrderId, true);
   }, [highlightWorkOrderId]);
 
   useEffect(() => {
@@ -1118,9 +1105,7 @@ export default function Permitting() {
         return;
       }
       highlightScrolledRef.current = true;
-      const group = allGroups.find((g) => g.work_order_id === highlightWorkOrderId);
-      const rowIndex = group ? group.lines.findIndex((li) => li.id === highlightLineId) : -1;
-      const rowEl = rowIndex >= 0 ? groupEl.querySelectorAll(".divide-y > *")[rowIndex] : null;
+      const rowEl = groupEl.querySelector(`[data-permit-line="${CSS.escape(highlightLineId)}"]`);
       const target = rowEl || groupEl;
       target.scrollIntoView({ behavior: "smooth", block: "center" });
       if (rowEl) rowEl.classList.add("ring-2", "ring-inset", "ring-purple-400", "rounded-lg", "bg-purple-50/60");
@@ -1244,7 +1229,8 @@ export default function Permitting() {
                     for (const n of names) count = Math.max(count, sharedLocalities[n]?.size || 0);
                     return count;
                   })()}
-                  expanded={!collapsedGroupIds.has(group.work_order_id)}
+                  expanded={expandedGroupIds.has(group.work_order_id)}
+                  initialLineId={highlightWorkOrderId === group.work_order_id ? highlightLineId : ""}
                   onExpandedChange={(expanded) => setGroupExpanded(group.work_order_id, expanded)}
                 />
               </div>
