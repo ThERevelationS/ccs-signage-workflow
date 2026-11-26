@@ -3,7 +3,7 @@
 // Pure — no mirrors, no network.
 import assert from 'node:assert';
 import { cleanOfficeName, isGenericOfficeName, isPlaceholderOffice, isNonPermitOfficeName, receiverOkForRole } from './lib/office-name-clean.mjs';
-import { buildPlan, planToUpdates, PAPER_RE } from './permitting-needs-person-cleanup.mjs';
+import { buildPlan, planToUpdates, mergeRevertOffices, PAPER_RE } from './permitting-needs-person-cleanup.mjs';
 
 // ── known-answer table: junk in → clean out ──────────────────────────────
 const KAT = [
@@ -199,6 +199,58 @@ assert.ok(!PAPER_RE.test('Dover Township'));
   const plan = buildPlan([loc], {});
   assert.equal(plan.renames.length, 0);
   assert.equal(plan.merges.length, 0);
+}
+
+// ── revert merges against live offices — never a stale snapshot ──────────
+// Live offices changed after cleanup: a researcher added a real office and
+// renamed another. The revert must restore the retired office and keep the
+// new live state untouched.
+{
+  const beforeOffices = [
+    { id: 'gone1', name: 'Sterling Electrical permit office', authority_roles: ['electrical_permit'] },
+    { id: 'stay1', name: 'Zoning Inspector', authority_roles: ['zoning'] },
+    { id: 'recv1', name: 'Planning Commission', authority_roles: ['planning'] },
+  ];
+  const entry = {
+    before: { offices: beforeOffices, archived_offices: [] },
+    data: {
+      offices: [
+        { id: 'stay1', name: 'Zoning Inspector', authority_roles: ['zoning'] },
+        // cleanup grafted an extra role onto the receiver
+        { id: 'recv1', name: 'Planning Commission', authority_roles: ['planning', 'historic_review'] },
+      ],
+      archived_offices: [{ ...beforeOffices[0], retired_reason: 'not a permitting office' }],
+    },
+  };
+  // live has evolved: recv1 renamed, a NEW office exists, stay1 kept.
+  const live = [
+    { id: 'stay1', name: 'Zoning Inspector', authority_roles: ['zoning'] },
+    { id: 'recv1', name: 'Planning & Zoning Commission', authority_roles: ['planning', 'historic_review'] },
+    { id: 'new1', name: 'County Building Safety Department', authority_roles: ['sign_permit'] },
+  ];
+  const merged = mergeRevertOffices(live, entry);
+  assert.equal(merged.length, 4);
+  assert.ok(merged.some((o) => o.id === 'gone1' && o.name === 'Sterling Electrical permit office'), 'retired office restored');
+  assert.ok(merged.some((o) => o.id === 'new1' && o.name === 'County Building Safety Department'), 'new live office kept');
+  const recv = merged.find((o) => o.id === 'recv1');
+  assert.equal(recv.name, 'Planning & Zoning Commission', 'live rename kept');
+  assert.deepEqual(recv.authority_roles, ['planning'], 'grafted role stripped');
+  // already-correct live state → null (nothing to enqueue)
+  assert.equal(mergeRevertOffices(merged, entry), null);
+}
+// receiver with verification keeps grafted roles
+{
+  const entry = {
+    before: { offices: [{ id: 'r', name: 'Planning Commission', authority_roles: ['planning'] }], archived_offices: [] },
+    data: { offices: [{ id: 'r', name: 'Planning Commission', authority_roles: ['planning', 'historic_review'] }], archived_offices: [] },
+  };
+  const live = [{ id: 'r', name: 'Planning Commission', authority_roles: ['planning', 'historic_review'], authority_verification_status: 'staff_verified' }];
+  assert.equal(mergeRevertOffices(live, entry), null, 'verified receiver untouched');
+}
+// paper/rename-only entries are no-ops under merge revert
+{
+  const entry = { before: { offices: [{ id: 'a', name: 'A' }], archived_offices: [] }, data: { offices: [{ id: 'a', name: 'A' }], archived_offices: [], duplicate_of: 'X' } };
+  assert.equal(mergeRevertOffices([{ id: 'a', name: 'A' }], entry), null);
 }
 
 console.log('PASS needs-person-cleanup');

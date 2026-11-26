@@ -153,6 +153,60 @@ export function planToUpdates(plan, locs) {
   return updates;
 }
 
+// ── Revert (live merge) ──────────────────────────────────────────────────
+// Never writes the logged `before` snapshot wholesale — researchers may have
+// rewritten offices since the cleanup ran. Reads live, appends back only the
+// offices the cleanup retired (matched by id, restored from `before`), strips
+// roles the cleanup grafted onto surviving receiver offices (unless that
+// office now carries verification/evidence), and leaves every other office
+// exactly as it is live. Returns the merged offices array, or null when the
+// merge would change nothing.
+const roleList = (o) => o?.authority_roles || o?.roles || [];
+const hasVerification = (o) => o?.authority_verification_status === 'staff_verified'
+  || !!o?.authority_verified_at
+  || !!String(o?.authority_verification_notes || '').trim()
+  || !!o?.authority_evidence;
+export function mergeRevertOffices(liveOffices, entry) {
+  const key = (o) => o?.id || o?.name;
+  const beforeOffices = entry?.before?.offices || [];
+  const beforeArch = entry?.before?.archived_offices || [];
+  const addedArch = (entry?.data?.archived_offices || []).filter((a) => {
+    const k = key(a);
+    return k && !beforeArch.some((b) => key(b) === k);
+  });
+  const retiredKeys = new Set(addedArch.map(key));
+  const restore = new Map(beforeOffices.filter((o) => retiredKeys.has(key(o))).map((o) => [key(o), o]));
+  // Roles the cleanup grafted onto surviving offices (merge receivers):
+  // present in the applied offices but absent from `before` for the same id.
+  const beforeByKey = new Map(beforeOffices.map((o) => [key(o), o]));
+  const grafted = new Map();
+  for (const d of entry?.data?.offices || []) {
+    const k = key(d), b = beforeByKey.get(k);
+    if (!k || !b) continue;
+    const extra = roleList(d).filter((r) => !roleList(b).includes(r));
+    if (extra.length) grafted.set(k, new Set(extra));
+  }
+  const out = [];
+  let changed = false;
+  for (const o of liveOffices || []) {
+    const g = key(o) && grafted.get(key(o));
+    if (g && !hasVerification(o)) {
+      const kept = roleList(o).filter((r) => !g.has(r));
+      if (kept.length !== roleList(o).length) {
+        out.push({ ...o, ...(o.authority_roles ? { authority_roles: kept } : { roles: kept }) });
+        changed = true;
+        continue;
+      }
+    }
+    out.push(o);
+  }
+  const liveKeys = new Set(out.map(key));
+  for (const [k, o] of restore) {
+    if (!liveKeys.has(k)) { out.push(o); liveKeys.add(k); changed = true; }
+  }
+  return changed ? out : null;
+}
+
 // ── Readback ─────────────────────────────────────────────────────────────
 let token = null;
 async function login() {
@@ -188,13 +242,20 @@ async function main() {
   if (revertMode) {
     const entries = (existsSync(LOG_FILE) ? readFileSync(LOG_FILE, 'utf8').trim().split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) : []).reverse();
     if (!entries.length) { console.log('revert: no log entries'); return; }
-    let n = 0;
+    // Merge against live — never a snapshot write. Fresh point read per
+    // locality; only retired offices come back, grafted roles are stripped.
+    if (!(await login())) { console.log('revert: readback login failed — nothing enqueued'); return; }
+    let merged = 0, already = 0, failed = 0;
+    const failedNames = [];
     for (const e of entries) {
-      enqueue({ entity: 'PermitLocality', op: 'update', id: e.locality_id, data: { offices: e.before.offices, archived_offices: e.before.archived_offices, duplicate_of: e.before.duplicate_of, permit_required_summary: e.before.permit_required_summary, office_change_log: e.before.office_change_log }, mirror: 'localities', note: `cleanup revert — ${e.name}` });
-      mirrorApply('localities', { id: e.locality_id, ...e.before });
-      n++;
+      const row = await readById('PermitLocality', e.locality_id).catch(() => null);
+      if (!row) { failed++; failedNames.push(e.name); continue; }
+      const offices = mergeRevertOffices(row.offices || [], e);
+      if (!offices) { already++; continue; }
+      enqueue({ entity: 'PermitLocality', op: 'update', id: e.locality_id, data: { offices }, mirror: 'localities', note: `cleanup revert — merge restore — ${e.name}` });
+      merged++;
     }
-    console.log(`revert: enqueued ${n} locality restore(s)`);
+    console.log(`revert: ${merged} merge restore(s) enqueued, ${already} already correct live, ${failed} read failures${failedNames.length ? ` — ${failedNames.join(', ')}` : ''}`);
     return;
   }
 
