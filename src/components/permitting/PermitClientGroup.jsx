@@ -192,23 +192,24 @@ export default function PermitClientGroup({
 
   return (
     <section ref={groupRef} className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="grid items-center gap-3 p-3 sm:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] sm:p-4">
+      <div className="grid items-center gap-2 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] sm:gap-4 sm:px-4">
         <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}
           className="flex min-w-0 items-center gap-3 rounded text-left hover:text-purple-800">
           {expanded ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
           <span className="min-w-0">
             <strong className="block break-words text-sm text-slate-900">{wo?.client_name || "Permit job"}</strong>
-            <span className="block text-xs text-slate-600">{wo?.current_task_assigned_to || "No owner assigned"} · {hasLines ? `${progress.completedCount}/${progress.totalCount} permits complete` : "No permits yet"}</span>
+            <span className="block text-xs text-slate-600">{wo?.current_task_assigned_to ? `Job owner: ${wo.current_task_assigned_to}` : "No job owner"} · {hasLines ? `${progress.completedCount}/${progress.totalCount} permits complete` : "No permits yet"}</span>
           </span>
         </button>
         {queueState && <div className="min-w-0 border-l-2 border-purple-200 pl-3">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className={`rounded border px-2 py-0.5 font-semibold ${PERMIT_QUEUE_META[queueState.key]?.className || ""}`}>{awaitingOffice ? "Awaiting office verification" : PERMIT_QUEUE_META[queueState.key]?.label}</span>
             {group.lines.some(li => li.urgent) && <strong className="text-red-700">Urgent</strong>}
-            {queueState.followupDate && <span>{queueState.timingLabel}</span>}
+            {queueState.followupDate && queueState.key !== "waiting" && <span>{queueState.timingLabel}</span>}
+            {!expanded && readiness.hasBlockers && <strong className="text-red-800">Blocked: {readiness.blockers[0]}</strong>}
           </div>
-          <div className="mt-1 text-sm text-slate-800">{awaitingOffice ? <span role="status">{pendStatus || `Setup will continue automatically when ${pendingLocalityName || "the selected jurisdiction"} is verified.`}</span>
-              : <><strong>Next: </strong>{hasLines ? queueState.nextAction : "Confirm the job site and choose the permit offices."}</>}</div>
+          <div className="mt-1 break-words text-sm font-medium text-slate-900">{awaitingOffice ? <span role="status">{pendStatus || `Setup will continue automatically when ${pendingLocalityName || "the selected jurisdiction"} is verified.`}</span>
+              : <><strong>{queueState.key === "waiting" || queueState.key === "completed" ? "" : "Next: "}</strong>{hasLines ? queueState.nextAction : "Confirm the job site and choose the permit offices."}</>}</div>
           {!hasLines && !awaitingOffice && wo && isRegistered && (
             <Button type="button" size="sm" className="mt-2" onClick={startSetup}>Set up permit</Button>
           )}
@@ -217,96 +218,6 @@ export default function PermitClientGroup({
           }}>{SECTION_ACTIONS[queueState.nextSection] || "Open permit"}</button>}
         </div>}
       </div>
-      {expanded && <details className="border-t px-4 py-2">
-        <summary className="cursor-pointer text-sm font-semibold text-slate-700">Job information</summary>
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <button type="button" className="text-xs text-purple-800 underline" onClick={() => onOpenWorkOrder(group.work_order_id)}>Open work order</button>
-        {/* Live auto-apply indicator — visible collapsed AND expanded so
-            background work is always on screen, not buried in the body. */}
-        {pendingLocalityName && !awaitingOffice && (
-          <span
-            className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800 max-w-full"
-            onClick={e => e.stopPropagation()}
-            title={pendStatus || `Auto-applying ${pendingLocalityName} when its offices verify`}
-          >
-            <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />
-            <span className="truncate">{pendStatus || `${pendingLocalityName} — auto-applying when offices verify`}</span>
-          </span>
-        )}
-
-        {/* Est/Inv # — editable text + external link */}
-        <div className="flex items-center gap-1 text-[11px] flex-shrink-0" onClick={e => e.stopPropagation()}>
-          <InlineEditField
-            label="Est/Inv:"
-            value={wo?.corbridge_invoice_number || wo?.est_inv_at || ""}
-            placeholder="—"
-            onSave={(v) => saveWO(wo?.corbridge_invoice_number !== undefined && wo?.corbridge_invoice_number !== "" ? 'corbridge_invoice_number' : 'est_inv_at', v)}
-            disabled={!isRegistered}
-            maxWidth={140}
-          />
-          {estInvLink && estInvNumber && (
-            <a
-              href={estInvLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800"
-              onClick={e => e.stopPropagation()}
-              title="Open in Corebridge"
-            >
-              <ExternalLink className="w-2.5 h-2.5" />
-            </a>
-          )}
-        </div>
-
-        {/* Job Description (from Sales Pipeline — wo.description) */}
-        <InlineEditField
-          icon={<Briefcase className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
-          label="Job:"
-          value={wo?.description || ""}
-          placeholder="Add job description…"
-          onSave={(v) => saveWO('description', v)}
-          disabled={!isRegistered}
-          maxWidth={420}
-          textSizeClass="text-[13px]"
-        />
-
-        {/* Task Assigned */}
-        <InlineEditField
-          icon={<User className="w-3 h-3 text-gray-400" />}
-          label="Assigned:"
-          value={wo?.current_task_assigned_to || ""}
-          placeholder="—"
-          onSave={(v) => saveWO('current_task_assigned_to', v)}
-          options={userOptions}
-          disabled={!isRegistered}
-          maxWidth={140}
-        />
-
-        {/* Project Manager */}
-        <InlineEditField
-          label="PM:"
-          value={wo?.project_manager || ""}
-          placeholder="—"
-          onSave={(v) => saveWO('project_manager', v)}
-          options={userOptions}
-          disabled={!isRegistered}
-          maxWidth={120}
-        />
-
-        {/* Task Description */}
-        <InlineEditField
-          icon={<Clipboard className="w-3 h-3 text-gray-400" />}
-          value={wo?.current_task_description || ""}
-          placeholder="Task…"
-          onSave={(v) => saveWO('current_task_description', v)}
-          options={taskDescOptions.length ? taskDescOptions : undefined}
-          disabled={!isRegistered}
-          maxWidth={200}
-        />
-
-        </div>
-      </details>}
-
       {expanded && <div className="flex flex-wrap items-center gap-2 px-4 text-xs">{wo?._permittingRoutingMismatch && (
             <>
               <span
@@ -327,37 +238,6 @@ export default function PermitClientGroup({
             </>
           )}</div>}
       {expanded && (<>
-      {progress.totalCount > 1 && (
-        <div className="border-b bg-slate-50/70 px-3 py-2 text-xs">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="font-semibold text-slate-700">Permit progress</span>
-            <span className="text-slate-500">
-              {progress.completedCount}/{progress.totalCount} lines complete
-            </span>
-            <span className="hidden text-slate-300 sm:inline">•</span>
-            <div className="flex flex-wrap items-center gap-1">
-              {progress.lifecycleStages.map((stage) => (
-                <span
-                  key={stage.key}
-                  className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${LIFECYCLE_PROGRESS_TONES[stage.tone] || LIFECYCLE_PROGRESS_TONES.neutral}`}
-                  title={`${stage.count} permit line${stage.count === 1 ? "" : "s"} at ${stage.label.toLowerCase()}`}
-                >
-                  {stage.count > 1 ? `${stage.count} × ` : ""}{stage.shortLabel || stage.label}
-                </span>
-              ))}
-            </div>
-            {progress.handoffApplicableCount > 0 && (
-              <span
-                className={`ml-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:ml-auto ${progress.handoffBlockedCount > 0 ? "border-red-200 bg-red-50 text-red-800" : progress.handoffIssueCount > 0 ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}
-                title="How many lines have everything filled in for handoff — this doesn't change any status."
-              >
-                Handoff {progress.handoffReadyCount}/{progress.handoffApplicableCount} ready
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
       {readiness.hasIssues && (
         <div className={`border-b px-3 py-2 text-xs ${readiness.hasBlockers ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}`}>
           <div className="flex items-start gap-2">
@@ -365,7 +245,7 @@ export default function PermitClientGroup({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                 <div className={`font-semibold ${readiness.hasBlockers ? "text-red-800" : "text-amber-800"}`}>
-                  {readiness.hasBlockers ? "Blocked / missing setup" : "Needs review"} · {readiness.issueCount} item{readiness.issueCount === 1 ? "" : "s"}
+                  Needs attention · {readiness.hasBlockers ? "Blocked" : "Review"} · {readiness.issueCount} item{readiness.issueCount === 1 ? "" : "s"}
                 </div>
                 {readiness.issueCount > 2 && (
                   <button
@@ -423,7 +303,8 @@ export default function PermitClientGroup({
               </span>
             </div>
           )}
-          {hasLines && <div className="flex flex-wrap items-center justify-end gap-2 border-t px-3 py-1">
+          {hasLines && <div className="flex flex-wrap items-center gap-2 border-y bg-slate-50 px-3 py-1">
+            <h4 className="mr-auto text-sm font-semibold text-slate-900">Permits</h4>
             <DropdownMenu>
               <DropdownMenuTrigger asChild><Button type="button" variant="outline" size="sm">Job actions <ChevronDown className="ml-1 h-3 w-3" /></Button></DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -480,7 +361,6 @@ export default function PermitClientGroup({
             </div>
           ) : (
             <>
-              <h4 className="border-y bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900">Permits <span className="font-normal text-slate-500">({group.lines.length})</span></h4>
               <div className="divide-y">
                 {[...group.lines].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((li, idx, sorted) => (
                   <div key={li.id} data-permit-line={li.id} className="flex items-stretch gap-0">
@@ -514,6 +394,7 @@ export default function PermitClientGroup({
                 ))}
               </div>
 
+      <h4 className="border-t px-4 pb-1 pt-3 text-sm font-semibold text-slate-800">Reference</h4>
       {/* Authority review is derived from the saved permit-line locality IDs, so it
           persists across Apply/reload and reflects subsequent staff verification. */}
       {authorityCoverage.length > 0 && (
@@ -620,6 +501,104 @@ export default function PermitClientGroup({
               )}
             </>
           )}
+
+      <details className="border-t px-4 py-2">
+        <summary className="cursor-pointer text-sm font-semibold text-slate-700">Job information</summary>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <button type="button" className="text-xs text-purple-800 underline" onClick={() => onOpenWorkOrder(group.work_order_id)}>Open work order</button>
+        {/* Est/Inv # — editable text + external link */}
+        <div className="flex items-center gap-1 text-[11px] flex-shrink-0" onClick={e => e.stopPropagation()}>
+          <InlineEditField
+            label="Est/Inv:"
+            value={wo?.corbridge_invoice_number || wo?.est_inv_at || ""}
+            placeholder="—"
+            onSave={(v) => saveWO(wo?.corbridge_invoice_number !== undefined && wo?.corbridge_invoice_number !== "" ? 'corbridge_invoice_number' : 'est_inv_at', v)}
+            disabled={!isRegistered}
+            maxWidth={140}
+          />
+          {estInvLink && estInvNumber && (
+            <a
+              href={estInvLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800"
+              onClick={e => e.stopPropagation()}
+              title="Open in Corebridge"
+            >
+              <ExternalLink className="w-2.5 h-2.5" />
+            </a>
+          )}
+        </div>
+
+        {/* Job Description (from Sales Pipeline — wo.description) */}
+        <InlineEditField
+          icon={<Briefcase className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
+          label="Job:"
+          value={wo?.description || ""}
+          placeholder="Add job description…"
+          onSave={(v) => saveWO('description', v)}
+          disabled={!isRegistered}
+          maxWidth={420}
+          textSizeClass="text-[13px]"
+        />
+
+        {/* Task Assigned */}
+        <InlineEditField
+          icon={<User className="w-3 h-3 text-gray-400" />}
+          label="Assigned:"
+          value={wo?.current_task_assigned_to || ""}
+          placeholder="—"
+          onSave={(v) => saveWO('current_task_assigned_to', v)}
+          options={userOptions}
+          disabled={!isRegistered}
+          maxWidth={140}
+        />
+
+        {/* Project Manager */}
+        <InlineEditField
+          label="PM:"
+          value={wo?.project_manager || ""}
+          placeholder="—"
+          onSave={(v) => saveWO('project_manager', v)}
+          options={userOptions}
+          disabled={!isRegistered}
+          maxWidth={120}
+        />
+
+        {/* Task Description */}
+        <InlineEditField
+          icon={<Clipboard className="w-3 h-3 text-gray-400" />}
+          value={wo?.current_task_description || ""}
+          placeholder="Task…"
+          onSave={(v) => saveWO('current_task_description', v)}
+          options={taskDescOptions.length ? taskDescOptions : undefined}
+          disabled={!isRegistered}
+          maxWidth={200}
+        />
+
+        </div>
+        {progress.totalCount > 1 && <div className="mt-2 flex flex-wrap items-center gap-2 text-xs" aria-label="Permit status breakdown">
+            <div className="flex flex-wrap items-center gap-1">
+              {progress.lifecycleStages.map((stage) => (
+                <span
+                  key={stage.key}
+                  className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${LIFECYCLE_PROGRESS_TONES[stage.tone] || LIFECYCLE_PROGRESS_TONES.neutral}`}
+                  title={`${stage.count} permit line${stage.count === 1 ? "" : "s"} at ${stage.label.toLowerCase()}`}
+                >
+                  {stage.count > 1 ? `${stage.count} × ` : ""}{stage.shortLabel || stage.label}
+                </span>
+              ))}
+            </div>
+            {progress.handoffApplicableCount > 0 && (
+              <span
+                className={`ml-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:ml-auto ${progress.handoffBlockedCount > 0 ? "border-red-200 bg-red-50 text-red-800" : progress.handoffIssueCount > 0 ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}
+                title="How many lines have everything filled in for handoff — this doesn't change any status."
+              >
+                Handoff {progress.handoffReadyCount}/{progress.handoffApplicableCount} ready
+              </span>
+            )}
+        </div>}
+      </details>
 
           {wo && (
             <PermitJobDocuments
