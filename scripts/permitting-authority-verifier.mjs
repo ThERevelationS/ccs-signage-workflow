@@ -34,6 +34,7 @@ import { paceCall } from './lib/read-ledger.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 import { buildIdentityIndex, withUnionResearch } from './lib/profile-identity.mjs';
 import { readCooldowns, tierExhausted, tiersDone } from './lib/research-claims.mjs';
+import { cleanOfficeName, isGenericOfficeName, isNonPermitOfficeName, isPlaceholderOffice } from './lib/office-name-clean.mjs';
 
 const APP = '68dfcc5e57bbbc35387da97c';
 const FN = `https://base44.app/api/apps/${APP}/functions`;
@@ -101,6 +102,9 @@ const GAP_CATEGORY = {
   non_permit_office: 'non_permit_body',
   research_denied: 'no_role_match',
   role_office_mismatch: 'no_role_match',
+  role_keyword_missing: 'no_quote',
+  office_name_junk: 'no_role_match',
+  office_name_absent_from_evidence: 'no_role_match',
   unknown_role: 'no_role_match',
   no_research_entry: 'no_research',
   research_unknown: 'no_research',
@@ -206,39 +210,77 @@ function isStubOffice(officeName, locName) {
   const key = norm(officeName), locKey = norm(locName);
   return !key || (locKey && key.includes(locKey)) || STUB_OFFICE.test(key);
 }
-function researchForOffice(profile, officeName, loc, officeRoles = []) {
+// Extraction noise can role-type a page's office_name wrong (a zoning
+// quote scraped off a police page). Wrong-domain providers can't carry
+// permitting roles — filtering them keeps role-attribution honest.
+const WRONG_DEPT = /police|fire\b|ems\b|sheriff|water\b|sewer|utility|sanitation|parks?\b|recreation|library|school|cemetery|transit|ambulance/i;
+// Evidence lookup, three levels (fixed 2026-11-26 — record names drifted
+// from research names, so ~1/3 of verified offices found no evidence at all):
+//   L1 office_id — future research may stamp the office record it describes;
+//   L2 cleaned/normalized name + aliases — match BOTH the entry's
+//      office_name and its label, against the raw and cleaned office name;
+//   L3 profile union — every same-role entry in the profile (minus
+//      wrong-domain providers). Candidates only: the tightened check below
+//      still requires the office name in the quote or the entry name.
+export function researchForOffice(profile, officeName, loc, officeRoles = [], officeId = null) {
   const roles = Array.isArray(profile?.office_research?.roles) ? profile.office_research.roles : [];
-  const key = norm(officeName);
-  const hits = roles.filter((r) => {
-    const rn = norm(r?.office_name || r?.label);
-    return rn && (rn === key || rn.includes(key) || key.includes(rn));
-  });
-  if (hits.length || !isStubOffice(officeName, loc?.name)) return hits;
-  const countyToks = nameTokens(profile?.county_name || loc?.parent_county_name || loc?.county_name || '');
-  const locToks = nameTokens(loc?.name || '');
-  const loose = roles.filter((r) => {
-    const rn = norm(r?.office_name || r?.label);
-    if (!rn) return false;
-    if (/county.administered|county.wide|unincorporated/i.test(`${r?.service_area || ''} ${r?.notes || ''}`)) return true;
-    if (countyToks.length && countyToks.every((t) => rn.includes(t))) return true;
-    if (locToks.length && locToks.every((t) => rn.includes(t))) return true;
-    return false;
-  });
-  if (loose.length) return loose;
-  // Stub offices are role-named placeholders seeded before research exists
-  // ("X Zoning office", "Right-of-way authority"). A role-typed entry for one
-  // of the stub's claimed roles IS the discovered authority — the entry's own
-  // evidence guards (official source, responsibility quote) still apply, and
-  // providerName renames the stub on promotion.
+  // L1 — research stamped with the office record id.
+  if (officeId) {
+    const byId = roles.filter((r) => r?.office_id && r.office_id === officeId);
+    if (byId.length) return byId;
+  }
+  // L2 — name/alias, trying the entry's office_name AND label.
+  const keys = new Set([norm(officeName), norm(cleanOfficeName(officeName).clean)].filter(Boolean));
+  const namesOf = (r) => [r?.office_name, r?.label].map(norm).filter(Boolean);
+  const hits = roles.filter((r) => namesOf(r).some((rn) => [...keys].some((k) => rn === k || rn.includes(k) || k.includes(rn))));
+  if (hits.length) return hits;
+  // Stub offices: county-administered / shared-service / loc-named loose
+  // match (unchanged — see block comment above).
+  let loose = [];
+  if (isStubOffice(officeName, loc?.name)) {
+    const countyToks = nameTokens(profile?.county_name || loc?.parent_county_name || loc?.county_name || '');
+    const locToks = nameTokens(loc?.name || '');
+    loose = roles.filter((r) => {
+      const rn = norm(r?.office_name || r?.label);
+      if (!rn) return false;
+      if (/county.administered|county.wide|unincorporated/i.test(`${r?.service_area || ''} ${r?.notes || ''}`)) return true;
+      if (countyToks.length && countyToks.every((t) => rn.includes(t))) return true;
+      if (locToks.length && locToks.every((t) => rn.includes(t))) return true;
+      return false;
+    });
+    if (loose.length) return loose;
+  }
+  // L3 — profile union: a same-role entry IS the discovered authority for a
+  // stub, and a candidate for a drifted real name. The strict check gates
+  // misattribution (office name must appear in the quote or the entry name).
   if (officeRoles.length) {
-    // Extraction noise can role-type a page's office_name wrong (a zoning
-    // quote scraped off a police page). Wrong-domain providers can't carry
-    // permitting roles — filtering them keeps role-attribution honest.
-    const wrongDept = /police|fire\b|ems\b|sheriff|water\b|sewer|utility|sanitation|parks?\b|recreation|library|school|cemetery|transit|ambulance/i;
-    const byRole = roles.filter((r) => officeRoles.includes(r?.role) && !wrongDept.test(String(r?.office_name || r?.label || '')));
+    const byRole = roles.filter((r) => officeRoles.includes(r?.role) && !WRONG_DEPT.test(String(r?.office_name || r?.label || '')));
     if (byRole.length) return byRole;
   }
   return loose;
+}
+
+// The strict bar: everything roleEvidence checks AND the quote carries the
+// role's own keyword (the old OR-coherence let a dept word in the office NAME
+// substitute for role evidence), AND the office's cleaned name isn't junk /
+// generic / non-permit / placeholder, AND its distinctive tokens appear in
+// the quote or in the entry's provider name (the alias path — a "Sign permit
+// issuer" entry still counts when it names this office's real provider).
+export function strictRoleEvidence(role, entry, officeName, locName, profile) {
+  const gaps = roleEvidence(role, entry, profile);
+  const q = clean(entry?.responsibility_quote);
+  if (ROLE_FUNC[role] && !ROLE_FUNC[role].test(q)) gaps.push(`${role}:role_keyword_missing`);
+  const cname = cleanOfficeName(officeName).clean;
+  if (!cname || isGenericOfficeName(cname) || isNonPermitOfficeName(officeName) || isPlaceholderOffice(officeName, locName)) {
+    gaps.push(`${role}:office_name_junk`);
+  } else {
+    const toks = nameTokens(cname);
+    if (toks.length) {
+      const has = (hay) => { const h = ` ${norm(hay)} `; return toks.every((t) => h.includes(` ${t} `) || h.includes(t)); };
+      if (!has(q) && !has(`${entry?.office_name || ''} ${entry?.label || ''}`)) gaps.push(`${role}:office_name_absent_from_evidence`);
+    }
+  }
+  return gaps;
 }
 
 const AUTHORITY_ROLES = new Set(['sign_permit', 'zoning', 'building', 'electrical', 'electrical_permit', 'electrical_inspection', 'right_of_way', 'historic_review', 'planning', 'transportation', 'other']);
@@ -347,7 +389,7 @@ async function pass(onlyNames = null) {
     for (const o of next) {
       if (o?.authority_verification_status !== 'needs_verification' || !Array.isArray(o?.authority_roles) || !o.authority_roles.length) continue;
       scanned += 1;
-      const hits = researchForOffice(researchProfile, o.name, loc, o.authority_roles);
+      const hits = researchForOffice(researchProfile, o.name, loc, o.authority_roles, o.id);
       // Research hasn't reached this office yet — WIP, not a gap. Recorded
       // as no_research but no attempt is burned (nothing evaluated).
       if (!hits.length) { recordOffice(loc, o, { status: 'needs_verification', reasons: ['no_research'], missing: o.authority_roles }); continue; }
@@ -366,7 +408,7 @@ async function pass(onlyNames = null) {
         const entries = hits.filter((h) => h?.role === r);
         const denied = entries.length && entries.every((e) => String(e?.applicability) === 'not_applicable_candidate');
         if (denied) { trimmed.push(`${r}:research_denied`); continue; }
-        const passing = entries.find((e) => String(e?.applicability) === 'potentially_applicable' && roleEvidence(r, e, profile).length === 0);
+        const passing = entries.find((e) => String(e?.applicability) === 'potentially_applicable' && strictRoleEvidence(r, e, o.name, loc?.name, profile).length === 0);
         if (passing) {
           proven.push(r); passingEntries[r] = passing; providerName = providerName || clean(passing.office_name || passing.label) || null;
           // MP-5.2 — corroboration tier: distinct evidence hosts backing
@@ -383,7 +425,7 @@ async function pass(onlyNames = null) {
           continue;
         }
         const applicable = entries.find((e) => String(e?.applicability) === 'potentially_applicable');
-        if (applicable) trimmed.push(...roleEvidence(r, applicable, profile));
+        if (applicable) trimmed.push(...strictRoleEvidence(r, applicable, o.name, loc?.name, profile));
         else trimmed.push(`${r}:${entries.length ? 'research_unknown' : 'no_research_entry'}`);
       }
       if (proven.length) {
@@ -465,8 +507,13 @@ async function pass(onlyNames = null) {
         gapped += 1;
         // Evaluated and held — the failure earns an attempt; REVIEW_ATTEMPTS
         // of these move the office to the human-review list in the ledger.
+        // Name-structural failures (junk name, name absent from evidence) are
+        // record problems for the researcher, not evidence gaps — retrying
+        // them only floods the review list, so they earn no attempt.
+        const NAME_STRUCT = /office_name_junk|office_name_absent_from_evidence/;
+        const burnable = trimmed.some((g) => !NAME_STRUCT.test(g));
         const missing = trimmed.map((g) => g.split(':')[0]).filter((v, i, a) => a.indexOf(v) === i);
-        recordOffice(loc, o, { status: 'needs_verification', reasons: trimmed.map((g) => gapCat(g.split(':').slice(1).join(':'))), missing, countAttempt: true });
+        recordOffice(loc, o, { status: 'needs_verification', reasons: trimmed.map((g) => gapCat(g.split(':').slice(1).join(':'))), missing, countAttempt: burnable });
       }
     }
     if (changed && !DRY) {

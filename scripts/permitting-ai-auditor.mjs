@@ -17,7 +17,7 @@ import { drainQueue, outputFor, clearUnit, enqueueUnit, queueDepth, probeAuth, a
 import { cleanOfficeName, isNonPermitOfficeName } from './lib/office-name-clean.mjs';
 import { addBoost } from './lib/research-boost.mjs';
 import { resolveTarget } from './lib/ai-sessions.mjs';
-import { roleEvidence, isOfficialSource } from './permitting-authority-verifier.mjs';
+import { strictRoleEvidence, isOfficialSource } from './permitting-authority-verifier.mjs';
 import { enqueue } from './lib/outbox.mjs';
 import { getMirror, mirrorApply } from './lib/entity-mirror.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
@@ -137,7 +137,7 @@ function deterministicAgrees(meta, finding) {
   const role = String(finding.field || '').split(' ')[0];
   const ev = (o.evidence || []).find((e) => e.url);
   if (!ev?.quote) return true; // no quote at all — agrees there is no support
-  const gaps = roleEvidence(role, { office_name: o.name, official_source_url: ev.url, responsibility_quote: ev.quote }, { name: meta.jurisdiction, county_name: meta.county, website_url: meta.official_domain });
+  const gaps = strictRoleEvidence(role, { office_name: o.name, official_source_url: ev.url, responsibility_quote: ev.quote }, o.name, meta.jurisdiction, { name: meta.jurisdiction, county_name: meta.county, website_url: meta.official_domain });
   return gaps.length > 0;
 }
 
