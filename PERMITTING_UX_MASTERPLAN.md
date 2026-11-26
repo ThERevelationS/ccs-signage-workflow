@@ -29,6 +29,8 @@ The queue chose the correct line ID in all six cases. The competing instructions
 
 **P1 implementation - in preview, not staff-validated or published.** The selected permit and confirmed-save dialog use the same queue decision scoped to that line and the page date. Only a decision pointing to an actual checklist step offers a checklist continuation. Other steps remain available without being presented as the priority. The existing section shortcuts and job-level selection order are unchanged. Synthetic browser verification: all six baseline mismatches resolved; ordinary checklist continuation, newly filed-to-follow-up transition, completed, read-only, and refused-save controls also passed (11 cases). No production reads or writes. P2 is next: reduce duplicated status, owner, and date information without hiding the primary action.
 
+**P2 job-card pass - in preview, not staff-validated or published.** Permits and Job actions share a header; reference and editable job information follow the permit list. Progress count stays in the job header; detailed lifecycle and handoff counts remain available in Job information. Waiting dates are no longer repeated in the collapsed header. The first blocker is visible before expansion. Synthetic browser measurements of first permit position after job expansion (before/after, px): waiting 322/197 at 320px and 262/133 at 1280px; fee blocked 401/248 and 313/184 respectively. Job menu, job information, keyboard fee shortcut and no horizontal overflow checked. Next: distinguish last contact from the next reminder in the follow-up workflow.
+
 ## What the staff member should see
 
 | Level | Visible by default | Intentionally one level deeper |
