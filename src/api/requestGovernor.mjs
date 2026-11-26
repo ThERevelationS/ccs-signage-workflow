@@ -195,8 +195,17 @@ export function createRequestGovernor({
     return promise;
   };
 
-  const bumpEpoch = () => { epoch += 1; };
-  const getEpoch = () => epoch;
+  // Scoped epochs: writes bump a scope (default "global") and readers fold
+  // only the scopes they depend on into their cache keys — an unrelated write
+  // (clock-in, notification dismiss) no longer orphans every TTL-cached read
+  // in the tab. Scopeless calls behave exactly as before.
+  const epochs = new Map();
+  const bumpEpoch = (scope = "global") => {
+    epochs.set(scope, (epochs.get(scope) || 0) + 1);
+    // Keep the legacy counter advancing for any consumer reading it directly.
+    epoch += 1;
+  };
+  const getEpoch = (scope = "global") => (epochs.get(scope) || 0) + (scope === "global" ? 0 : epochs.get("global") || 0);
 
   return { run, dedupe, bumpEpoch, getEpoch, stats };
 }
