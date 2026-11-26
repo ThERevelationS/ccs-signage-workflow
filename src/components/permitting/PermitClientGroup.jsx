@@ -191,8 +191,8 @@ export default function PermitClientGroup({
   const taskDescOptions = (taskDescriptions || []).filter(Boolean);
 
   return (
-    <section ref={groupRef} className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="grid items-center gap-2 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] sm:gap-4 sm:px-4">
+    <section ref={groupRef} className=" [&_input:not([type=checkbox])]:border-slate-500 [&_input:not([type=checkbox])]:bg-white [&_textarea]:border-slate-500 [&_[role=combobox]]:border-slate-500 [&_:focus-visible]:outline [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-sky-800 min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-t-lg bg-slate-100 grid items-center gap-2 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] sm:gap-4 sm:px-4">
         <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}
           className="flex min-w-0 items-center gap-3 rounded text-left hover:text-purple-800">
           {expanded ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
@@ -303,11 +303,11 @@ export default function PermitClientGroup({
               </span>
             </div>
           )}
-          {hasLines && <div className="flex flex-wrap items-center gap-2 border-y bg-slate-50 px-3 py-1">
+          {hasLines && <div className="flex flex-wrap items-center gap-2 border-y border-slate-400 bg-[#dce8ed] px-3 py-1">
             <h4 className="mr-auto text-sm font-semibold text-slate-900">Permits</h4>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button type="button" variant="outline" size="sm">Job actions <ChevronDown className="ml-1 h-3 w-3" /></Button></DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuTrigger asChild><Button className="border-slate-500 bg-slate-100 text-slate-900" type="button" variant="outline" size="sm">Job actions <ChevronDown className="ml-1 h-3 w-3" /></Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="border-slate-500 bg-white text-slate-900 shadow-lg [&_[data-highlighted]]:bg-slate-200 [&_[data-highlighted]]:text-slate-950">
                 <DropdownMenuItem disabled={!isRegistered} onSelect={() => { setWizardStep(3); setShowSetupWizard(true); }}>Edit permit setup</DropdownMenuItem>
                 {wo && <DropdownMenuItem disabled={!isRegistered} onSelect={() => { setWizardStep(2); setShowSetupWizard(true); }}>Build AI permit plan</DropdownMenuItem>}
                 {sharedOfficeCount > 1 && <DropdownMenuItem onSelect={() => onSearchLocality?.(group.lines[0]?.locality_name)}>Show jobs with this office</DropdownMenuItem>}
@@ -352,8 +352,8 @@ export default function PermitClientGroup({
               <span className="text-xs text-slate-600">{awaitingOffice ? "Office verification is already queued." : "Permit setup starts with the job site address."}</span>
               {!queueState && !awaitingOffice && wo && isRegistered && <Button size="sm" onClick={startSetup}>Set up permit</Button>}
               {wo && isRegistered && <DropdownMenu>
-                <DropdownMenuTrigger asChild><Button type="button" variant="outline" size="sm">Setup options <ChevronDown className="ml-1 h-3 w-3" /></Button></DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuTrigger asChild><Button className="border-slate-500 bg-slate-100 text-slate-900" type="button" variant="outline" size="sm">Setup options <ChevronDown className="ml-1 h-3 w-3" /></Button></DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="border-slate-500 bg-white text-slate-900 shadow-lg [&_[data-highlighted]]:bg-slate-200 [&_[data-highlighted]]:text-slate-950">
                   {awaitingOffice && <DropdownMenuItem onSelect={startSetup}>Review permit setup</DropdownMenuItem>}
                   <DropdownMenuItem onSelect={() => setShowLocalityPicker(true)}>Advanced office lookup</DropdownMenuItem>
                 </DropdownMenuContent>
@@ -361,9 +361,9 @@ export default function PermitClientGroup({
             </div>
           ) : (
             <>
-              <div className="divide-y">
+              <div className="space-y-1 bg-slate-100 p-1">
                 {[...group.lines].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((li, idx, sorted) => (
-                  <div key={li.id} data-permit-line={li.id} className="flex items-stretch gap-0">
+                  <div key={li.id} data-permit-line={li.id} className={`flex items-stretch rounded border border-l-4 ${openLines.has(li.id) ? "border-slate-400 border-l-sky-800 bg-[#edf4f6]" : "border-slate-300 border-l-slate-400 bg-white"}`}>
                     <div className="flex flex-col justify-center pl-1 pr-0.5">
                       <button type="button" disabled={idx === 0 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move up" onClick={() => onUpdateField(li.id, "order", (sorted[idx-1]?.order ?? idx-1) - 0.5)}>▲</button>
                       <button type="button" disabled={idx === sorted.length - 1 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move down" onClick={() => onUpdateField(li.id, "order", (sorted[idx+1]?.order ?? idx+1) + 0.5)}>▼</button>
@@ -394,11 +394,11 @@ export default function PermitClientGroup({
                 ))}
               </div>
 
-      <h4 className="border-t px-4 pb-1 pt-3 text-sm font-semibold text-slate-800">Reference</h4>
+      <h4 className="border-y border-stone-400 bg-stone-200 px-4 py-2 text-sm font-semibold text-slate-800">Reference</h4>
       {/* Authority review is derived from the saved permit-line locality IDs, so it
           persists across Apply/reload and reflects subsequent staff verification. */}
       {authorityCoverage.length > 0 && (
-        <details className="border-t px-4 py-3 text-xs"><summary className="cursor-pointer text-sm font-semibold text-slate-800">Offices &amp; contacts{authorityNeedsCheck ? " · Verification needed" : ""}</summary>
+        <details className="border-t border-stone-300 bg-stone-50 px-4 py-3 text-xs"><summary className="cursor-pointer text-sm font-semibold text-slate-800">Offices &amp; contacts{authorityNeedsCheck ? " · Verification needed" : ""}</summary>
           <div className="mt-3 mb-1 flex items-center gap-1.5 font-semibold text-amber-950">
             <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
             Office check — only the offices we have on file; there may be more
@@ -490,7 +490,7 @@ export default function PermitClientGroup({
         </details>
       )}
               {/* Single shared notes section for the whole project — expanded by default */}
-              {wo && (<details className="border-t px-4 py-3"><summary className="cursor-pointer text-sm font-semibold">Project notes</summary>
+              {wo && (<details className="border-t border-stone-300 bg-stone-50 px-4 py-3"><summary className="cursor-pointer text-sm font-semibold">Project notes</summary>
                 <PermitLineNotesSection
                   workOrder={wo}
                   officeLabel=""
@@ -502,7 +502,7 @@ export default function PermitClientGroup({
             </>
           )}
 
-      <details className="border-t px-4 py-2">
+      <details className="border-t border-stone-300 bg-stone-50 px-4 py-2">
         <summary className="cursor-pointer text-sm font-semibold text-slate-700">Job information</summary>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
           <button type="button" className="text-xs text-purple-800 underline" onClick={() => onOpenWorkOrder(group.work_order_id)}>Open work order</button>
