@@ -71,10 +71,12 @@ Verify default, expanded, focused, selected, disabled and error states at 320, 3
 ## Autonomous preview checklist
 
 - [x] Independent baseline, unified recommendations, compact job cards and contact/reminder distinction verified in preview.
-- [ ] Apply and verify the visual separation package above.
-- [ ] Finish outstanding P3 follow-up and save/continuation checks against the fixture pack.
-- [ ] Complete P4 exceptions, permissions and closeout checks; fix in-scope failures.
-- [ ] Complete P5 synthetic desktop/mobile and keyboard walkthrough, final sandbox build and evidence report. Staff timing targets are optional later research, not a completion gate.
+- [x] Apply and verify the visual separation package above.
+- [x] Finish outstanding P3 follow-up and save/continuation checks against the fixture pack.
+- [x] Complete P4 exceptions, permissions and closeout checks; fix in-scope failures.
+- [x] Complete P5 synthetic desktop/mobile and keyboard walkthrough, final sandbox build and evidence report. Staff timing targets are optional later research, not a completion gate.
+
+Preview evidence: 41 synthetic browser cases across queue routing, setup entry, contact/reminders, saved-state continuation, permissions and refusal. Layout and keyboard routing covered 320/390/1280px. Computed colors independently distinguish expanded blue-gray permits, white siblings and stone Reference; sandbox build passed and three edited components matched readback. Setup-entry tests use a wizard stub; no live office lookup, production mutation, staff study or full accessibility certification. Publication remains manual.
 
 ## Execution rules
 
