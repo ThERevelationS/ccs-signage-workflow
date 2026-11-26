@@ -15,15 +15,20 @@
 // Concurrency: ≤MAX_SESSIONS persistent ACP processes per process-pool.
 // Per-batch watchdog kills the session (process stays) — units never lost.
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync, openSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync, openSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DEVIN_EXE = process.env.DEVIN_EXE || 'C:/Users/BrettHeinlein/AppData/Local/Programs/Devin/resources/app/extensions/windsurf/devin/bin/devin.exe';
 const CREDS = 'C:/Users/BrettHeinlein/AppData/Roaming/devin/credentials.toml';
 const REPO = 'C:/Users/BrettHeinlein/Documents/DevinProjects/ccs-signage-workflow-clean';
 const DIR = '.audit-work';
-const QUEUE = `${DIR}/extract-queue`;
-const OUT = `${DIR}/extract-out`;
+// Per-consumer queues — each worker owns its own <name>-queue/<name>-out so
+// two drainers can never steal each other's units.
+const QUEUE_NAME = process.env.DEVIN_LLM_QUEUE || 'extract';
+const QUEUE = `${DIR}/${QUEUE_NAME}-queue`;
+const OUT = `${DIR}/${QUEUE_NAME}-out`;
+const MODEL = process.env.DEVIN_LLM_MODEL || 'swe-2.1';
+const MODEL_FALLBACK = 'swe';
 const MAX_SESSIONS = Number(process.env.DEVIN_LLM_SESSIONS || 2);
 const BATCH = Number(process.env.DEVIN_LLM_BATCH || 10);
 const SESSION_MS = 15 * 60 * 1000;
@@ -40,6 +45,7 @@ function archiveUnit(sessionId, rec) {
 
 const evFd = openSync('.live-events.jsonl', 'a');
 const emit = (e) => { try { writeFileSync(evFd, JSON.stringify({ t: Date.now(), worker: 'devin-llm', ...e }) + '\n', { flag: 'a' }); } catch {} };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let authState = 'unknown';
 
@@ -68,6 +74,8 @@ export function outputFor(id) {
   try {
     const raw = readFileSync(p, 'utf8').trim();
     const json = JSON.parse(raw.replace(/^```(?:json)?\s*|```\s*$/g, '').trim());
+    // Wrapped files carry the consumed unit's meta alongside the output.
+    if (json && typeof json === 'object' && 'output' in json && '__meta' in json) return { id, output: json.output, meta: json.__meta };
     return { id, output: json };
   } catch { return { id, output: null, malformed: true }; }
 }
@@ -83,12 +91,29 @@ export function queueDepth() {
 // ── persistent ACP session ────────────────────────────────────────────────
 // One devin.exe acp process; MCP-server boot cost paid once. Each batch is a
 // session/prompt call. On any transport failure the process is respawned.
+// Session spawn pacing — the ACP host throttles bursts (eight simultaneous
+// `devin.exe acp` launches get "agent is shutting down" on session/new).
+// One fresh session every few seconds; the loser's units just re-queue.
+let lastSpawnAt = 0;
+const SPAWN_GAP_MS = 8000;
+
 class AcpWorker {
-  constructor() { this.child = null; this.buf = ''; this.rpcId = 0; this.pending = new Map(); this.reply = ''; this.busy = false; }
+  constructor() { this.child = null; this.buf = ''; this.rpcId = 0; this.pending = new Map(); this.reply = ''; this.busy = false; this.model = MODEL; this.resolvedModel = null; }
 
   async ensure() {
     if (this.child && !this.child.killed) return true;
-    this.child = spawn(DEVIN_EXE, ['acp'], { cwd: REPO, windowsHide: true });
+    if (Date.now() - lastSpawnAt < SPAWN_GAP_MS) { this.spawnPacedUntil = lastSpawnAt + SPAWN_GAP_MS; return false; }
+    lastSpawnAt = Date.now();
+    // The acp server treats WINDSURF_EXT_HOST_PID as the parent process it
+    // must outlive — an inherited stale pid (an ext host that since exited)
+    // makes it cancel every prompt and shut down ~2s in. Point it at the
+    // worker's own pid: worker death still reaps the session, and a live
+    // worker keeps it alive.
+    const env = { ...process.env, WINDSURF_EXT_HOST_PID: String(process.pid) };
+    this.child = spawn(DEVIN_EXE, ['acp', '--model', this.model], { cwd: REPO, windowsHide: true, env });
+    // A write to a dead child's stdin fails ASYNC (EPIPE/EOF 'error' event),
+    // not as a throw — without a handler it crashes the whole worker.
+    this.child.stdin.on('error', () => {});
     this.buf = ''; this.pending = new Map(); this.reply = '';
     const child = this.child;
     child.stdout.on('data', (d) => {
@@ -128,6 +153,17 @@ class AcpWorker {
       const sn = await this.send('session/new', { cwd: REPO, mcpServers: [] });
       this.sessionId = sn?.result?.sessionId || sn?.result?.id;
       if (!this.sessionId) throw new Error(JSON.stringify(sn?.error || 'no sessionId').slice(0, 150));
+      // Report the model the session actually resolved — swe-2.1 is preferred;
+      // an unresolvable model id falls back to 'swe' once per process.
+      this.resolvedModel = sn?.result?.model || sn?.result?.modelId || sn?.result?.currentModel
+        || sn?.result?.configOptions?.model || sn?.result?.configOptions?.modelId
+        || (Array.isArray(sn?.result?.models) ? sn.result.models.find((m) => m.current || m.selected)?.modelId : null)
+        || this.model;
+      emit({ stage: 'devin_session', ok: true, detail: `acp session ${this.sessionId} — model ${this.resolvedModel}${this.resolvedModel !== this.model ? ` (requested ${this.model})` : ''}` });
+      if (this.model !== MODEL_FALLBACK && this.resolvedModel && this.resolvedModel !== this.model) {
+        this.model = MODEL_FALLBACK;
+        emit({ stage: 'devin_session', ok: true, detail: `model '${this.resolvedModel}' ≠ '${MODEL}' — next session requests '${MODEL_FALLBACK}'` });
+      }
       // ask mode: text-only replies — no tool detours during extraction
       await this.send('session/set_mode', { sessionId: this.sessionId, modeId: 'ask' }).catch(() => {});
       return true;
@@ -149,12 +185,38 @@ class AcpWorker {
     if (!(await this.ensure())) return { ok: false, error: 'no session' };
     this.reply = '';
     const pr = await this.send('session/prompt', { sessionId: this.sessionId, prompt: [{ type: 'text', text }] });
-    if (pr.error) { this.child = null; try { this.child?.kill('SIGKILL'); } catch {}; return { ok: false, error: pr.error.message, reply: this.reply }; }
+    if (pr.error) { const c = this.child; this.child = null; try { c?.kill('SIGKILL'); } catch {}; return { ok: false, error: pr.error.message, retryable: Boolean(pr.error?.data?.['cognition.ai/retryable']), reply: this.reply }; }
     return { ok: true, reply: this.reply, stopReason: pr?.result?.stopReason };
   }
 }
 
-const workers = Array.from({ length: MAX_SESSIONS }, () => new AcpWorker());
+// Session pool grows on demand — the controller's guard scales the target
+// (1–8) with memory/commit/CPU gates, exactly like researcher scaling.
+// Culling is newest-first; a busy session finishes its batch, then drops.
+const workers = [];
+const unitOwner = new Map(); // unit id → session index that produced its out file
+export const sessionFor = (uid) => unitOwner.get(String(uid));
+let sessionTarget = MAX_SESSIONS;
+export function setSessionTarget(n) { sessionTarget = Math.max(0, Math.floor(Number(n) || 0)); ensureWorkerPool(); }
+export function sessionTargetNow() { return sessionTarget; }
+function ensureWorkerPool() {
+  while (workers.length < sessionTarget) workers.push(new AcpWorker());
+  for (let i = workers.length - 1; i >= sessionTarget; i--) {
+    if (workers[i].busy) continue; // let it finish; culled on the next pass
+    try { workers[i].child?.kill('SIGKILL'); } catch {}
+    workers.splice(i, 1);
+  }
+}
+// Recover units orphaned by a crash: *.json.claim-* files are renamed back.
+function recoverClaims() {
+  try {
+    for (const f of readdirSync(QUEUE)) {
+      const m = f.match(/^(.*\.json)\.claim-\d+$/);
+      if (m) { try { renameSync(join(QUEUE, f), join(QUEUE, m[1])); } catch {} }
+    }
+  } catch {}
+}
+recoverClaims();
 
 export async function probeAuth() {
   if (authState !== 'unknown') return authState;
@@ -191,20 +253,36 @@ function extractJson(text) {
 }
 
 // ── the batch call — one prompt on a persistent session ───────────────────
-export async function runBatch() {
+// Units are claimed by renaming queue files first, so two parallel sessions
+// can never read the same unit (per-session claim files).
+export async function runBatch(w) {
   const auth = await probeAuth();
   if (auth !== 'ok') return { lane: 'auth', spawned: false };
-  const queued = readdirSync(QUEUE).filter((f) => f.endsWith('.json')).slice(0, BATCH);
-  if (!queued.length) return { lane: 'empty', spawned: false };
-  const w = workers.find((x) => !x.busy);
-  if (!w) return { lane: 'busy', spawned: false };
+  if (!w) { w = workers.find((x) => !x.busy); if (!w) return { lane: 'busy', spawned: false }; }
+  const widx = workers.indexOf(w);
+  const claimed = [];
+  let qfiles = [];
+  try { qfiles = readdirSync(QUEUE).filter((f) => f.endsWith('.json')); } catch { return { lane: 'empty', spawned: false }; }
+  for (const f of qfiles) {
+    if (claimed.length >= BATCH) break;
+    try { renameSync(join(QUEUE, f), join(QUEUE, `${f}.claim-${widx}`)); claimed.push(f); } catch {}
+  }
+  if (!claimed.length) return { lane: 'empty', spawned: false };
+  const unclaim = () => { for (const f of claimed) { try { renameSync(join(QUEUE, `${f}.claim-${widx}`), join(QUEUE, f)); } catch {} } };
   w.busy = true;
   try {
     const units = [];
-    for (const f of queued) { try { units.push(JSON.parse(readFileSync(join(QUEUE, f), 'utf8'))); } catch {} }
-    if (!units.length) return { lane: 'empty', spawned: false };
-    emit({ stage: 'devin_batch_start', detail: `${units.length} units → acp session` });
-    const r = await w.prompt(BATCH_PROMPT(units));
+    for (const f of claimed) { try { const u = JSON.parse(readFileSync(join(QUEUE, `${f}.claim-${widx}`), 'utf8')); units.push(u); unitOwner.set(String(u.id), widx); } catch {} }
+    if (!units.length) { unclaim(); return { lane: 'empty', spawned: false }; }
+    w.currentUnits = units.map((u) => u.meta?.jurisdiction || u.id);
+    w.since = Date.now(); w.reply = '';
+    emit({ stage: 'devin_batch_start', detail: `${units.length} units → acp session ${widx}` });
+    // A session-level failure (auth handshake, retryable server_stopping,
+    // transport death) must not kill the worker — the claimed units go back
+    // to the queue and a respawned session retries them next batch.
+    let r;
+    try { r = await w.prompt(BATCH_PROMPT(units)); }
+    catch (e) { r = { ok: false, error: String(e?.message || e).slice(0, 150), reply: '' }; }
     const parsed = extractJson(r.reply);
     let produced = 0;
     const seenIds = new Set();
@@ -212,7 +290,11 @@ export async function runBatch() {
       for (const res of parsed.results) {
         const uid = String(res?.id || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 90);
         if (!uid || res?.output == null) continue;
-        try { writeFileSync(join(OUT, `${uid}.json`), JSON.stringify(res.output)); produced += 1; seenIds.add(uid); } catch {}
+        // The queue file is consumed at claim time, so the unit's meta rides
+        // inside the out file — consumers read it back via outputFor().meta.
+        const unit = units.find((u) => String(u.id) === uid);
+        const file = unit?.meta ? { __meta: unit.meta, output: res.output } : res.output;
+        try { writeFileSync(join(OUT, `${uid}.json`), JSON.stringify(file)); produced += 1; seenIds.add(uid); } catch {}
         archiveUnit(w.sessionId, { unit: uid, kind: 'output', output: res.output });
       }
     }
@@ -220,19 +302,61 @@ export async function runBatch() {
     // short-circuited still leaves a record of what it attempted and why.
     for (const u of units) if (!seenIds.has(u.id)) archiveUnit(w.sessionId, { unit: u.id, kind: 'missed', error: r.error ? String(r.error).slice(0, 120) : 'no output in batch' });
     archiveUnit(w.sessionId, { kind: 'batch_done', units: units.length, produced, ok: r.ok, error: r.error ? String(r.error).slice(0, 120) : null });
-    emit({ stage: 'devin_batch_done', ok: r.ok && produced > 0, detail: `${r.error ? `err:${String(r.error).slice(0, 70)}` : r.stopReason || 'done'} — ${produced}/${units.length} outputs` });
-    return { lane: 'devin', spawned: true, ok: r.ok, produced, error: r.error };
-  } finally { w.busy = false; }
+    // Produced units leave the queue (their out file is the answer); misses
+    // are unclaimed back so a later batch retries them.
+    for (const u of units) {
+      const f = `${String(u.id).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 90)}.json`;
+      if (seenIds.has(f.slice(0, -5))) { try { unlinkSync(join(QUEUE, `${f}.claim-${widx}`)); } catch {} }
+      else { try { renameSync(join(QUEUE, `${f}.claim-${widx}`), join(QUEUE, f)); } catch {} }
+    }
+    emit({ stage: 'devin_batch_done', ok: r.ok && produced > 0, detail: `s${widx} ${r.error ? `err:${String(r.error).slice(0, 70)}` : r.stopReason || 'done'} — ${produced}/${units.length} outputs` });
+    return { lane: 'devin', spawned: true, ok: r.ok, produced, error: r.error, session: widx };
+  } finally { w.busy = false; w.currentUnits = null; }
 }
 
-export async function drainQueue({ maxBatches = 8, sleepMs = 5000 } = {}) {
+export function acpInfo() {
+  const w = workers.find((x) => x.resolvedModel) || workers[0];
+  return {
+    queue: QUEUE_NAME, sessions: workers.length, target: sessionTarget, model: w?.resolvedModel || MODEL,
+    busy: workers.filter((x) => x.busy).length, alive: workers.filter((x) => x.child && !x.child.killed).length,
+    // Per-session rows for the dashboard's live panel.
+    detail: workers.map((x, i) => ({
+      i, busy: x.busy, alive: Boolean(x.child && !x.child.killed),
+      units: x.currentUnits || [], since: x.since || null,
+      partial: x.busy ? String(x.reply || '').slice(-300) : null,
+      model: x.resolvedModel || null,
+    })),
+  };
+}
+
+// Parallel drain — every free session works its own claimed batch at once.
+export async function drainQueue({ maxBatches = 8, sleepMs = 3000 } = {}) {
+  ensureWorkerPool();
   let batches = 0, produced = 0;
-  while (queueDepth() > 0 && batches < maxBatches) {
-    const r = await runBatch();
-    if (r.lane === 'auth' || r.lane === 'empty') return { lane: r.lane, batches, produced };
-    if (r.lane === 'busy') { await new Promise((res) => setTimeout(res, sleepMs)); continue; }
-    batches += 1; produced += r.produced || 0;
-    await new Promise((res) => setTimeout(res, sleepMs));
+  const running = new Set();
+  const launch = async () => {
+    const w = workers.find((x) => !x.busy && !(x.spawnPacedUntil > Date.now()));
+    if (!w) { // all free workers are spawn-paced — wait out the gap
+      const wait = Math.min(...workers.filter((x) => !x.busy).map((x) => (x.spawnPacedUntil || 0) - Date.now()).filter((ms) => ms > 0));
+      if (Number.isFinite(wait)) { await sleep(Math.min(wait + 200, SPAWN_GAP_MS + 200)); return launch(); }
+      return false;
+    }
+    const p = runBatch(w).then((r) => {
+      running.delete(p);
+      if (r.lane === 'devin') { batches += 1; produced += r.produced || 0; }
+      return r;
+    }).catch((e) => { running.delete(p); return { lane: 'devin', ok: false, error: String(e?.message || e) }; });
+    running.add(p);
+    return true;
+  };
+  while (batches < maxBatches) {
+    if (queueDepth() === 0) break;
+    const auth = await probeAuth();
+    if (auth !== 'ok') return { lane: 'auth', batches, produced };
+    if (await launch()) continue;
+    if (running.size) { await Promise.race(running); continue; }
+    break;
   }
+  if (running.size) await Promise.all([...running]);
   return { lane: 'devin', batches, produced };
 }
