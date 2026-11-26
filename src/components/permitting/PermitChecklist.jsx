@@ -71,8 +71,8 @@ export function PermitHandoff({ initial, today, onSave, onClose, canEdit }) {
     }
   }
   return <Dialog open onOpenChange={open => { if (!open && !inFlight.current) onClose(); }}>
-    <DialogContent hideClose={busy} className="max-h-[90dvh] w-[calc(100vw_-_2rem)] max-w-md overflow-y-auto">
-      <DialogHeader>
+    <DialogContent hideClose={busy} className="bg-slate-50 border-slate-400 [&_input:not([type=checkbox])]:border-slate-500 [&_input:not([type=checkbox])]:bg-white [&_textarea]:border-slate-500 [&_[role=combobox]]:border-slate-500 [&_:focus-visible]:outline [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-sky-800 max-h-[90dvh] w-[calc(100vw_-_2rem)] max-w-md overflow-y-auto">
+      <DialogHeader className="rounded border-l-4 border-sky-800 bg-[#dce8ed] px-3 py-2">
         <DialogTitle>{result ? filing ? "Submission recorded" : "Step updated" : stepName(step)}</DialogTitle>
         <DialogDescription>{line.row_name || line.office_type || "Permit"} · {line.locality_name || "Office not set"}</DialogDescription>
       </DialogHeader>
