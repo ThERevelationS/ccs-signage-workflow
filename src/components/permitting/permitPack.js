@@ -44,7 +44,7 @@ export function buildPermitPack({ jurisdiction, locality }) {
     line(`${i + 1}. ${clean(o.name) || "Office"}`, 13, true, 20);
     const roles = (o.authority_roles || []).map((r) => ROLE_LABEL[r] || r).join(", ");
     field("Roles", roles);
-    field("Verification", o.authority_verification_status === "staff_verified" ? `Verified (${o.corroboration_tier || "single_source"})` : (o.authority_verification_status || "unverified"));
+    field("Verification", o.authority_verification_status === "staff_verified" ? `Verified (${o.corroboration_tier || "single_source"})` : o.authority_verification_status === "needs_recheck" ? "Verified — needs re-check" : (o.authority_verification_status || "unverified"));
     field("Phone", o.contact_phone); field("Email", o.contact_email);
     field("Website", o.contact_website); field("Address", o.contact_address);
     field("Hours", o.hours); field("Contact", o.contact_person);
