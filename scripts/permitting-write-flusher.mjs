@@ -13,7 +13,7 @@
 //
 // Tuning: --rate 300 (records/min) · --batch 100 · --once for a single drain.
 import { openSync, writeFileSync, readFileSync, existsSync, appendFileSync, mkdirSync, rmSync, statSync, copyFileSync } from 'node:fs';
-import { enqueue, takeBatch, outboxDepth, journal, requeueTail, compactOutbox, OUTBOX, OUTBOX_DONE, OUTBOX_ERR } from './lib/outbox.mjs';
+import { enqueue, takeBatch, outboxDepth, journal, requeueTail, compactOutbox, sanitizeOffice, OUTBOX, OUTBOX_DONE, OUTBOX_ERR } from './lib/outbox.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
@@ -99,8 +99,20 @@ async function flushSingle(rec) {
   return call('staffEntityWrite', body);
 }
 
+// Flush-time sanitize: records enqueued before the enqueue-side fix (or by a
+// worker still running old code) carry field_confidence:"" — remote rejects
+// the whole offices[] update unless it's a dict. Sanitize every PermitLocality
+// offices write one last time at the boundary.
+const sanitizeRec = (rec) => {
+  if (rec?.entity === 'PermitLocality' && Array.isArray(rec?.data?.offices)) {
+    return { ...rec, data: { ...rec.data, offices: rec.data.offices.map(sanitizeOffice) } };
+  }
+  return rec;
+};
+
 let bulkAvailable = null; // null = untested; cached after first invoke
-async function flushBatch(batch) {
+async function flushBatch(rawBatch) {
+  const batch = rawBatch.map(sanitizeRec);
   if (bulkAvailable !== false) {
     const res = await call('staffEntityBulkWrite', { writes: batch.map((r) => ({ entity: r.entity, op: r.op, ...(r.id ? { id: r.id } : {}), ...(r.query ? { query: r.query } : {}), ...(r.update ? { update: r.update } : {}), ...(r.data ? { data: r.data } : {}) })) });
     if (res?.error === 'function_not_found') { bulkAvailable = false; emit({ stage: 'outbox_error', ok: false, detail: 'staffEntityBulkWrite not on this runtime — per-record fallback' }); }

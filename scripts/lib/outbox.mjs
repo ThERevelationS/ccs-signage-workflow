@@ -27,12 +27,22 @@ function withLock(fn) {
   try { return fn(); } finally { try { fs.rmdirSync(LOCK); } catch {} }
 }
 
+export const sanitizeOffice = (o) => {
+  // field_confidence is a schema-typed dict; "" and other non-dict values make
+  // remote validation reject the whole update.
+  if (o && typeof o === 'object' && 'field_confidence' in o
+    && !(o.field_confidence === null || (typeof o.field_confidence === 'object' && !Array.isArray(o.field_confidence)))) {
+    return { ...o, field_confidence: null };
+  }
+  return o;
+};
+
 export function enqueue(rec) {
   // rec: {entity, op, id, query, data, mirror, note}
   // Write-boundary office dedupe: a stale writer's full offices[] can't
   // re-introduce same-id rows — deduped before it reaches the queue or mirror.
   if (rec?.entity === 'PermitLocality' && Array.isArray(rec?.data?.offices)) {
-    rec = { ...rec, data: { ...rec.data, offices: dedupeOfficeRows(rec.data.offices) } };
+    rec = { ...rec, data: { ...rec.data, offices: dedupeOfficeRows(rec.data.offices).map(sanitizeOffice) } };
   }
   const line = JSON.stringify({ at: Date.now(), attempts: 0, ...rec });
   withLock(() => fs.appendFileSync(OUTBOX, line + '\n'));
