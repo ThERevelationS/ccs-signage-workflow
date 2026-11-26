@@ -14,16 +14,7 @@ import JurisdictionsView from "@/components/permitting/JurisdictionsView";
 import PermittingDraftLibrary from "@/components/permitting/PermittingDraftLibrary";
 import PermitWorkflowDesigner from "@/components/permitting/PermitWorkflowDesigner.jsx";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { PermitHandoff } from "@/components/permitting/PermitChecklist";
 import SavedViews from "@/components/workflow/SavedViews";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
@@ -110,15 +101,7 @@ export default function Permitting() {
   const [expandedGroupIds, setExpandedGroupIds] = useState(() => new Set(woFilter ? [woFilter] : []));
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
-  // Page-level styled confirm — replaces window.confirm for the send-stamp
-  // prompt. Resolves true/false; honors the same skip flag as the picker.
-  const [confirmAsk, setConfirmAsk] = useState(null);
-  const confirmResolveRef = useRef(null);
-  const askPageConfirm = (ui) => {
-    try { if (localStorage.getItem("permitting_skip_confirms") === "1") return Promise.resolve(true); } catch {}
-    return new Promise((resolve) => { confirmResolveRef.current = resolve; setConfirmAsk(ui); });
-  };
-  const answerPageConfirm = (v) => { const r = confirmResolveRef.current; confirmResolveRef.current = null; setConfirmAsk(null); r?.(v); };
+  const [handoff, setHandoff] = useState(null);
   const [loadError, setLoadError] = useState("");
   const [activeView, setActiveView] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -378,22 +361,15 @@ export default function Permitting() {
     });
   }, [workOrders, lineItems]);
 
-  const updateStep = useCallback(async (lineItemId, stepId, updates) => {
-    const item = lineItems.find(li => li.id === lineItemId);
-    if (!item) return;
-
-    const newSteps = (item.steps || []).map(s => s.id === stepId ? { ...s, ...updates } : s);
-    const updatedStep = newSteps.find(s => s.id === stepId);
-
-    // Plain-language confirm before recording a filing — this step fires the
-    // permit_submitted automation, so it should never be a silent click.
-    if (updatedStep?.type === 'submitted_date' && updates.value && !item.submitted_date) {
-      const ok = await askPageConfirm({
-        title: `Application sent to ${item.locality_name || "the office"}?`,
-        body: "This stamps today as the sent date and starts the follow-up clock. Only confirm if the application actually went out.",
-      });
-      if (!ok) return;
+  const updateStep = useCallback(async (opened, step, updates) => {
+    const lineItemId = opened.id;
+    const item = lineItemBaselinesRef.current.get(lineItemId);
+    if (!isRegistered || !item || item.updated_date !== opened.updated_date ||
+        lineItemMutationQueuesRef.current.has(lineItemId) || !item.steps?.some(s => s.id === step.id)) {
+      throw new Error("This permit changed or is no longer editable. Close this window and reopen the latest step.");
     }
+    const newSteps = item.steps.map(s => s.id === step.id ? { ...s, ...updates } : s);
+    const updatedStep = newSteps.find(s => s.id === step.id);
 
     if (updatedStep?.type === 'checkbox' && updates.checked === true) {
       updatedStep.checked_date = new Date().toISOString().split('T')[0];
@@ -429,9 +405,8 @@ export default function Permitting() {
     // Preserve status here so staff can review any recorded fee/inspection/closeout
     // obligations and explicitly use the audited "Mark line complete" action.
     const lineUpdate = { steps: newSteps, next_followup_date: nextFollowup, permit_received_date: permitReceived, submitted_date: submittedDate };
-    setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, ...lineUpdate } : li));
     const savedLine = await persistPermitLineItemFields(lineItemId, lineUpdate, "Permit workflow step update");
-    if (!savedLine) return;
+    if (!savedLine) return null;
 
     // ── Fire permit automations only after the PermitLineItem update is durable. ──
     // The server authenticates the Sign Shop session and rereads both the PermitLineItem
@@ -456,7 +431,8 @@ export default function Permitting() {
     if (updatedStep?.type === 'permit_received_date' && updates.value && !item.permit_received_date) {
       fireTrigger('permit_received');
     }
-  }, [lineItems, sessionToken, persistPermitLineItemFields]);
+    return savedLine;
+  }, [isRegistered, sessionToken, persistPermitLineItemFields]);
 
   const updateField = useCallback(async (lineItemId, field, value) => {
     setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, [field]: value } : li));
@@ -1189,7 +1165,7 @@ export default function Permitting() {
                 <PermitClientGroup
                   group={group}
                   queueState={group.queueState}
-                  onUpdateStep={updateStep}
+                  onOpenStep={(line, step) => setHandoff({ line, step })}
                   onUpdateField={updateField}
                   onUpdateNotes={updateNotesAndSync}
                   onUpdateLocality={updateLocality}
@@ -1592,20 +1568,7 @@ export default function Permitting() {
         />
       )}
 
-      {/* Page-level styled confirm — the send-stamp prompt resolves through
-          this instead of window.confirm so the UI stays consistent. */}
-      <AlertDialog open={!!confirmAsk} onOpenChange={(o) => { if (!o) answerPageConfirm(false); }}>
-        <AlertDialogContent className="clay-card border-none">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{confirmAsk?.title}</AlertDialogTitle>
-            <AlertDialogDescription>{confirmAsk?.body}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => answerPageConfirm(false)}>Not yet</AlertDialogCancel>
-            <AlertDialogAction onClick={() => answerPageConfirm(true)}>Yes — I sent it</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {handoff && <PermitHandoff initial={handoff} canEdit={isRegistered} onSave={updateStep} onClose={() => setHandoff(null)} />}
     </div>
   );
 }
