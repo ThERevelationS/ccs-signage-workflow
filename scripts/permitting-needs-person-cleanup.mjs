@@ -248,6 +248,9 @@ async function main() {
     let merged = 0, already = 0, failed = 0;
     const failedNames = [];
     for (const e of entries) {
+      // Entries appended by an APPROVED apply carry the marker — a revert of
+      // the bad classes must not resurrect offices the user approved removing.
+      if ((e.data?.archived_offices || []).some((a) => a.retired_reason === 'approved cleanup')) continue;
       const row = await readById('PermitLocality', e.locality_id).catch(() => null);
       if (!row) { failed++; failedNames.push(e.name); continue; }
       const offices = mergeRevertOffices(row.offices || [], e);
