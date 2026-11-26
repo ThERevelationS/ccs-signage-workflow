@@ -23,6 +23,13 @@ import { useJobSiteAddress } from "./jobSiteAddress";
 import { getPermitGroupProgress, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META } from "./permitQueue";
 import { summarizePermitGroupAuthorityCoverage, summarizePermitLineOfficeAuthority, legacyOfficeLinkOptions, officeResearchStatusLine } from "@/shared/permittingAddressLocality.js";
 
+const SECTION_ACTIONS = {
+  fee: "Review fee",
+  inspection: "Review inspection & wrap-up",
+  corrections: "Review corrections",
+  handoff: "Review closeout",
+};
+
 const LIFECYCLE_PROGRESS_TONES = {
   neutral: "border-slate-200 bg-white text-slate-600",
   info: "border-blue-200 bg-blue-50 text-blue-700",
@@ -77,7 +84,18 @@ export default function PermitClientGroup({
   }, [initialLineId]);
   useEffect(() => {
     if (!focusLine) return;
-    groupRef.current?.querySelector(`[data-permit-line="${CSS.escape(String(focusLine))}"] button[aria-expanded]`)?.focus();
+    const row = groupRef.current?.querySelector(`[data-permit-line="${CSS.escape(String(focusLine.id))}"]`);
+    const target = focusLine.section && row?.querySelector(`[data-permit-section="${CSS.escape(focusLine.section)}"]`);
+    if (target) {
+      // Open the targeted section and its enclosing disclosure without invoking any field actions.
+      for (let parent = target.parentElement; parent && parent !== row; parent = parent.parentElement) {
+        if (parent.tagName === "DETAILS") parent.open = true;
+      }
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: "center" });
+    } else {
+      row?.querySelector("button[aria-expanded]")?.focus();
+    }
     setFocusLine("");
   }, [focusLine]);
   const toggleLine = id => setOpenLines(previous => {
@@ -189,8 +207,8 @@ export default function PermitClientGroup({
           </div>
           <div className="mt-1 text-sm text-slate-800"><strong>Next: </strong>{queueState.nextAction}</div>
           {queueState.nextLineId && <button type="button" className="mt-1 rounded py-1 text-xs font-semibold text-purple-800 underline" onClick={() => {
-            setExpanded(true); setOpenLines(new Set([queueState.nextLineId])); setFocusLine(queueState.nextLineId);
-          }}>Open permit</button>}
+            setExpanded(true); setOpenLines(new Set([queueState.nextLineId])); setFocusLine({ id: queueState.nextLineId, section: queueState.nextSection });
+          }}>{SECTION_ACTIONS[queueState.nextSection] || "Open permit"}</button>}
         </div>}
       </div>
       {expanded && <details className="border-t px-4 py-2">
