@@ -2,7 +2,7 @@
 // cleaner, placeholder detection, merge rules and paper-township planning.
 // Pure — no mirrors, no network.
 import assert from 'node:assert';
-import { cleanOfficeName, isGenericOfficeName, isPlaceholderOffice } from './lib/office-name-clean.mjs';
+import { cleanOfficeName, isGenericOfficeName, isPlaceholderOffice, isNonPermitOfficeName, receiverOkForRole } from './lib/office-name-clean.mjs';
 import { buildPlan, planToUpdates, PAPER_RE } from './permitting-needs-person-cleanup.mjs';
 
 // ── known-answer table: junk in → clean out ──────────────────────────────
@@ -46,7 +46,46 @@ assert.equal(isPlaceholderOffice('Planning Commission', 'Eden Township'), false)
 assert.equal(isPlaceholderOffice('Union County Building Department', 'Eden Township'), false);
 assert.equal(isPlaceholderOffice('Zoning Inspector', 'Eden Township'), false);
 
-// ── paper-township detection + absorbing-target pick ─────────────────────
+// ── non-permit retirement: name-driven only, permit tokens protect ────────
+// Retired — the name itself says non-permitting body, no permit token.
+for (const n of ["Grant County Sheriff's Department", 'County Police Department', 'Services ADAMH Board', 'City Auditor', 'Clerk of Courts', 'Board of Health', 'Municipal Airport Authority', 'Cemetery Sexton']) {
+  assert.equal(isNonPermitOfficeName(n), true, `non-permit: ${n}`);
+}
+// 'service' is a permitting token — even a non-permit-list match is protected
+assert.equal(isNonPermitOfficeName('Civil Service Commission'), false);
+// Kept — placeholders/role-template names NEVER retire as non-permit.
+for (const n of ['Rochester Sign permit office', 'Rochester Zoning office', 'Rochester Electrical permit office', 'Zoning authority', 'Historic/design review authority', 'City of Woodbury']) {
+  assert.equal(isNonPermitOfficeName(n), false, `keep placeholder: ${n}`);
+}
+// Kept — a permitting token anywhere in the name disqualifies the verdict.
+for (const n of ['Keene Police Department Public Works Department', 'Sheriff Building Division', 'Fire Code Inspector', 'Parks Planning Department']) {
+  assert.equal(isNonPermitOfficeName(n), false, `permit token protects: ${n}`);
+}
+// Kept — substring collisions: 'Parker' is a person, 'Woodlawn Park' a place.
+assert.equal(isNonPermitOfficeName('Bryan Parker Inspector'), false);
+assert.equal(isNonPermitOfficeName('City of Woodlawn Park City Council'), false);
+// Kept — "City Clerk" is a permitting office in small cities; only clerk OF
+// COURTS is non-permit.
+assert.equal(isNonPermitOfficeName('City of Hillview City Clerk/Treasurer'), false);
+assert.equal(isNonPermitOfficeName('City Clerk'), false);
+assert.equal(isNonPermitOfficeName('Village Clerk'), false);
+
+// ── merge receivers: name must match the absorbed role ───────────────────
+// Rejected — non-permit, tab-glued person names, junk and role-mismatched.
+assert.equal(receiverOkForRole({ name: 'Departments Police Department' }, 'historic_review', 'Grayson'), false);
+assert.equal(receiverOkForRole({ name: 'Alexander City Clerk' }, 'historic_review', 'Fairfield'), false);
+assert.equal(receiverOkForRole({ name: 'Elaine\tJones\tCity Clerk' }, 'historic_review', 'Salt Lick'), false);
+assert.equal(receiverOkForRole({ name: 'Local Government The Department' }, 'zoning', 'Fleming-Neon'), false);
+assert.equal(receiverOkForRole({ name: 'ADAMH Board' }, 'right_of_way', 'Blue Creek'), false);
+assert.equal(receiverOkForRole({ name: 'City Clerk' }, 'sign_permit', 'Hillview'), false); // clerk name doesn't match the role
+// Accepted — clean real names that match the role they absorb.
+assert.equal(receiverOkForRole({ name: 'Historic Preservation Commission' }, 'historic_review', 'X'), true);
+assert.equal(receiverOkForRole({ name: 'Zoning Inspector' }, 'zoning', 'X'), true);
+assert.equal(receiverOkForRole({ name: 'Planning Commission' }, 'zoning', 'X'), true);
+assert.equal(receiverOkForRole({ name: 'County Engineer' }, 'right_of_way', 'X'), true);
+assert.equal(receiverOkForRole({ name: 'Building Department' }, 'sign_permit', 'X'), true);
+assert.equal(receiverOkForRole({ name: 'Code Enforcement Office' }, 'building', 'X'), true);
+assert.equal(receiverOkForRole({ name: 'Dog Warden' }, 'other', 'X'), false); // 'other' never merges
 assert.ok(PAPER_RE.test('Dover Township (paper — no permitting authority)'));
 assert.ok(!PAPER_RE.test('Dover Township'));
 {
@@ -116,6 +155,42 @@ assert.ok(!PAPER_RE.test('Dover Township'));
   // verified office untouched, change log recorded
   assert.ok(u.data.offices.some((o) => o.id === 'o3'));
   assert.ok(u.data.office_change_log.length >= 1);
+}
+
+// ── merges rejected when the receiver's name doesn't match the role ──────
+{
+  const loc = {
+    id: 'L4', name: 'Grayson', state: 'KY', jurisdiction_type: 'city',
+    offices: [
+      { id: 'junk1', name: 'Departments Police Department', authority_roles: ['historic_review', 'zoning'] },
+      { id: 'ph1', name: 'Historic/design review authority', authority_roles: ['historic_review'] },
+    ],
+  };
+  const recs = { 'L4:ph1': { locality_id: 'L4', status: 'needs_verification', reasons: ['no_quote'], attempts: 4 } };
+  const plan = buildPlan([loc], recs);
+  assert.equal(plan.merges.length, 0); // police dept can never carry historic_review
+  assert.equal(plan.kept_placeholder.length, 1);
+}
+// ── a real role-matching receiver still merges ───────────────────────────
+{
+  const loc = {
+    id: 'L5', name: 'Sample', state: 'KY', jurisdiction_type: 'city',
+    offices: [
+      { id: 'real', name: 'Historic Preservation Commission', authority_roles: ['historic_review'] },
+      { id: 'ph1', name: 'Historic/design review authority', authority_roles: ['historic_review'] },
+    ],
+  };
+  const recs = { 'L5:ph1': { locality_id: 'L5', status: 'needs_verification', reasons: ['no_quote'], attempts: 4 } };
+  const plan = buildPlan([loc], recs);
+  assert.equal(plan.merges.length, 1);
+  assert.deepEqual(plan.merges[0].into, ['Historic Preservation Commission']);
+}
+// ── non_permit_body reason alone no longer retires real role targets ─────
+{
+  const loc = { id: 'L6', name: 'Rochester', state: 'OH', jurisdiction_type: 'village', offices: [{ id: 'r1', name: 'Rochester Sign permit office', authority_roles: ['sign_permit'] }] };
+  const recs = { 'L6:r1': { locality_id: 'L6', status: 'needs_verification', reasons: ['non_permit_body'], attempts: 4 } };
+  const plan = buildPlan([loc], recs);
+  assert.equal(plan.non_permit.length, 0); // the reason never retires — the name decides
 }
 
 // ── offices without failing records are never touched ────────────────────

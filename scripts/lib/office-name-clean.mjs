@@ -81,3 +81,46 @@ export function isPlaceholderOffice(name, locName) {
   while (i < words.length && (locWords.has(words[i].toLowerCase()) || /^(city|village|township|of|the)$/i.test(words[i]))) i++;
   return i > 0 && isGenericOfficeName(words.slice(i).join(' '));
 }
+
+// ── Non-permitting bodies ────────────────────────────────────────────────
+// An office is only retired as non-permit when its own (cleaned) name says
+// so — evidence reasons alone never retire anything. Clerk offices are
+// protected: in small KY/OH cities the city clerk issues permits; only
+// "clerk of courts" is a non-permit body.
+const NON_PERMIT_RE = /police|sheriff|marshal\b|clerk of courts|\bcourts?\b|auditor|treasurer|property tax|adamh|health board|board of health|civil service|airport|library|school|fire\b|fire dept|ems\b|emergency medical|parks\b|park (district|department|dept|and recreation|recreation)|recreation|cemetery|coroner|prosecutor|probate|common pleas/i;
+// Any permitting token in the name disqualifies a non-permit verdict — a
+// "Police Department Public Works Department" contains a real office.
+const PERMIT_TOKEN_RE = /building|zoning|planning|permits?|inspection|engineer|public works|service|street|road|historic|design review|code/i;
+export function isNonPermitOfficeName(name) {
+  const { clean } = cleanOfficeName(name);
+  if (!clean || isGenericOfficeName(clean)) return false; // placeholders never retire
+  if (/\bclerk\b/i.test(clean) && !/clerk of courts|courts? clerk/i.test(clean)) return false; // city clerks issue permits
+  return NON_PERMIT_RE.test(clean) && !PERMIT_TOKEN_RE.test(clean);
+}
+
+// ── Merge receivers ──────────────────────────────────────────────────────
+// A placeholder may only merge into an office whose name actually matches
+// the role it would absorb — a clerk or police dept can never carry
+// historic_review evidence for the placeholder.
+const ROLE_NAME_TOKENS = {
+  historic_review: /historic|landmark|design review|architectural review|preservation/i,
+  zoning: /zoning|planning/i,
+  planning: /planning|zoning|comprehensive/i,
+  right_of_way: /engineer|public works|street|road|service departments?|services dept|odot|kytc|highway/i,
+  building: /building|inspection|code|housing/i,
+  electrical_permit: /building|inspection|code|electric/i,
+  electrical_inspection: /building|inspection|code|electric/i,
+  sign_permit: /building|zoning|planning|permits?|inspection|code|sign/i,
+  transportation: /engineer|public works|street|road|odot|kytc/i,
+  other: null, // 'other' never auto-merges
+};
+export function receiverOkForRole(receiver, role, locName) {
+  const name = String(receiver?.name || '');
+  if (/\t/.test(name)) return false;                        // tab-glued person names
+  const c = cleanOfficeName(name);
+  if (!c.clean || c.generic) return false;                  // junk/generic names
+  if (isPlaceholderOffice(name, locName)) return false;     // placeholders can't absorb
+  if (isNonPermitOfficeName(name)) return false;            // non-permit bodies can't absorb
+  const re = ROLE_NAME_TOKENS[role];
+  return re ? re.test(c.clean) : false;
+}

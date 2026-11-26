@@ -16,7 +16,7 @@ import { getMirror, mirrorApply } from './lib/entity-mirror.mjs';
 import { enqueue } from './lib/outbox.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
-import { cleanOfficeName, isGenericOfficeName, isPlaceholderOffice } from './lib/office-name-clean.mjs';
+import { cleanOfficeName, isGenericOfficeName, isPlaceholderOffice, isNonPermitOfficeName, receiverOkForRole } from './lib/office-name-clean.mjs';
 
 const APP = '68dfcc5e57bbbc35387da97c';
 const FN = `https://base44.app/api/apps/${APP}/functions`;
@@ -71,29 +71,32 @@ export function buildPlan(locs, officeRecs) {
       if (!live.has(key)) continue;
       const office = (loc.offices || []).find((o) => `${locId}:${o.id || o.name}` === key);
       if (!office) continue;
-      // Class 3 — evidence already says it isn't a permitting office.
-      if ((rec.reasons || []).includes('non_permit_body')) {
-        plan.non_permit.push({ locality_id: locId, jurisdiction: `${loc.name}, ${loc.state}`, office_id: office.id, office: office.name, roles: office.authority_roles || [] });
-        continue;
-      }
       const c = cleanOfficeName(office.name);
       const placeholder = (c.stripped.length && c.generic) || isPlaceholderOffice(office.name, loc.name);
       if (placeholder) {
-        // Class 4 — retire only when a real office covers EVERY role it holds,
-        // and never retire a verified office.
+        // Class 4 — retire only when a real, role-matching office covers
+        // EVERY role it holds, and never retire a verified office.
         if (String(office.authority_verification_status) === 'staff_verified') {
           plan.kept_placeholder.push({ locality_id: locId, jurisdiction: `${loc.name}, ${loc.state}`, office: office.name, why: 'verified — never merged away' });
           continue;
         }
-        const real = (loc.offices || []).filter((o) => o !== office && !isPlaceholderOffice(o.name, loc.name));
         const roles = office.authority_roles || [];
-        const uncovered = roles.filter((r) => !real.some((o) => (o.authority_roles || []).includes(r)));
+        const receiversFor = (r) => (loc.offices || []).filter((o) => o !== office && (o.authority_roles || []).includes(r) && receiverOkForRole(o, r, loc.name));
+        const uncovered = roles.filter((r) => !receiversFor(r).length);
         if (roles.length && !uncovered.length) {
-          const into = real.filter((o) => roles.some((r) => (o.authority_roles || []).includes(r))).map((o) => o.name);
+          const into = [...new Set(roles.flatMap((r) => receiversFor(r).map((o) => o.name)))];
           plan.merges.push({ locality_id: locId, jurisdiction: `${loc.name}, ${loc.state}`, office_id: office.id, office: office.name, roles, into });
         } else {
           plan.kept_placeholder.push({ locality_id: locId, jurisdiction: `${loc.name}, ${loc.state}`, office: office.name, roles, why: uncovered.length ? `sole target for ${uncovered.join(', ')}` : 'no roles recorded' });
         }
+        continue;
+      }
+      // Class 3 — the office's OWN NAME says non-permitting body (police,
+      // sheriff, court, auditor, ADAMH…) with no permitting token in it.
+      // Evidence reasons never retire anything on their own, and
+      // placeholder/role-template names are handled by class 4, never here.
+      if (isNonPermitOfficeName(office.name)) {
+        plan.non_permit.push({ locality_id: locId, jurisdiction: `${loc.name}, ${loc.state}`, office_id: office.id, office: office.name, roles: office.authority_roles || [] });
         continue;
       }
       // Class 2 — cleaned name is a real office name → rename, unless another
