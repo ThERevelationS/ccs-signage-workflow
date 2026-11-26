@@ -10,6 +10,7 @@ const WORKFLOW_CAPABILITY_HASHES: Record<string, string> = {
   smartsheetSyncAction: '7bf936a6db5677115b441de13a6f442ea914721a5ad67436d09e9379121c503f',
   sendGmail: '11a4e004a291fbc881f4009f67e3ad97f55b0243527fb75ce793f50012605af7',
   followUpSweepAction: 'f75d200ee5ded9edff661afa8b856fdd6dc0be653e3c17e892c7ac2243644e4b',
+  notificationAction: 'd095fce1603da529e5b2e93d79abb87fd6bde9361abdc6419036797faacda8b4',
 };
 
 function constantTimeEqual(a: string, b: string) {
