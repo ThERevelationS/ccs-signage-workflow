@@ -40,6 +40,15 @@ const ANNOUNCEMENT_READ_ACTIONS = new Set(['active_feed']);
 const SOP_READ_ACTIONS = new Set(['bootstrap', 'list', 'get', 'ack_report']);
 const TRAINING_READ_ACTIONS = new Set(['bootstrap', 'report']);
 
+// Write invokes on these gateways mutate arbitrary entities, so they still
+// bump the GLOBAL epoch (flushing every TTL-cached read — entity data flows
+// into most feeds). Writes on any other function bump only that function's
+// scope: a clock-in or a notification dismissal no longer orphans the
+// attention feed, prefs, announcement and bootstrap read caches.
+const ENTITY_WRITE_GATEWAYS = new Set([
+  'staffEntityWrite', 'staffEntityBulkWrite', 'estimatorProjectWrite', 'fleetEntityWrite',
+]);
+
 // Short-TTL response cache for advisory reads: identical invokes inside the
 // TTL share one response instead of one in-flight call, which collapses the
 // sequential duplicates in a mount wave (dedupe only covers simultaneous
@@ -315,7 +324,7 @@ const functionsProxy = new Proxy(rawClient.functions, {
           const key = `fn:${fnName}:${JSON.stringify(payload ?? null)}`;
           const ttl = readTtlMs(fnName, payload);
           if (ttl > 0) {
-            const cacheKey = `${governor.getEpoch()}|${key}`;
+            const cacheKey = `${governor.getEpoch(`fn:${fnName}`)}|${key}`;
             const hit = readResponseCache.get(cacheKey);
             if (hit && Date.now() - hit.at < ttl) return Promise.resolve(copyResponse(hit.value));
             return governor.dedupe(key, () => tracked().then((v) => { readCacheSet(cacheKey, v); return v; }), copyResponse);
@@ -324,8 +333,11 @@ const functionsProxy = new Proxy(rawClient.functions, {
         }
         // A write may commit even when its response is lost, so reads requested
         // after it settles must never reuse a response fetched before it.
-        governor.bumpEpoch();
-        return tracked().finally(governor.bumpEpoch);
+        // Entity-gateway writes flush every cached read (global scope); other
+        // functions flush only their own readers.
+        const writeScope = ENTITY_WRITE_GATEWAYS.has(fnName) ? 'global' : `fn:${fnName}`;
+        governor.bumpEpoch(writeScope);
+        return tracked().finally(() => governor.bumpEpoch(writeScope));
       };
     }
     return value;
@@ -349,7 +361,7 @@ export const requestGovernor = governor;
 // from cache without a POST. Used by the appBootstrap mount read to carry
 // several providers' opening data in one call.
 export function primeReadResponse(fnName, payload, data) {
-  const cacheKey = `${governor.getEpoch()}|fn:${fnName}:${JSON.stringify(payload ?? null)}`;
+  const cacheKey = `${governor.getEpoch(`fn:${fnName}`)}|fn:${fnName}:${JSON.stringify(payload ?? null)}`;
   readCacheSet(cacheKey, { data });
 }
 
