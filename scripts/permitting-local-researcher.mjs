@@ -334,7 +334,7 @@ export function gapTargetScan(state, locs, cooldowns, now = Date.now()) {
     const tier = nextTierFor(cd, t.attempts > 0);
     if (tier == null) { exhausted.push(locId); continue; }
     const release = cd?.at ? new Date(cd.at).getTime() + TIER_CD : 0;
-    const target = { locality_id: locId, loc, gap_offices: t.count, missing_roles: [...t.roles], reasons: [...t.reasons], tier, last_try: cd?.at || null };
+    const target = { locality_id: locId, loc, gap_offices: t.count, missing_roles: [...t.roles], reasons: [...t.reasons], tier, attempts: t.attempts, last_try: cd?.at || null };
     if (release > now) {
       target.release = release;
       cooling.push(target);
@@ -486,6 +486,14 @@ async function gapPass(profiles, profById, cooldowns, claimed, budget = 8) {
     if (!claim(key, WORKER)) continue;
     await waitWhilePaused(WORKER, { item: `${TIER_LABEL[t.tier] || 'Researching'} ${label} — ${t.missing_roles.slice(0, 3).join(', ') || 'evidence'}` });
     try {
+      // The pass's cooldown snapshot is seconds-to-minutes stale — a
+      // fleet-mate may have finished this exact tier meanwhile. Re-read the
+      // store under the claim: skip if the planned tier is no longer the
+      // next untried one, or if a fresh cooldown landed (relaxed passes
+      // skip the cooldown check by design).
+      const freshCd = readCooldown(key);
+      if (nextTierFor(freshCd, t.attempts > 0) !== t.tier) continue;
+      if (!relaxed && freshCd?.at && Date.now() - new Date(freshCd.at).getTime() < TIER_CD) continue;
       const profile = profById.get(loc.jurisdiction_profile_id);
       if (!profile || profile.verification_status === 'historical') {
         // Profile gap belongs to relink/sweep — mark the tier done so the
