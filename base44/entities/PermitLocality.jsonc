@@ -12,11 +12,18 @@
     },
     "county_name": {
       "type": "string",
-      "description": "County this jurisdiction sits in (multi-county municipalities: ' / '-joined, e.g. 'Boyle County / Lincoln County'). Identity field — same-name localities in different counties are different jurisdictions and must never merge."
+      "description": "County this jurisdiction sits in (multi-county municipalities: ' / '-joined, e.g. 'Boyle County / Lincoln County'). Identity field \u2014 same-name localities in different counties are different jurisdictions and must never merge."
     },
     "jurisdiction_type": {
       "type": "string",
-      "enum": ["county", "city", "village", "township", "municipality", "unincorporated_community"],
+      "enum": [
+        "county",
+        "city",
+        "village",
+        "township",
+        "municipality",
+        "unincorporated_community"
+      ],
       "description": "Kind of jurisdiction, from the linked JurisdictionProfile.type. Township vs city/village never merge."
     },
     "zip": {
@@ -29,29 +36,53 @@
     },
     "office_change_log": {
       "type": "array",
-      "description": "Append-only (cap 20) log of detected changes to this locality's offices[] — entries {at, summary, office_count, verified_count} written by the office-diff worker. Powers the 'offices updated' alerts.",
+      "description": "Append-only (cap 20) log of detected changes to this locality's offices[] \u2014 entries {at, summary, office_count, verified_count} written by the office-diff worker. Powers the 'offices updated' alerts.",
       "items": {
         "type": "object",
         "properties": {
-          "at": { "type": "string" },
-          "summary": { "type": "string" },
-          "office_count": { "type": "number" },
-          "verified_count": { "type": "number" }
+          "at": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "office_count": {
+            "type": "number"
+          },
+          "verified_count": {
+            "type": "number"
+          }
         }
       }
     },
     "observed_outcomes": {
       "type": "object",
-      "description": "MP-11.4 — observed-vs-claimed aggregation from real filed permits: {permits_observed, avg_decision_days, fee_min, fee_max, fee_avg, denial_count, computed_at, sample_window}. Stamped by the office-diff worker from the PermitLineItem mirror.",
+      "description": "MP-11.4 \u2014 observed-vs-claimed aggregation from real filed permits: {permits_observed, avg_decision_days, fee_min, fee_max, fee_avg, denial_count, computed_at, sample_window}. Stamped by the office-diff worker from the PermitLineItem mirror.",
       "properties": {
-        "permits_observed": { "type": "number" },
-        "avg_decision_days": { "type": "number" },
-        "fee_min": { "type": "number" },
-        "fee_max": { "type": "number" },
-        "fee_avg": { "type": "number" },
-        "denial_count": { "type": "number" },
-        "computed_at": { "type": "string" },
-        "sample_window": { "type": "string" }
+        "permits_observed": {
+          "type": "number"
+        },
+        "avg_decision_days": {
+          "type": "number"
+        },
+        "fee_min": {
+          "type": "number"
+        },
+        "fee_max": {
+          "type": "number"
+        },
+        "fee_avg": {
+          "type": "number"
+        },
+        "denial_count": {
+          "type": "number"
+        },
+        "computed_at": {
+          "type": "string"
+        },
+        "sample_window": {
+          "type": "string"
+        }
       }
     },
     "governing_body": {
@@ -95,7 +126,7 @@
         "joint_commission",
         "regional"
       ],
-      "description": "How this locality is zoned: township_own = township adopted its own zoning resolution (ORC 519); county = defers to county zoning; joint_commission/regional = shared authority. Records the MODEL, not just which office — distinguishes 'not found yet' from 'correctly county'."
+      "description": "How this locality is zoned: township_own = township adopted its own zoning resolution (ORC 519); county = defers to county zoning; joint_commission/regional = shared authority. Records the MODEL, not just which office \u2014 distinguishes 'not found yet' from 'correctly county'."
     },
     "sign_code_url": {
       "type": "string",
@@ -153,9 +184,19 @@
             "type": "string",
             "enum": [
               "needs_verification",
-              "staff_verified"
+              "staff_verified",
+              "needs_recheck"
             ],
             "description": "Review state for this locality-to-office authority relationship. staff_verified means staff confirmed the listed authority_roles; it does not verify unrelated office contact or repository facts."
+          },
+          "recheck_reason": {
+            "type": "string",
+            "description": "Why this office was moved to needs_recheck (failed strict re-verification sub-check or audit demotion reason)."
+          },
+          "recheck_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this office was moved to needs_recheck."
           },
           "authority_verified_at": {
             "type": "string",
@@ -172,8 +213,11 @@
           },
           "corroboration_tier": {
             "type": "string",
-            "enum": ["verified", "single_source"],
-            "description": "MP-5.2 — 'verified' only when every proven role is backed by ≥2 distinct official evidence hosts; otherwise 'single_source'."
+            "enum": [
+              "verified",
+              "single_source"
+            ],
+            "description": "MP-5.2 \u2014 'verified' only when every proven role is backed by \u22652 distinct official evidence hosts; otherwise 'single_source'."
           },
           "corroboration_tiers": {
             "type": "object",
@@ -263,7 +307,7 @@
               "state_certified_private",
               "utility"
             ],
-            "description": "What kind of provider this office is — determines where research should look (e.g. state_certified_private = a certified private inspection agency, not a government)."
+            "description": "What kind of provider this office is \u2014 determines where research should look (e.g. state_certified_private = a certified private inspection agency, not a government)."
           },
           "field_confidence": {
             "type": "object",
@@ -299,7 +343,9 @@
           },
           "overlay_flags": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Derived overlay contexts on this office: historic_district, row_permit_possible, etc."
           },
           "inspection_contact": {
@@ -427,10 +473,18 @@
       "items": {
         "type": "object",
         "properties": {
-          "work_order_id": { "type": "string" },
-          "requested_by": { "type": "string" },
-          "requested_at": { "type": "string" },
-          "exclude_electrical": { "type": "boolean" }
+          "work_order_id": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "requested_at": {
+            "type": "string"
+          },
+          "exclude_electrical": {
+            "type": "boolean"
+          }
         }
       }
     }
@@ -439,9 +493,25 @@
     "name"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "read": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "update": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "delete": { "user_condition": { "role": "__permitlocality_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__permitlocality_backend_only__"
+      }
+    }
   }
 }
