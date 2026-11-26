@@ -12,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import PermitSpreadsheetRow from "./PermitSpreadsheetRow";
 import PermitLineNotesSection from "./PermitLineNotesSection";
 import PermitJobDocuments from "./PermitJobDocuments";
@@ -32,7 +33,7 @@ const LIFECYCLE_PROGRESS_TONES = {
 
 export default function PermitClientGroup({
   group,
-  onUpdateStep,
+  onOpenStep,
   onUpdateField,
   onUpdateNotes,
   onUpdateLocality,
@@ -398,46 +399,20 @@ export default function PermitClientGroup({
               </span>
             </div>
           )}
-          {hasLines&&<details className="border-t px-4 py-2"><summary className="cursor-pointer text-sm font-semibold text-slate-700">Job actions</summary><div className="mt-2 flex flex-wrap items-center gap-2">
-          {sharedOfficeCount > 1 && (
-            <button
-              type="button"
-              onClick={() => { const name = String(group.lines[0]?.locality_name || "").trim(); if (name && onSearchLocality) onSearchLocality(name); }}
-              className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-700 hover:bg-indigo-100"
-              title="Show the other jobs that use this same permit office"
-            >
-              Same office as {sharedOfficeCount - 1} other{sharedOfficeCount - 1 === 1 ? "" : "s"}
-            </button>
-          )}
-          {isRegistered && wo && hasLines && (
-            <button
-              type="button"
-              className="inline-flex items-center rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 font-semibold text-violet-800 hover:bg-violet-100"
-              title="Build an AI permit plan for this job from its town's checked rules"
-              onClick={() => { setWizardStep(2); setShowSetupWizard(true); }}
-            >AI plan</button>
-          )}
-          {isRegistered && group.lines.length > 1 && group.lines.some(li => !li.submitted_date && !isPermitLineEffectivelyComplete(li)) && (
-            <button
-              type="button"
-              className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800 hover:bg-emerald-100"
-              title="Mark every pending line in this job as submitted today"
-              onClick={() => setMarkSentAsk(group.lines.filter((li) => !li.submitted_date && !isPermitLineEffectivelyComplete(li)))}
-            >Mark all submitted</button>
-          )}
-<Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>{setWizardStep(3);setShowSetupWizard(true);}}>Edit permit setup…</Button>
-            {group.lines.length > 2 && (
-              <>
-                <button type="button" onClick={() => setAllLinesExpanded(false)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">compact all</button>
-                <button type="button" onClick={() => setAllLinesExpanded(true)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">expand all</button>
-              </>
-            )}
-            {onRemoveLocality && removeLocalityTargets.map(target => (
-              <Button key={target.id} type="button" variant="outline" className="min-h-11 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" disabled={!isRegistered} onClick={() => setRemoveTarget(target)}>
-                <Trash2 className="w-3 h-3" /> Remove {target.name}
-              </Button>
-            ))}
-
+          {hasLines && <div className="flex flex-wrap items-center justify-end gap-2 border-t px-3 py-1">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button type="button" variant="outline" size="sm">Job actions <ChevronDown className="ml-1 h-3 w-3" /></Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem disabled={!isRegistered} onSelect={() => { setWizardStep(3); setShowSetupWizard(true); }}>Edit permit setup</DropdownMenuItem>
+                {wo && <DropdownMenuItem disabled={!isRegistered} onSelect={() => { setWizardStep(2); setShowSetupWizard(true); }}>Build AI permit plan</DropdownMenuItem>}
+                {sharedOfficeCount > 1 && <DropdownMenuItem onSelect={() => onSearchLocality?.(group.lines[0]?.locality_name)}>Show jobs with this office</DropdownMenuItem>}
+                {group.lines.length > 2 && <><DropdownMenuItem onSelect={() => setAllLinesExpanded(true)}>Expand all permits</DropdownMenuItem><DropdownMenuItem onSelect={() => setAllLinesExpanded(false)}>Collapse all permits</DropdownMenuItem></>}
+                {isRegistered && group.lines.length > 1 && group.lines.some(li => !li.submitted_date && !isPermitLineEffectivelyComplete(li)) &&
+                  <DropdownMenuItem onSelect={() => setMarkSentAsk(group.lines.filter(li => !li.submitted_date && !isPermitLineEffectivelyComplete(li)))}>Mark all submitted...</DropdownMenuItem>}
+                {onRemoveLocality && removeLocalityTargets.length > 0 && <DropdownMenuSeparator />}
+                {onRemoveLocality && removeLocalityTargets.map(target => <DropdownMenuItem key={target.id} disabled={!isRegistered} className="text-red-700" onSelect={() => setRemoveTarget(target)}>Remove {target.name}...</DropdownMenuItem>)}
+              </DropdownMenuContent>
+            </DropdownMenu>
             {(() => {
 
               const latest = [...(appliedLocality?.office_change_log || [])].pop();
@@ -466,7 +441,7 @@ export default function PermitClientGroup({
 
             })()}
 
-          </div></details>}
+          </div>}
           {!hasLines ? (
             <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
               <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> set up this job's permit — office, lines, and an AI plan in one pass.</span>
@@ -498,7 +473,7 @@ export default function PermitClientGroup({
                     lineItem={li}
                     expanded={openLines.has(li.id)}
                     onToggle={() => toggleLine(li.id)}
-                    onUpdateStep={onUpdateStep}
+                    onOpenStep={onOpenStep}
                     onUpdateField={onUpdateField}
                     onShowLocalityInfo={onShowLocalityInfo}
                     onShowJurisdictionInfo={onShowJurisdictionInfo}
