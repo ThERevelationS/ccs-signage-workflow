@@ -18,6 +18,7 @@ import { cleanOfficeName, isNonPermitOfficeName } from './lib/office-name-clean.
 import { addBoost } from './lib/research-boost.mjs';
 import { resolveTarget } from './lib/ai-sessions.mjs';
 import { strictRoleEvidence, isOfficialSource } from './permitting-authority-verifier.mjs';
+import { pendingCandidates, verdictMap, appendVerdict, judgeUnit } from './lib/promote-judge.mjs';
 import { enqueue } from './lib/outbox.mjs';
 import { getMirror, mirrorApply } from './lib/entity-mirror.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
@@ -266,6 +267,28 @@ async function main() {
     const profById = new Map([...(getMirror('profiles-oh.slim')?.rows || []), ...(getMirror('profiles-ky.slim')?.rows || [])].map((p) => [p.id, p]));
     const score = (l) => (l.offices || []).reduce((a, o) => a + (o.authority_verification_status === 'staff_verified' ? 1 : 0), 0);
     localities.sort((a, b) => score(b) - score(a));
+    // ── promotion-judge lane: strict-pass candidates become judge units ──
+    // (one office per unit, all candidate roles) — claimed ahead of audit
+    // units by the runBatch judge-first sort.
+    {
+      const cands = pendingCandidates();
+      const verdicts = verdictMap();
+      const byOffice = new Map();
+      for (const [k, c] of cands) {
+        if (verdicts.has(k)) continue;
+        const g = byOffice.get(c.office_id) || { meta: { locality_id: c.locality_id, jurisdiction: c.jurisdiction, office_name: c.office_name, retro: false }, roles: [] };
+        if (c.retro === true) g.meta.retro = true;
+        g.roles.push(c); byOffice.set(c.office_id, g);
+      }
+      let judgeFed = 0;
+      for (const [officeId, g] of byOffice) {
+        const qid = `judge-${String(officeId).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60)}`;
+        if (existsSync(`.audit-work/audit-queue/${qid}.json`) || existsSync(`.audit-work/audit-out/${qid}.json`)) continue;
+        enqueueUnit(judgeUnit(officeId, g.meta, g.roles));
+        judgeFed++;
+      }
+      if (judgeFed) emit({ stage: 'ai_judge_fed', ok: true, detail: `${judgeFed} office(s) queued for promotion judgment` });
+    }
     let total = 0, done = 0;
     const limit = PILOT || localities.length;
     for (const loc of localities) {
@@ -290,8 +313,21 @@ async function main() {
     }
     const res = await drainQueue({ maxBatches: 4, sleepMs: 4000 });
     stats.sent += res.produced || 0;
-    // process outputs
+    // process outputs — judge verdicts first (they unblock promotions)
     try {
+      for (const f of readdirSync('.audit-work/audit-out').filter((x) => x.startsWith('judge-') && x.endsWith('.json'))) {
+        const id = f.slice(0, -5);
+        const out = outputFor(id);
+        const meta = out?.meta;
+        const results = Array.isArray(out?.output?.results) ? out.output.results : [];
+        for (const v of results) {
+          const entry = (meta?.roles || []).find((r) => r.role === v?.role) || {};
+          appendVerdict(meta?.office_id || id.replace(/^judge-/, ''), meta?.locality_id || null, meta?.office_name || null, v?.role, v, entry, meta?.retro === true);
+        }
+        stats.judged = (stats.judged || 0) + results.length;
+        emit({ stage: 'ai_judge_answered', address: meta?.jurisdiction ? `${meta.jurisdiction.name}, ${meta.jurisdiction.state}` : id, ok: results.length > 0, detail: results.map((v) => `${v.role}:${v.verdict}`).join(' ') || 'no verdicts' });
+        clearUnit(id);
+      }
       for (const f of readdirSync('.audit-work/audit-out').filter((x) => x.startsWith('audit-') && x.endsWith('.json'))) {
         const id = f.slice(0, -5);
         stats.answered++;

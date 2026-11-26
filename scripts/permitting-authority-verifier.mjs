@@ -35,6 +35,8 @@ import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 import { buildIdentityIndex, withUnionResearch } from './lib/profile-identity.mjs';
 import { readCooldowns, tierExhausted, tiersDone } from './lib/research-claims.mjs';
 import { cleanOfficeName, isGenericOfficeName, isNonPermitOfficeName, isPlaceholderOffice } from './lib/office-name-clean.mjs';
+import { appendCandidates, verdictMap, pendingCandidates, candHash, vkey, resolveJudged } from './lib/promote-judge.mjs';
+import { addBoost } from './lib/research-boost.mjs';
 
 const APP = '68dfcc5e57bbbc35387da97c';
 const FN = `https://base44.app/api/apps/${APP}/functions`;
@@ -110,6 +112,7 @@ const GAP_CATEGORY = {
   research_unknown: 'no_research',
 };
 const gapCat = (reason) => GAP_CATEGORY[reason] || 'other';
+const readControl = () => readJSON('.audit-work/server-control.json', {});
 const readJSON = (f, d) => { try { return JSON.parse(readFileSync(f, 'utf8')); } catch { return d; } };
 
 // ── evidence guards (mirroring verifyEvidence's checks, adapted for
@@ -382,6 +385,15 @@ const pageText = (html) => comparableText(String(html || '').replace(/<script[\s
 async function pass(onlyNames = null) {
   const [idx, localities] = await Promise.all([loadProfiles(), loadLocalities()]);
   const countyIndex = buildCountyIndex(idx.rows);
+  // promote_hold: strict-pass offices are CANDIDATES for the AI judge, not
+  // promotions. Verdicts accumulate in judge-verdicts.jsonl; when the hold
+  // lifts, promotion requires a 'yes' verdict per role on top of strict +
+  // live re-fetch. If the judge is unreachable, candidates keep holding —
+  // nothing ever promotes on the strict check alone anymore.
+  const holdOn = readControl().promote_hold !== false;
+  const judgeVerdicts = verdictMap();
+  const judgeNoBoosts = []; // {locality_id, office_name, role} — 'no' verdicts needing re-research
+  const pendingCands = pendingCandidates(); // dedupe repeated candidate emission
   const only = onlyNames ? new Set(onlyNames.map((h) => `${String(h.name || '').toLowerCase().trim()}|${String(h.state || '').toUpperCase().trim()}`)) : null;
   // Fresh-first ordering: enrichers append name|state to verify-first.jsonl
   // the moment evidence lands — re-judging those localities immediately cuts
@@ -528,11 +540,38 @@ async function pass(onlyNames = null) {
         proven.length = 0; proven.push(...stillProven);
       }
       if (proven.length) {
+        // Judge gate — a strict pass makes these roles CANDIDATES, not
+        // promotions. The AI promotion judge decides per-role; nothing
+        // promotes on the strict check alone.
+        const fresh = proven.map((r) => {
+          const e = passingEntries[r] || {};
+          return { role: r, entry_office_name: clean(e.office_name || e.label), quote: clean(e.responsibility_quote), url: clean(e.official_source_url) };
+        });
+        // Verdicts key on office|role|evidence-hash — new research produces a
+        // new hash and gets re-judged instead of inheriting a stale verdict.
+        const cleanQ = new Map(fresh.map((r) => [r.role, r.quote]));
+        const hashOf = (r) => candHash({ office_id: o.id, role: r, quote: cleanQ.get(r) });
+        const toQueue = fresh.filter((r) => !pendingCands.has(vkey(o.id, r.role, candHash({ office_id: o.id, role: r.role, quote: r.quote }))));
+        if (toQueue.length) appendCandidates(loc, o, toQueue);
+        if (holdOn) {
+          recordOffice(loc, o, { status: o.authority_verification_status === 'needs_recheck' ? 'needs_recheck' : 'needs_verification', reasons: ['promote_hold'], missing: [] });
+          continue;
+        }
+        const dj = resolveJudged(o.id, proven, hashOf, judgeVerdicts);
+        trimmed.push(...dj.gaps);
+        for (const b of dj.noBoosts) judgeNoBoosts.push({ locality_id: loc.id, office_name: o.name, role: b.role, reason: b.reason });
+        proven.length = 0; proven.push(...dj.judged);
+      }
+      if (proven.length) {
         o.authority_roles = proven;
-        // Stub names ("Zoning authority", "City of <Jurisdiction>") carry no
-        // real provider identity — upgrade to the researched provider name
-        // so the app shows who actually administers the role.
-        if (providerName && isStubOffice(o.name, loc?.name) && norm(providerName) !== norm(o.name)) o.name = providerName;
+        // Stub names ("Zoning authority", "City of <Jurisdiction>", role
+        // templates like "Right-of-way authority") carry no real provider
+        // identity — upgrade to the judged/researched provider name so the
+        // app shows who actually administers the role.
+        if (providerName && (isStubOffice(o.name, loc?.name) || isPlaceholderOffice(o.name, loc?.name)) && norm(providerName) !== norm(o.name)) {
+          const v0 = judgeVerdicts.get(vkey(o.id, proven[0], candHash({ office_id: o.id, role: proven[0], quote: clean(passingEntries[proven[0]]?.responsibility_quote) })));
+          o.name = v0?.provider && norm(v0.provider) === norm(providerName) ? v0.provider : providerName;
+        }
         // keep display labels consistent with the repaired role set
         const RT = { sign_permit: 'Sign permit', zoning: 'Zoning', building: 'Building', electrical: 'Electrical', electrical_permit: 'Electrical permit', electrical_inspection: 'Electrical inspection', right_of_way: 'Right of way', historic_review: 'Historic review', planning: 'Planning', transportation: 'Transportation', other: 'Permitting' };
         if (Array.isArray(o.office_types)) o.office_types = proven.map((r) => RT[r] || r);
@@ -571,7 +610,7 @@ async function pass(onlyNames = null) {
         // Name-structural failures (junk name, name absent from evidence) are
         // record problems for the researcher, not evidence gaps — retrying
         // them only floods the review list, so they earn no attempt.
-        const NAME_STRUCT = /office_name_junk|office_name_absent_from_evidence/;
+        const NAME_STRUCT = /office_name_junk|office_name_absent_from_evidence|awaiting_judge|ai_judge/;
         const burnable = trimmed.some((g) => !NAME_STRUCT.test(g));
         const missing = trimmed.map((g) => g.split(':')[0]).filter((v, i, a) => a.indexOf(v) === i);
         // A needs_recheck office that still fails keeps its recheck status in
@@ -607,6 +646,16 @@ async function pass(onlyNames = null) {
   // AND some for zoning), its queued work orders get their permit lines here —
   // the same create shape the Permitting page uses — then the queue clears.
   if (!DRY && SLICE === 0) await consumePendingApplies(localities);
+  // 'no' verdicts target re-research on exactly the rejected roles — the
+  // judge says the current evidence is for something/somewhere else.
+  if (judgeNoBoosts.length) {
+    const byLoc = new Map();
+    for (const b of judgeNoBoosts) {
+      const cur = byLoc.get(b.locality_id) || { roles: new Set(), offices: new Set() };
+      cur.roles.add(b.role); cur.offices.add(b.office_name); byLoc.set(b.locality_id, cur);
+    }
+    for (const [locality_id, b] of byLoc) addBoost({ locality_id, type: 'needs_recheck', finding: { type: 'needs_recheck', roles: [...b.roles], offices: [...b.offices], reason: `AI judge: evidence rejected for ${[...b.roles].join(', ')}` } });
+  }
   writeVerificationLedger(localities, officeState, passStart);
   emit({ stage: 'auth_verify_done', detail: `scanned ${scanned} offices · promoted ${promoted} · gapped ${gapped} · wrote ${wrote}` });
 }

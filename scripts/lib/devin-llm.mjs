@@ -263,6 +263,9 @@ export async function runBatch(w) {
   const claimed = [];
   let qfiles = [];
   try { qfiles = readdirSync(QUEUE).filter((f) => f.endsWith('.json')); } catch { return { lane: 'empty', spawned: false }; }
+  // Promotion-judge units jump the lane: claimed ahead of same-queue work
+  // (alphabetical readdir would rank 'audit-' before 'judge-').
+  qfiles.sort((a, z) => (z.startsWith('judge-') ? 1 : 0) - (a.startsWith('judge-') ? 1 : 0) || a.localeCompare(z));
   for (const f of qfiles) {
     if (claimed.length >= BATCH) break;
     try { renameSync(join(QUEUE, f), join(QUEUE, `${f}.claim-${widx}`)); claimed.push(f); } catch {}

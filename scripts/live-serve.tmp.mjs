@@ -672,6 +672,7 @@ function renderOverview(){
  +'<div style="font:700 26px var(--mono);margin-bottom:8px">'+num(o.staff_verified||0)+' of '+num(o.total||0)+' offices verified <span class="dim" style="font-size:15px">('+pct+'%)</span></div>'
  +'<div class="bar"><i style="width:'+pct+'%;background:var(--green)"></i></div>'
  +'<div class="dim small" style="margin-top:8px">Right now: '+esc(rightNow())+'</div>'
+ +(srv&&srv.promote_hold?'<div class="warn" style="margin-top:6px">Promotions on hold — waiting for AI judge</div>':'')
  +'<div class="dim small" style="margin-top:3px"><span class="blue">Auto-scaling:</span> running '+res+' researcher'+(res===1?'':'s')+(R.mode==='manual'?' of '+ (R.max!=null?R.max:16) +' (manual)':' (auto, no limit)')+' — scales up and down automatically with memory, CPU and available work.</div>'
  +(R.hold_reason?'<div class="dim small" style="margin-top:3px">Holding at '+res+': '+esc(R.hold_reason)+'</div>':'')+'</div>'
  +'<div class="tiles">'

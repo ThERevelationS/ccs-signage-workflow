@@ -242,4 +242,4 @@ async function main() {
 }
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === pathResolve(process.argv[1]);
 if (isMain) main().catch((e) => { console.error(e); process.exit(1); });
-export { scan };
+export { scan, readLocLive };

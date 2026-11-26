@@ -72,9 +72,26 @@ export function cleanOfficeName(raw) {
 // ("Eden Township Sign permit office", "Sign permit issuer") — synthetic
 // stubs a real office can absorb. Strip the locality's own words from the
 // front; if what remains is generic, it's a placeholder.
+// Role-template placeholders: names that are nothing but role vocabulary
+// plus a template suffix — "Right-of-way authority", "Electrical inspection
+// office", "Holmes Building office" (optional locality prefix). Real
+// providers end in department/commission/board/etc., not these stubs.
+const ROLE_TOKENS = /^(sign|permits?|zoning|buildings?|electrical|electric|inspections?|right|of|way|historic|review|planning|land|use|code|entitlement|development|services|construction|licensing|licenses?|subdivision)$/i;
+export function isRoleTemplateName(name, locName) {
+  const cleaned = cleanOfficeName(name).clean;
+  if (!cleaned) return false;
+  let words = cleaned.split(/[\s-]+/); // 'Right-of-way authority' → right/of/way/authority
+  const locWords = new Set(norm(locName).split(' ').filter((w) => w && !/^(city|village|township|of|the)$/i.test(w)));
+  while (words.length && (locWords.has(words[0].toLowerCase()) || /^(city|village|township|of|the)$/i.test(words[0]))) words = words.slice(1);
+  if (words.length < 2) return false;
+  if (!/^(authority|office|issuer)$/i.test(words[words.length - 1])) return false;
+  return words.slice(0, -1).every((w) => ROLE_TOKENS.test(w));
+}
+
 export function isPlaceholderOffice(name, locName) {
   const cleaned = cleanOfficeName(name).clean;
   if (isGenericOfficeName(cleaned)) return true;
+  if (isRoleTemplateName(name, locName)) return true;
   const locWords = new Set(norm(locName).split(' ').filter((w) => w && !/^(city|village|township|of|the)$/i.test(w)));
   const words = cleaned.split(' ');
   let i = 0;
