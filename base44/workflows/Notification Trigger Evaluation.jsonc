@@ -1,0 +1,45 @@
+{
+  "description": "Evaluates notification triggers globally every 10 minutes so per-user browser polls no longer multiply the scan suite",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "notification_trigger_evaluation",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "notificationAction",
+            "args": {
+              "_workflow_capability": "ccs-wf-cap-61bfc34f6ffe6a03edc07ff63d7b002b",
+              "action": "evaluate_triggers",
+              "force": true
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "name": "Notification Trigger Evaluation",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/10 * * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}
