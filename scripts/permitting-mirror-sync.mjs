@@ -7,7 +7,7 @@
 // Usage: node scripts/permitting-mirror-sync.mjs [--once] [--sync-ms 600000]
 // Emits mirror_synced / mirror_error to .live-events.jsonl.
 import { appendFileSync, writeFileSync } from 'node:fs';
-import { putMirrorSnapshot, getMirror } from './lib/entity-mirror.mjs';
+import { putMirrorSnapshot } from './lib/entity-mirror.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
@@ -70,16 +70,20 @@ async function readAll(entity, query, label, sort, max, page = 5000) {
 }
 
 let pass = 0;
+const lastPull = {}; // name → epochMs of the last remote pull by THIS daemon.
+// getMirror().at can't drive the TTL: journal write-throughs (mirrorApply)
+// bump it, so hot sources like localities would never be pulled again and
+// live-verified-count.json went stale (dashboard fell back to mirror counts).
 emit({ stage: 'mirror_boot', address: 'mirror sync', ok: true, detail: `mirror-sync live — ${SOURCES.length} sources · cycle ${SYNC_MS / 1000}s` });
 while (true) {
   pass++;
   await waitWhilePaused('mirror-sync', { item: 'mirror pass' });
   if (!token && !(await login())) { emit({ stage: 'mirror_error', address: 'mirror sync', ok: false, detail: 'login failed — retrying' }); await sleep(SYNC_MS); continue; }
   for (const s of SOURCES) {
-    const cur = getMirror(s.name);
-    if (cur && Date.now() - cur.at < s.ttl) continue; // still fresh — skip the pull entirely
+    if (lastPull[s.name] && Date.now() - lastPull[s.name] < s.ttl) continue; // pulled recently — skip
     const rows = await readAll(s.entity, s.query, s.name, s.sort, s.max, s.page);
     if (rows === null) continue;
+    lastPull[s.name] = Date.now();
     // Snapshot write preserves local-pending rows: a sync pulled between a
     // worker's mirrorApply and its outbox flush would otherwise roll the
     // mirror back to older remote state (apply-ready oscillated this way).
