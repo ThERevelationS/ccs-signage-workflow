@@ -16,7 +16,7 @@ import {
 import { format, differenceInDays } from "date-fns";
 import { ChevronDown, ChevronRight, ExternalLink, Info, Loader2, MapPin, ShieldAlert, Trash2, UserRoundPlus } from "lucide-react";
 import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
-import { firstIncompleteStep, getPermitLineHandoffReadiness, isPermitLineEffectivelyComplete } from "./permitQueue";
+import { getPermitLineRecommendation, getPermitLineHandoffReadiness, isPermitLineEffectivelyComplete } from "./permitQueue";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { normalizePermitJurisdictionName } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust, isJurisdictionPlaceholder } from "./jurisdictionTrust";
@@ -171,14 +171,14 @@ export default function PermitSpreadsheetRow({
       style={followupStyle}
     >
       {!expanded ? (() => {
-        const next = firstIncompleteStep(lineItem);
+        const next = getPermitLineRecommendation(lineItem, today);
         return <button type="button" onClick={toggleExpanded} aria-expanded={false}
           className="grid w-full min-w-0 gap-2 rounded py-2 text-left text-xs sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,.8fr)] sm:items-center">
           <span className="flex min-w-0 items-start gap-2"><ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-purple-700" /><span className="min-w-0">
             <strong className="block break-words text-sm text-slate-900">{lineItem.row_name || officeAuthority?.office_name || officeTypes.join(", ") || "Permit"}</strong>
             <span className="text-slate-600">{localityLabel}{lineItem.permit_number && ` · #${lineItem.permit_number}`}</span>
           </span></span>
-          <span className="pl-6 sm:pl-0"><span className="block text-slate-500">Current step</span>{isCompleted ? "Complete" : next?.name || "Review permit"}
+          <span className="pl-6 sm:pl-0"><span className="block text-slate-500">{next.key === "waiting" ? "Waiting" : "Permit status"}</span>{next.step?.name || next.nextAction}
             {blockers.length > 0 && <strong className="block text-red-800">{blockers[0]}</strong>}
             {(expectedReplyOverdue || permitExpired) && <strong className="block text-amber-800">{permitExpired ? "Renewal needed" : "Reply overdue"}</strong>}
           </span>
@@ -225,7 +225,7 @@ export default function PermitSpreadsheetRow({
 
       {blockers.length > 0 && <ul aria-label="Permit blockers" className="mb-2 border-l-4 border-red-500 bg-red-50 px-3 py-2 text-xs text-red-900">{blockers.map(message => <li key={message}>{message}</li>)}</ul>}
       <p className="mb-2 text-xs text-slate-600">Owner: {lineItem.assigned_to || "Unassigned"} · Follow-up: {lineItem.next_followup_date || "Not scheduled"}</p>
-      <PermitChecklist line={lineItem} canEdit={isRegistered} onOpen={onOpenStep} />
+      <PermitChecklist today={today} line={lineItem} canEdit={isRegistered} onOpen={onOpenStep} />
       <details className="mt-2 rounded border px-3 py-2"><summary className="cursor-pointer text-xs font-semibold text-slate-700">Permit actions &amp; office settings</summary>
         <div className="space-y-2 pt-2">
             <div className="flex items-center gap-1.5">
