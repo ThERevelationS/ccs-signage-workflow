@@ -11,7 +11,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync, statSync, renameSync, unlinkSync, openSync, readSync, closeSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync, statSync, renameSync, unlinkSync, openSync, readSync, closeSync, readdirSync } from 'node:fs';
 import { AUDIT, CONTROL_FILE, HEARTBEAT_DIR, DEFAULT_CONTROL } from './lib/server-control.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -30,13 +30,17 @@ const COMMIT_PAUSE_BYTES = 1.5 * 1024 ** 3; // commit headroom <1.5GB → emerge
 // spawn per 10s, only while every margin still holds with cushion. Recovery
 // re-admits culled slices after 15s of clean margins (not the old 60–120s).
 const RES_DEFAULT_RSS = 500 * 1024 ** 2; // 500MB until live RSS is measured
-const RES_TOTAL = 16;
+const RES_MAX = 64;                    // technical safety ceiling — auto mode is otherwise uncapped
 const RES_SPAWN_MS = 10000;            // ≤1 researcher spawn per 10s
 const RES_SETTLE_MS = 10000;           // previous spawn must be alive ≥10s
 const RES_ROTATE_MS = 10 * 60 * 1000;  // fairness — cycle slices through runtime
 const RECOVER_HOLD_MS = 15000;         // clean-margin hold before unpause/re-admit
 const SCALE_UP_MARGIN = 1 * 1024 ** 3; // spawn needs free − rss ≥ reserve + 1GB
 const SCALE_UP_COMMIT = 4 * 1024 ** 3; // …and commit headroom − rss ≥ 4GB
+const CPU_SPAWN_MAX = 85;              // no new researcher while 30s avg CPU exceeds this
+const CPU_CULL_MAX = 95;               // over this → cull one researcher per 10s
+const CPU_CULL_MS = 10000;
+const IDLE_CULL_MS = 2 * 60 * 1000;    // researchers idle on empty work >2min get culled
 const RESERVE_DEFAULT_GB = 4;          // spawn admission keeps this much free
 const FLEET_BUDGET_DEFAULT_GB = 12;    // total fleet RSS cap
 const MEM_HISTORY_MS = 30 * 60 * 1000; // sparkline window, sampled per tick
@@ -61,7 +65,9 @@ function catalog() {
     // every entry against the current mirror and holds ambiguous ones.
     { name: 'profile-relink', group: 'verification', script: 'scripts/permitting-profile-relink.mjs', args: ['--apply'], events: ['profile-relink'], once: true, every_ms: 6 * 3600e3 },
   ];
-  for (let i = 0; i < 16; i++) w.push({ name: `local-res-${i}`, group: 'verification', script: 'scripts/permitting-local-researcher.mjs', args: ['--slice', String(i), '--slices', '16'], events: [`local-res-${i}`], researcher: true });
+  // 64 interchangeable researcher slots — dynamic claims share work, so the
+  // live count is whatever the gates allow (auto) or the user asked (manual).
+  for (let i = 0; i < RES_MAX; i++) w.push({ name: `local-res-${i}`, group: 'verification', script: 'scripts/permitting-local-researcher.mjs', args: ['--id', String(i)], events: [`local-res-${i}`], researcher: true });
   for (let i = 0; i < 4; i++) w.push({ name: `office-sweep-${i}`, group: 'expansion', script: 'scripts/permitting-office-sweep.mjs', args: ['--slice', String(i), '--slices', '4', '--delay-ms', '800'], events: [`sweep${i}`], researcher: true, once: true });
   w.push({ name: 'forever-runner', group: 'expansion', script: 'scripts/permitting-forever-runner.mjs', args: ['--workers', '8', '--delay-ms', '300'], events: ['forever', 'forever-runner'], researcher: true });
   w.push({ name: 'parcel-resolver', group: 'expansion', script: 'scripts/permitting-parcel-resolver.mjs', events: ['parcelres', 'parcel-resolver'], researcher: true });
@@ -260,7 +266,12 @@ const guardActions = [];
 // emits `availMB committedBytes commitLimit` every 2s; headroom = limit −
 // committed. Stale >10s or dead → headroom reports null (and the probe
 // restarts); a null headroom blocks scale-up but never triggers a cull.
-const memProbe = { proc: null, avail: null, committed: null, limit: null, at: 0 };
+const memProbe = { proc: null, avail: null, committed: null, limit: null, cpu: null, at: 0 };
+const cpuSamples = []; // {t, pct} — rolling 30s window for the CPU gates
+export function cpuAvg30(now = Date.now(), samples = cpuSamples) {
+  const w = samples.filter((s) => now - s.t <= 30000);
+  return w.length ? w.reduce((a, s) => a + s.pct, 0) / w.length : null;
+}
 function commitHeadroomBytes() {
   if (!memProbe.at || Date.now() - memProbe.at > 10000 || !Number.isFinite(memProbe.limit)) return null;
   return memProbe.limit - memProbe.committed;
@@ -270,7 +281,7 @@ function startMemProbe() {
   let proc;
   try {
     proc = spawn('powershell', ['-NoProfile', '-Command',
-      'while($true){ $m = Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory; "$($m.AvailableMBytes) $($m.CommittedBytes) $($m.CommitLimit)"; Start-Sleep -Seconds 2 }'],
+      'while($true){ $m = Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory; $c = Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor -Filter "Name=\'_Total\'"; "$($m.AvailableMBytes) $($m.CommittedBytes) $($m.CommitLimit) $($c.PercentProcessorTime)"; Start-Sleep -Seconds 2 }'],
       { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
   } catch { setTimeout(startMemProbe, 5000).unref(); return; }
   memProbe.proc = proc;
@@ -283,6 +294,11 @@ function startMemProbe() {
       buf = buf.slice(i + 1);
       if (parts.length >= 3 && parts.every(Number.isFinite)) {
         memProbe.avail = parts[0]; memProbe.committed = parts[1]; memProbe.limit = parts[2]; memProbe.at = Date.now();
+        if (parts.length >= 4) {
+          memProbe.cpu = parts[3];
+          cpuSamples.push({ t: memProbe.at, pct: parts[3] });
+          while (cpuSamples.length && memProbe.at - cpuSamples[0].t > 30000) cpuSamples.shift();
+        }
       }
     }
   });
@@ -328,16 +344,25 @@ function reconcile() {
         const last = guard.lastSpawn && procs.get(guard.lastSpawn.name);
         const lastSpawnAliveMs = isAlive(last) ? Date.now() - last.startedAt : null;
         const margins = { freeBytes: os.freemem(), reserveBytes: reserveBytesOf(control), commitHeadroomBytes: commitHeadroomBytes(), fleetRssBytes: guard.fleetRss, budgetBytes: fleetBudgetBytesOf(control), avgRssBytes: guard.avgRss };
-        if (!spawnMarginsOk(margins)) {
-          if (!admitBlocked.has(spec.name)) {
-            admitBlocked.add(spec.name);
-            guardActions.push({ at: new Date().toISOString(), detail: `spawn blocked ${spec.name} — margins don't fit another ${GB(margins.avgRssBytes || RES_DEFAULT_RSS)}GB researcher yet` });
+        // Up-scale gates in order of cost: memory margins (fails closed on
+        // missing commit data), CPU 30s average, claimable work, then the
+        // one-spawn-per-10s pacing with settle time. The first failing gate
+        // is the dashboard's hold reason.
+        const cpu = cpuAvg30();
+        const wa = workAvailable();
+        const hold = spawnHoldReason({ ...margins, cpuPct: cpu, workAvail: wa, liveCount: liveRes().length, now: Date.now(), lastSpawnAt: guard.lastSpawn?.at ?? null, lastSpawnAliveMs });
+        if (hold) {
+          if (spawnHold.get(spec.name) !== hold) {
+            spawnHold.set(spec.name, hold);
+            const why = { memory: `margins don't fit another ${GB(margins.avgRssBytes || RES_DEFAULT_RSS)}GB researcher yet`, cpu: `CPU averaging ${Math.round(cpu)}% (limit ${CPU_SPAWN_MAX}%)`, work: `only ${wa} piece${wa === 1 ? '' : 's'} of claimable work left`, pace: 'spawn pacing' }[hold];
+            guardActions.push({ at: new Date().toISOString(), detail: `spawn blocked ${spec.name} — ${why}` });
             guardActions.splice(0, Math.max(0, guardActions.length - 50));
-            emit({ stage: 'guard', detail: `spawn blocked ${spec.name} — insufficient memory headroom` });
+            emit({ stage: 'guard', detail: `spawn blocked ${spec.name} — ${why}` });
           }
+          if (hold === 'memory') admitBlocked.add(spec.name);
           continue;
         }
-        if (!maySpawnResearcher({ ...margins, now: Date.now(), lastSpawnAt: guard.lastSpawn?.at ?? null, lastSpawnAliveMs })) continue;
+        spawnHold.delete(spec.name);
         admitBlocked.delete(spec.name);
         spawnWorker(spec);
         guard.lastSpawn = { name: spec.name, at: Date.now() };
@@ -353,7 +378,7 @@ function reconcile() {
 }
 
 // ── researcher membership + limits ───────────────────────────────────────
-const resCfg = (c) => ({ mode: 'auto', max: RES_TOTAL, disabled: [], ...(c?.researchers || {}) });
+const resCfg = (c) => ({ mode: 'auto', max: 16, disabled: [], killall: false, ...(c?.researchers || {}) });
 export function reserveBytesOf(control) {
   const gb = Number(control?.limits?.reserve_gb);
   return Math.max(2, Math.min(10, Number.isFinite(gb) ? gb : RESERVE_DEFAULT_GB)) * 1024 ** 3;
@@ -370,15 +395,33 @@ export function admitResearcher(freeBytes, avgRssBytes, reserveBytes) {
   return freeBytes - avgRssOr(avgRssBytes) >= reserveBytes;
 }
 // Display estimate — how many researchers memory could host right now.
-export function memoryAllowance(freeBytes, avgRssBytes, reserveBytes, total = RES_TOTAL) {
+export function memoryAllowance(freeBytes, avgRssBytes, reserveBytes, total = RES_MAX) {
   return Math.max(0, Math.min(total, Math.floor((freeBytes - reserveBytes) / avgRssOr(avgRssBytes))));
 }
-// The user's cap: auto = up to their max, manual = exactly their count.
-// The memory fit is enforced by the spawn gate and the cull — never by
-// loosening this number.
-export function researcherCap(control, total = RES_TOTAL) {
-  const max = Number(resCfg(control).max);
-  return Math.max(0, Math.min(total, Number.isFinite(max) ? Math.floor(max) : total));
+// The cap on membership: auto mode is UNCAPPED — memory, CPU and available
+// work decide how many run, bounded only by the RES_MAX safety ceiling.
+// Manual = exactly the user's count. killall pins 0 until the user picks a
+// mode or count again.
+export function researcherCap(control, total = RES_MAX) {
+  const rc = resCfg(control);
+  if (rc.killall) return 0;
+  if (rc.mode === 'manual') {
+    const max = Number(rc.max);
+    return Math.max(0, Math.min(total, Number.isFinite(max) ? Math.floor(max) : 0));
+  }
+  return total;
+}
+// ── work-availability gate ───────────────────────────────────────────────
+// Each researcher publishes how much work is claimable right now to
+// .audit-work/research-targets.json (gap targets + queue rows + a small
+// fulfill allowance — fulfill is real work but shouldn't drive unbounded
+// scaling). No fleet runs more researchers than there is work for. Stale or
+// missing data fails OPEN so the fleet can always bootstrap a probe.
+const TARGETS_FILE = path.join(AUDIT, 'research-targets.json');
+export function workAvailable(now = Date.now(), file = TARGETS_FILE) {
+  const j = readJSON(file, null);
+  if (!j || !Number.isFinite(j.at) || now - j.at > 60000) return null;
+  return Math.max(0, (Number(j.gap) || 0) + (Number(j.queue) || 0) + Math.min(Number(j.fulfill) || 0, 4));
 }
 // Scale-up margins: another researcher only starts when all three limits
 // still hold after its projected RSS lands — reserve plus a 1GB cushion,
@@ -393,20 +436,45 @@ export function spawnMarginsOk({ freeBytes, reserveBytes, commitHeadroomBytes, f
 // Full up-scale gate: margins + at most one spawn per 10s + the previous
 // spawn settled (alive ≥10s so its real RSS feeds avgRss). A dead previous
 // spawn only needs the pacing wait — crash backoff handles its restart.
-export function maySpawnResearcher({ freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes, avgRssBytes, now, lastSpawnAt, lastSpawnAliveMs }) {
-  if (!spawnMarginsOk({ freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes, avgRssBytes })) return false;
+export function spawnPacingOk({ now, lastSpawnAt, lastSpawnAliveMs }) {
   if (lastSpawnAt != null && now - lastSpawnAt < RES_SPAWN_MS) return false;
   if (lastSpawnAliveMs != null && lastSpawnAliveMs < RES_SETTLE_MS) return false;
   return true;
+}
+export function maySpawnResearcher({ freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes, avgRssBytes, now, lastSpawnAt, lastSpawnAliveMs }) {
+  if (!spawnMarginsOk({ freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes, avgRssBytes })) return false;
+  return spawnPacingOk({ now, lastSpawnAt, lastSpawnAliveMs });
+}
+// The full uncapped up-scale gate as one pure decision: memory margins →
+// CPU 30s average → claimable work → pacing. Returns the holding gate name
+// (the dashboard's hold reason) or null when a spawn may proceed. A null
+// workAvail (stale/missing probe data) fails open so the fleet can always
+// bootstrap its first researcher.
+export function spawnHoldReason({ freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes, avgRssBytes, cpuPct, workAvail, liveCount, now, lastSpawnAt, lastSpawnAliveMs }) {
+  if (!spawnMarginsOk({ freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes, avgRssBytes })) return 'memory';
+  if (cpuPct != null && cpuPct > CPU_SPAWN_MAX) return 'cpu';
+  if (workAvail != null && liveCount >= workAvail) return 'work';
+  if (!spawnPacingOk({ now, lastSpawnAt, lastSpawnAliveMs })) return 'pace';
+  return null;
 }
 // Cull order for memory pressure: newest-spawned first (the oldest slice is
 // likeliest to be mid-item; the newest hasn't earned its keep yet).
 export function cullOrder(records) {
   return records.slice().sort((a, b) => b.startedAt - a.startedAt);
 }
-// Rotation pointer: next slice index not already wanted, user-disabled, or
-// memory-blocked. Returns -1 when nothing is available.
-export function nextSliceIndex(start, taken, disabled, blocked, total = RES_TOTAL) {
+// Idle cull selection: live researchers whose heartbeat has said 'idle'
+// continuously for idleMs, newest-spawned first. hbByName(name) → heartbeat
+// record or null. Only the worker's own 'no work' signal counts — 'paused'/
+// 'stopped'/'memory guard' idle states must never trigger a work cull.
+export function idleCullList(records, hbByName, now, idleMs = IDLE_CULL_MS) {
+  return cullOrder(records).filter((r) => {
+    const hb = hbByName(r.spec.name);
+    return hb?.state === 'idle' && hb.item === 'no work' && hb.at && now - new Date(hb.at).getTime() >= idleMs;
+  });
+}
+// Rotation pointer: next slot index not already wanted, user-disabled, or
+// blocked by any guard. Returns -1 when nothing is available.
+export function nextSliceIndex(start, taken, disabled, blocked, total = RES_MAX) {
   for (let i = 0; i < total; i++) {
     const idx = (start + i) % total;
     const n = `local-res-${idx}`;
@@ -415,7 +483,10 @@ export function nextSliceIndex(start, taken, disabled, blocked, total = RES_TOTA
   return -1;
 }
 const memBlocked = new Set();   // slices culled for memory — stay out until recovery
+const cpuBlocked = new Set();   // slices culled while CPU >95% — back when the 30s avg drops under 85%
+const workBlocked = new Set();  // slices culled after idling >2min on empty work
 const admitBlocked = new Set(); // wanted slices that failed spawn margins
+const spawnHold = new Map();    // spec.name → 'memory'|'cpu'|'work'|'pace' — the gate holding it back
 const memHistory = [];          // {t, free, fleet, headroom} per tick, 30min ring
 const isAlive = (r) => Boolean(r?.proc && !r.proc.killed && r.proc.exitCode === null);
 const liveRes = () => [...procs.values()].filter((r) => /^local-res-\d+$/.test(r.spec.name) && isAlive(r));
@@ -424,7 +495,7 @@ const liveRes = () => [...procs.values()].filter((r) => /^local-res-\d+$/.test(r
 // user-disabled and memory-culled names.
 function researcherRunSet() {
   const disabled = new Set(resCfg(control).disabled);
-  return [...resWanted].filter((n) => !disabled.has(n) && !memBlocked.has(n));
+  return [...resWanted].filter((n) => !disabled.has(n) && !memBlocked.has(n) && !cpuBlocked.has(n) && !workBlocked.has(n));
 }
 // Membership maintenance, run every reconcile: shrink to the user's cap
 // (pending spawns first, then newest live), rotate the longest-running
@@ -433,8 +504,13 @@ function researcherRunSet() {
 function syncResMembership() {
   const cap = researcherCap(control);
   const disabled = new Set(resCfg(control).disabled);
+  // The work gate caps membership too — no point wanting 40 researchers
+  // when 6 pieces of work exist. Live workers are never trimmed here (the
+  // idle cull drains them); membership just can't outgrow max(work, live).
+  const wa = workAvailable();
+  const effCap = wa == null ? cap : Math.min(cap, Math.max(wa, liveRes().length));
   for (const n of [...resWanted]) if (disabled.has(n)) resWanted.delete(n);
-  while (resWanted.size > cap) {
+  while (resWanted.size > effCap) {
     const pending = [...resWanted].filter((n) => !isAlive(procs.get(n)));
     const drop = pending[0] || cullOrder([...resWanted].map((n) => procs.get(n)).filter(isAlive))[0]?.spec.name || [...resWanted][0];
     resWanted.delete(drop);
@@ -446,17 +522,18 @@ function syncResMembership() {
     if (live.length) {
       const oldest = live.reduce((a, b) => (a.startedAt < b.startedAt ? a : b));
       resWanted.delete(oldest.spec.name);
-      const idx = nextSliceIndex(guard.resNext, resWanted, disabled, memBlocked);
-      if (idx >= 0) { guard.resNext = (idx + 1) % RES_TOTAL; resWanted.add(`local-res-${idx}`); emit({ stage: 'guard', detail: `rotation — ${oldest.spec.name} rests, local-res-${idx} takes its slot` }); }
+      const idx = nextSliceIndex(guard.resNext, resWanted, disabled, allBlocked());
+      if (idx >= 0) { guard.resNext = (idx + 1) % RES_MAX; resWanted.add(`local-res-${idx}`); emit({ stage: 'guard', detail: `rotation — ${oldest.spec.name} rests, local-res-${idx} takes its slot` }); }
     }
   }
-  while (resWanted.size < cap) {
-    const idx = nextSliceIndex(guard.resNext, resWanted, disabled, memBlocked);
+  while (resWanted.size < effCap) {
+    const idx = nextSliceIndex(guard.resNext, resWanted, disabled, allBlocked());
     if (idx < 0) break;
-    guard.resNext = (idx + 1) % RES_TOTAL;
+    guard.resNext = (idx + 1) % RES_MAX;
     resWanted.add(`local-res-${idx}`);
   }
 }
+const allBlocked = () => new Set([...memBlocked, ...cpuBlocked, ...workBlocked]);
 
 // Plain description of which margins are breached, for the action log.
 function pressureReasons(freeBytes, reserveBytes, commitHeadroomBytes, fleetRssBytes, budgetBytes) {
@@ -510,6 +587,32 @@ async function guardTick() {
       stopWorker(r.spec.name);
       act(`${emergency ? 'emergency' : 'pressure'} cull ${r.spec.name} — ${why}`);
     }
+  }
+  // ── CPU cull: sustained >95% → shed one researcher per 10s ───────────
+  const cpu = cpuAvg30(now);
+  if (cpu != null && cpu > CPU_CULL_MAX && (!guard.lastCpuCull || now - guard.lastCpuCull >= CPU_CULL_MS)) {
+    const victim = cullOrder(liveRes().filter((x) => !memBlocked.has(x.spec.name) && !cpuBlocked.has(x.spec.name)))[0];
+    if (victim) {
+      guard.lastCpuCull = now;
+      cpuBlocked.add(victim.spec.name);
+      resWanted.delete(victim.spec.name);
+      stopWorker(victim.spec.name);
+      act(`CPU cull ${victim.spec.name} — processor averaging ${Math.round(cpu)}% for 30s`);
+    }
+  }
+  if (cpuBlocked.size && (cpu == null || cpu < CPU_SPAWN_MAX)) { cpuBlocked.clear(); act('CPU recovered — culled researchers can start again'); }
+  // ── idle cull: researchers waiting on empty work >2min are shed ──────
+  // newest first. The work gate keeps them out until fresh work appears.
+  for (const r of idleCullList(liveRes(), (n) => readJSON(path.join(HEARTBEAT_DIR, `${n}.json`), null), now)) {
+    workBlocked.add(r.spec.name);
+    resWanted.delete(r.spec.name);
+    stopWorker(r.spec.name);
+    const hb = readJSON(path.join(HEARTBEAT_DIR, `${r.spec.name}.json`), null);
+    act(`idle cull ${r.spec.name} — no claimable work for ${Math.round((hb?.at ? now - new Date(hb.at).getTime() : 0) / 60000)}min`);
+  }
+  if (workBlocked.size) {
+    const wa = workAvailable(now);
+    if (wa == null || wa > liveRes().length) workBlocked.clear(); // work came back (or went unknown — fail open)
   }
   // ── recover: 15s of clean margins releases the pause and re-admits ────
   const recovered = guard.pressureAt > 0 && deficit <= 0 && !emergency && now - guard.pressureAt >= RECOVER_HOLD_MS;
@@ -576,8 +679,13 @@ function statusJSON() {
     else if (spec.once && r?.finished) status = 'done';
     else if (disRes.has(spec.name) || stoppedW.has(spec.name)) status = 'stopped-by-user';
     else if (memBlocked.has(spec.name)) status = 'culled-by-memory';
+    else if (cpuBlocked.has(spec.name)) status = 'culled-by-cpu';
+    else if (workBlocked.has(spec.name)) status = 'culled-idle';
+    else if (spawnHold.get(spec.name) === 'work') status = 'no-work';
+    else if (spawnHold.get(spec.name) === 'cpu') status = 'blocked-by-cpu';
+    else if (spawnHold.get(spec.name) === 'pace') status = 'ramping';
     else if (admitBlocked.has(spec.name) || resWanted.has(spec.name)) status = 'blocked-by-memory'; // queued for a spawn slot / margins
-    else if (/^local-res-\d+$/.test(spec.name) && control.state !== 'stopped') status = 'culled-by-memory'; // not in the wanted set — pressure-drained or capped
+    else if (/^local-res-\d+$/.test(spec.name) && control.state !== 'stopped') status = 'stopped'; // slot exists but isn't in the wanted set — uncapped slots are just off
     else if ((control.guard_paused || []).includes(spec.name)) status = 'paused-by-guard';
     else status = 'stopped';
     return { name: spec.name, group: spec.group, status, pid: alive ? r.proc.pid : null, alive, rss_mb: alive && rss.get(r.proc.pid) ? Math.round(rss.get(r.proc.pid) / 1048576) : null, uptime_s: alive && r ? Math.round((now - r.startedAt) / 1000) : null, restarts: (r?.restarts || []).length, recent_restarts: recentRestarts, crash_looping: recentRestarts >= 5, last_heartbeat: hb, last_event: lastEvent };
@@ -586,18 +694,24 @@ function statusJSON() {
   const res = resCfg(control);
   const headroom = commitHeadroomBytes();
   // Why the next researcher isn't starting — the dashboard shows this when
-  // the live count sits below the user's cap.
+  // the live count sits below the cap.
   let holdReason = null;
-  if (control.state === 'running' && control.verification && liveRes().length < researcherCap(control)) {
+  const resCap = researcherCap(control);
+  if (resCfg(control).killall) holdReason = 'all researchers were stopped — pick a mode or count to start again';
+  else if (control.state === 'running' && control.verification && liveRes().length < resCap) {
     const a = avgRssOr(guard.avgRss), free = os.freemem(), reserve = reserveBytesOf(control), budget = fleetBudgetBytesOf(control);
+    const cpu = cpuAvg30(), wa = workAvailable();
     if (guard.paused) holdReason = 'memory is critically low — background work is paused until it recovers';
     else if (free - a < reserve + SCALE_UP_MARGIN) holdReason = `free memory is ${GB(free)} GB — a new researcher needs ${GB(reserve + SCALE_UP_MARGIN)} GB + ${GB(a)} GB`;
     else if (headroom == null) holdReason = `Windows memory headroom is being measured — a new researcher needs ${GB(SCALE_UP_COMMIT)} GB + ${GB(a)} GB`;
     else if (headroom - a < SCALE_UP_COMMIT) holdReason = `Windows memory headroom is ${GB(headroom)} GB — a new researcher needs ${GB(SCALE_UP_COMMIT)} GB + ${GB(a)} GB`;
     else if (guard.fleetRss + a > budget) holdReason = `the server is already using ${GB(guard.fleetRss)} GB of its ${GB(budget)} GB memory limit`;
+    else if (cpu != null && cpu > CPU_SPAWN_MAX) holdReason = `the processor is busy — CPU has averaged ${Math.round(cpu)}% for 30 seconds (limit ${CPU_SPAWN_MAX}%)`;
+    else if (wa != null && liveRes().length >= wa) holdReason = `only ${wa} piece${wa === 1 ? '' : 's'} of research work are waiting — no point running more researchers than that`;
+    else if (resCap >= RES_MAX && liveRes().length >= RES_MAX) holdReason = `at the safety ceiling of ${RES_MAX}`;
     else holdReason = 'ramping up — researchers start one at a time, every 10 seconds';
   }
-  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: resWanted.size, requested: res.mode === 'manual' ? res.max : null, memory_allows: memoryAllowance(os.freemem(), guard.avgRss, reserveBytesOf(control)), mode: res.mode, max: res.max, disabled: res.disabled, mem_blocked: [...memBlocked], total: RES_TOTAL, next_slice: guard.resNext, hold_reason: holdReason, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, limits: { reserve_gb: Number(control.limits?.reserve_gb) || RESERVE_DEFAULT_GB, fleet_budget_gb: Number(control.limits?.fleet_budget_gb) || FLEET_BUDGET_DEFAULT_GB }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()), fleet_rss_gb: GB(guard.fleetRss || 0), commit_used_gb: Number.isFinite(memProbe.committed) ? GB(memProbe.committed) : null, commit_limit_gb: Number.isFinite(memProbe.limit) ? GB(memProbe.limit) : null, commit_headroom_gb: headroom != null ? GB(headroom) : null, history: memHistory.map((h) => ({ t: h.t, free_gb: GB(h.free), fleet_gb: GB(h.fleet), headroom_gb: h.headroom != null ? GB(h.headroom) : null })) }, updated_at: control.updated_at || null, workers, verification_progress: vp ? { at: vp.at, jurisdictions: vp.jurisdictions, offices: vp.offices, gap_reasons: vp.gap_reasons, missing_roles: vp.missing_roles, promotions: vp.promotions, eta: vp.eta, held_relinks: (vp.held_relinks || []).length, needs_review_total: vp.needs_review_total || 0 } : null };
+  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: resWanted.size, requested: res.mode === 'manual' ? res.max : null, memory_allows: memoryAllowance(os.freemem(), guard.avgRss, reserveBytesOf(control)), mode: res.mode, max: res.max, disabled: res.disabled, mem_blocked: [...memBlocked], total: RES_MAX, ceiling: RES_MAX, killall: Boolean(res.killall), work_available: workAvailable(), cpu_pct: cpuAvg30() != null ? Math.round(cpuAvg30()) : null, next_slice: guard.resNext, hold_reason: holdReason, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, limits: { reserve_gb: Number(control.limits?.reserve_gb) || RESERVE_DEFAULT_GB, fleet_budget_gb: Number(control.limits?.fleet_budget_gb) || FLEET_BUDGET_DEFAULT_GB }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()), fleet_rss_gb: GB(guard.fleetRss || 0), cpu_pct: memProbe.cpu != null ? Math.round(memProbe.cpu) : null, commit_used_gb: Number.isFinite(memProbe.committed) ? GB(memProbe.committed) : null, commit_limit_gb: Number.isFinite(memProbe.limit) ? GB(memProbe.limit) : null, commit_headroom_gb: headroom != null ? GB(headroom) : null, history: memHistory.map((h) => ({ t: h.t, free_gb: GB(h.free), fleet_gb: GB(h.fleet), headroom_gb: h.headroom != null ? GB(h.headroom) : null })) }, updated_at: control.updated_at || null, workers, verification_progress: vp ? { at: vp.at, jurisdictions: vp.jurisdictions, offices: vp.offices, gap_reasons: vp.gap_reasons, missing_roles: vp.missing_roles, promotions: vp.promotions, eta: vp.eta, held_relinks: (vp.held_relinks || []).length, needs_review_total: vp.needs_review_total || 0 } : null };
 }
 
 // ── stop: pause → flusher drains → kill trees ────────────────────────────
@@ -636,20 +750,23 @@ const server = http.createServer(async (req, res) => {
         if (body.on) for (const r of procs.values()) if (r.spec.once) r.finished = false; // re-enable re-runs one-shot sweeps
         writeControl({ expansion: Boolean(body.on) }, 'api'); reconcile(); return json(res, 200, { ok: true, expansion: Boolean(body.on) });
       }
-      // Researcher count controls: {mode:'auto'|'manual', max:0..16}.
-      // max:0 is the dashboard's kill-all — every live slice culls now.
+      // Researcher controls: {mode:'auto'|'manual', max:0..64, killall}.
+      // Auto ignores max (uncapped up to the 64 ceiling). Kill-all pins the
+      // count to 0 until the user picks a mode or a non-zero count again.
       if (url.pathname === '/researchers') {
         const cur = { ...DEFAULT_CONTROL, ...readJSON(CONTROL_FILE, {}) };
         const rc = resCfg(cur);
-        if (body.mode != null) { if (!['auto', 'manual'].includes(body.mode)) return json(res, 400, { error: 'mode must be auto|manual' }); rc.mode = body.mode; }
-        if (body.max != null) { const m = Math.floor(Number(body.max)); if (!Number.isFinite(m) || m < 0 || m > RES_TOTAL) return json(res, 400, { error: `max must be 0..${RES_TOTAL}` }); rc.max = m; }
+        if (body.mode != null) { if (!['auto', 'manual'].includes(body.mode)) return json(res, 400, { error: 'mode must be auto|manual' }); rc.mode = body.mode; rc.killall = false; }
+        if (body.max != null) { const m = Math.floor(Number(body.max)); if (!Number.isFinite(m) || m < 0 || m > RES_MAX) return json(res, 400, { error: `max must be 0..${RES_MAX}` }); rc.max = m; rc.killall = m === 0; }
+        if (body.killall === true) rc.killall = true;
+        if (body.killall === false) rc.killall = false;
         control = writeControl({ researchers: rc }, 'api');
         // Recompute membership now — reconcile only runs every 2s and a
         // kill-all or count drop shouldn't wait for it.
         syncResMembership();
-        if (rc.max === 0) {
+        if (rc.killall || (rc.mode === 'manual' && rc.max === 0)) {
           for (const r of procs.values()) if (/^local-res-\d+$/.test(r.spec.name) && isAlive(r)) stopWorker(r.spec.name);
-          emit({ stage: 'guard', detail: 'kill-all — researchers max set to 0, all slices stopping' });
+          emit({ stage: 'guard', detail: 'kill-all — all researchers stopping, count pinned at 0' });
         }
         reconcile(); return json(res, 200, { ok: true, researchers: rc });
       }
@@ -669,9 +786,9 @@ const server = http.createServer(async (req, res) => {
         if (body.action === 'start') {
           const cur = { ...DEFAULT_CONTROL, ...readJSON(CONTROL_FILE, {}) };
           if (isRes) {
-            const rc = resCfg(cur); rc.disabled = rc.disabled.filter((n) => n !== spec.name);
+            const rc = resCfg(cur); rc.disabled = rc.disabled.filter((n) => n !== spec.name); rc.killall = false;
             control = writeControl({ researchers: rc }, 'api');
-            memBlocked.delete(spec.name); admitBlocked.delete(spec.name);
+            memBlocked.delete(spec.name); cpuBlocked.delete(spec.name); workBlocked.delete(spec.name); admitBlocked.delete(spec.name); spawnHold.delete(spec.name);
             resWanted.add(spec.name); // user-started slices are wanted (may exceed the cap by one)
           } else {
             const sw = new Set(cur.stopped_workers || []); sw.delete(spec.name); control = writeControl({ stopped_workers: [...sw] }, 'api');

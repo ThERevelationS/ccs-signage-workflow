@@ -5,11 +5,16 @@
 //   official site (profile fields → past source URLs → domain guesses →
 //   Wikidata → county fallback) → sitemap + keyword links + directory pages +
 //   PDF evidence → role extraction → normalizeOfficeResearch (caller's job)
+import { paceHost } from './host-pace.mjs';
+
 export const UA = { 'User-Agent': 'ccs-signage-office-research/1.0 (municipal permitting contact research)' };
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function fetchText(url, timeout = 15000) {
   try {
+    // Fleet-wide politeness: ≥1s between requests to the same host across
+    // every worker process (a county site sees the whole fleet as one visitor).
+    await paceHost(url, 1000);
     const r = await fetch(url, { signal: AbortSignal.timeout(timeout), headers: UA, redirect: 'follow' });
     if (!r.ok) return null;
     const type = r.headers.get('content-type') || '';

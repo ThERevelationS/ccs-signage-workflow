@@ -503,7 +503,10 @@ const friendlyName=n=>{if(FRIENDLY[n])return FRIENDLY[n][0];const m=n.match(/^lo
 const friendlyDesc=n=>{if(FRIENDLY[n])return FRIENDLY[n][1];if(/^local-res-[0-9]+$/.test(n))return 'reads official town websites for evidence';if(/^office-sweep-[0-9]+$/.test(n))return 'adds new jurisdictions — locked until all current ones are verified';return '';};
 const STATUS_PLAIN={running:['Working','g'],idle:['Waiting','n'],done:['Done','n'],
  'paused-by-guard':['Paused for memory','a'],'culled-by-memory':['Paused for memory','a'],
- 'blocked-by-memory':['Waiting for memory','a'],'stopped-by-user':['Stopped by you','r'],stopped:['Off','n']};
+ 'blocked-by-memory':['Waiting for memory','a'],'culled-by-cpu':['Paused — CPU busy','a'],
+ 'blocked-by-cpu':['Waiting — CPU busy','a'],'culled-idle':['Off — nothing to research','n'],
+ 'no-work':['Waiting — nothing to research','n'],'ramping':['Starting soon','a'],
+ 'stopped-by-user':['Stopped by you','r'],stopped:['Off','n']};
 const chip=w=>{const p=STATUS_PLAIN[w.status]||['Off','n'];return '<span class="chip '+p[1]+'">'+p[0]+'</span>';};
 const GAP_LABEL={no_research:'No research yet',no_quote:'No proof sentence found yet',no_role_match:'Research found, but not for this office’s job',
  unofficial_source:'Evidence only from unofficial sites',county_scope:'County office — coverage unclear',non_permit_body:'Not a permitting office',other:'Other checks failed'};
@@ -523,6 +526,10 @@ function plainAction(d){
  m=s.match(/cull local-res-([0-9]+) — server using ([0-9.]+)GB/);
  if(m)return 'Stopped Researcher '+(Number(m[1])+1)+' — server was over its memory limit';
  m=s.match(/fleet budget cull local-res-([0-9]+)/);if(m)return 'Stopped Researcher '+(Number(m[1])+1)+' — server was over its memory limit';
+ m=s.match(/CPU cull local-res-([0-9]+)/);if(m)return 'Stopped Researcher '+(Number(m[1])+1)+' — the processor was overloaded';
+ m=s.match(/idle cull local-res-([0-9]+)/);if(m)return 'Stopped Researcher '+(Number(m[1])+1)+' — no research work was waiting';
+ m=s.match(/spawn blocked local-res-([0-9]+) — CPU/);if(m)return 'Waiting to start Researcher '+(Number(m[1])+1)+' — processor busy';
+ m=s.match(/spawn blocked local-res-([0-9]+) — only ([0-9]+) piece/);if(m)return 'Waiting to start Researcher '+(Number(m[1])+1)+' — only '+m[2]+' pieces of work left';
  m=s.match(/spawn blocked local-res-([0-9]+)/);if(m)return 'Waiting to start Researcher '+(Number(m[1])+1)+' — not enough free memory yet';
  m=s.match(/rotation — local-res-([0-9]+) rests, local-res-([0-9]+)/);
  if(m)return 'Researcher '+(Number(m[1])+1)+' finished its turn — Researcher '+(Number(m[2])+1)+' takes over';
@@ -634,8 +641,8 @@ function renderOverview(){
  +'<div style="font:700 26px var(--mono);margin-bottom:8px">'+num(o.staff_verified||0)+' of '+num(o.total||0)+' offices verified <span class="dim" style="font-size:15px">('+pct+'%)</span></div>'
  +'<div class="bar"><i style="width:'+pct+'%;background:var(--green)"></i></div>'
  +'<div class="dim small" style="margin-top:8px">Right now: '+esc(rightNow())+'</div>'
- +'<div class="dim small" style="margin-top:3px"><span class="blue">Auto-scaling:</span> running '+res+' of up to '+(R.total||16)+' researchers — scales up and down automatically with free memory.</div>'
- +(R.hold_reason&&res<(R.max!=null?R.max:16)?'<div class="dim small" style="margin-top:3px">Holding at '+res+': '+esc(R.hold_reason)+'</div>':'')+'</div>'
+ +'<div class="dim small" style="margin-top:3px"><span class="blue">Auto-scaling:</span> running '+res+' researcher'+(res===1?'':'s')+(R.mode==='manual'?' of '+ (R.max!=null?R.max:16) +' (manual)':' (auto, no limit)')+' — scales up and down automatically with memory, CPU and available work.</div>'
+ +(R.hold_reason?'<div class="dim small" style="margin-top:3px">Holding at '+res+': '+esc(R.hold_reason)+'</div>':'')+'</div>'
  +'<div class="tiles">'
  +'<div class="tile"><div class="t">Verified in the last hour</div><div class="v ok">'+num((vp()&&vp().promotions&&vp().promotions.last_hour)||0)+'</div><div class="s">'+num((vp()&&vp().promotions&&vp().promotions.last_24h)||0)+' in the last 24 hours</div></div>'
  +'<div class="tile"><div class="t">Left to verify</div><div class="v">'+num(o.needs_verification||0)+'</div><div class="s">'+num(o.needs_review||0)+' need a person</div></div>'
@@ -648,10 +655,15 @@ function renderOverview(){
 // — Researchers tab —
 function renderResearchers(){
  const R=(srv&&srv.guard&&srv.guard.researchers)||{};
+ const ceil=R.ceiling||64;
  const max=pendingMax&&Date.now()-pendingMax.at<10000?pendingMax.v:(R.max!=null?R.max:16);
- const mode=R.mode||'auto';
+ const mode=R.killall?'killed':(R.mode||'auto');
  const memAllows=R.memory_allows!=null?R.memory_allows:null;
- const cards=resList().sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})).map(w=>{
+ // Dynamic list: cards for every worker doing something (running, held by a
+ // gate, stopped by you). Slots that are simply off or were culled collapse
+ // into one expandable group — with an uncapped pool they'd bury the page.
+ const interesting=w=>w.alive||['stopped-by-user','no-work','ramping','blocked-by-memory','blocked-by-cpu','idle'].includes(w.status);
+ const card=w=>{
   const m=w.name.match(/([0-9]+)$/);const label='Researcher '+(Number(m[1])+1);
   const hb=w.last_heartbeat||{};
   // Only show the town when the worker is actually alive — a dead slice
@@ -665,21 +677,29 @@ function renderResearchers(){
   return '<div class="rcard"><div class="rn">'+label+'</div>'+chip(w)
    +'<div class="town">'+(town?esc(town):'<span class="dim">'+(w.status==='idle'?'between tasks':'not running')+'</span>')+'</div>'
    +'<div class="meta">'+(onIt?esc(onIt)+' · ':'')+mem+'</div>'+btn+'</div>';
- }).join('');
+ };
+ const sorted=resList().sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+ const shown=sorted.filter(interesting).map(card).join('');
+ const hidden=sorted.filter(w=>!interesting(w));
  const disList=(R.disabled||[]).length?' · <span class="warn">you stopped: '+esc((R.disabled||[]).map(friendlyName).join(', '))+'</span>':'';
- const blockedList=(R.mem_blocked||[]).length?' · <span class="dim">waiting for memory: '+esc((R.mem_blocked||[]).slice(0,4).map(friendlyName).join(', '))+((R.mem_blocked||[]).length>4?' +'+(R.mem_blocked.length-4):'')+'</span>':'';
+ const workTxt=R.work_available!=null?' · '+num(R.work_available)+' pieces of work waiting':'';
+ const cpuTxt=R.cpu_pct!=null?' · CPU '+R.cpu_pct+'%':'';
  setH('tab-researchers',
  '<div class="card"><h2>Researchers</h2>'
  +'<div class="dim small" style="margin-bottom:12px">Researchers visit official town websites to collect evidence. More researchers = faster, but each uses about 0.5 GB of memory.</div>'
  +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
- +'<span class="seg"><button data-cmd="mode-auto" class="'+(mode!=='manual'?'on':'')+'">Auto</button><button data-cmd="mode-manual" class="'+(mode==='manual'?'on':'')+'">Manual</button></span>'
- +'<span class="dim small">'+(mode==='manual'?'You pick the count — memory still caps it for safety.':'The server picks the count from free memory, up to your maximum.')+'</span></div>'
+ +'<span class="seg"><button data-cmd="mode-auto" class="'+(mode==='auto'?'on':'')+'">Auto</button><button data-cmd="mode-manual" class="'+(mode==='manual'?'on':'')+'">Manual</button></span>'
+ +'<span class="dim small">'+(mode==='manual'?'You pick the count — memory, CPU and work still cap it for safety.':(mode==='killed'?'All researchers are stopped — pick a mode or count to restart.':'Auto — no limit; memory, CPU and available work decide.'))+'</span></div>'
+ +(mode==='manual'?'<div style="margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+ +'<span class="dim small">Run exactly:</span><span class="stepper"><button data-cmd="max-dec"'+(max<=0?' disabled':'')+'>−</button><b id="resmax">'+max+'</b><button data-cmd="max-inc"'+(max>=ceil?' disabled':'')+'>+</button></span>'
+ +(memAllows!=null?'<span class="dim small">Room for about <b class="num" style="color:var(--txt)">'+memAllows+'</b> more right now'+(max>memAllows?' — your count is capped by memory':'')+'</span>':'')
+ +'</div>':'<div class="dim small" style="margin-top:8px">Safety ceiling: '+ceil+' researchers — the gates below usually hold it well under that.</div>')
  +'<div style="margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
- +'<span class="dim small">Maximum:</span><span class="stepper"><button data-cmd="max-dec"'+(max<=0?' disabled':'')+'>−</button><b id="resmax">'+max+'</b><button data-cmd="max-inc"'+(max>=16?' disabled':'')+'>+</button></span>'
- +(memAllows!=null?'<span class="dim small">Room for about <b class="num" style="color:var(--txt)">'+memAllows+'</b> more right now'+(mode==='manual'&&max>memAllows?' — your count is capped by memory':'')+'</span>':'')
+ +(R.hold_reason?'<span class="dim small">Holding at '+resAlive().length+': '+esc(R.hold_reason)+'</span>':'')
  +'<span style="flex:1"></span><button class="danger" data-cmd="killres">Stop all researchers</button></div>'
- +'<div class="dim small" style="margin-top:8px">'+resAlive().length+' of '+(R.total||16)+' running'+(R.avg_rss_mb?' · about '+R.avg_rss_mb+' MB each':'')+disList+blockedList+'</div></div>'
- +'<div class="rgrid">'+cards+'</div>');
+ +'<div class="dim small" style="margin-top:8px">'+resAlive().length+' running'+(mode==='auto'?' (auto, no limit)':'')+(R.avg_rss_mb?' · about '+R.avg_rss_mb+' MB each':'')+workTxt+cpuTxt+disList+'</div></div>'
+ +'<div class="rgrid">'+shown+'</div>'
+ +(hidden.length?'<details style="margin-top:10px"><summary class="dim small" style="cursor:pointer">'+hidden.length+' more slots — off or recently stopped</summary><div class="rgrid" style="margin-top:10px">'+hidden.map(card).join('')+'</div></details>':''));
 }
 // — Verification tab —
 function renderVerification(){
@@ -714,7 +734,7 @@ function renderMemory(){
  '<div class="card"><h2>Memory — last 30 minutes</h2>'
  +'<canvas id="memchart" class="chart" width="1100" height="240"></canvas>'
  +'<div class="legend"><span><i style="background:var(--green)"></i>Free memory (GB)</span><span><i style="background:var(--amber)"></i>Used by this server (GB)</span><span><i style="background:var(--purple)"></i>Windows memory headroom (GB)</span></div>'
- +'<div class="dim small" style="margin-top:8px">'+gb(mem.free_gb)+' free of '+gb(mem.total_gb)+' total · the server is using '+gb(mem.fleet_rss_gb)+(mem.commit_headroom_gb!=null?' · Windows can still hand out '+gb(mem.commit_headroom_gb):'')+'</div>'
+ +'<div class="dim small" style="margin-top:8px">'+gb(mem.free_gb)+' free of '+gb(mem.total_gb)+' total · the server is using '+gb(mem.fleet_rss_gb)+(mem.commit_headroom_gb!=null?' · Windows can still hand out '+gb(mem.commit_headroom_gb):'')+(mem.cpu_pct!=null?' · CPU '+mem.cpu_pct+'%':'')+'</div>'
  +(R.hold_reason?'<div class="dim small" style="margin-top:4px">Holding researchers at '+resAlive().length+': '+esc(R.hold_reason)+'</div>':'')+'</div>'
  +'<div class="card"><h2>Limits</h2>'
  +'<div class="setrow"><div><label for="inReserve">Keep free for other programs (GB)</label><input id="inReserve" type="number" min="2" max="10" step="0.5" value="'+(lim.reserve_gb!=null?lim.reserve_gb:4)+'"></div>'
@@ -804,7 +824,7 @@ function renderLegacy(){
 function renderAdvanced(){
  const g=srv&&srv.guard||{};const mem=srv&&srv.memory||{};
  const rows=workers().map(w=>{
-  const canCtl=['stopped-by-user','stopped','culled-by-memory','blocked-by-memory'].includes(w.status);
+  const canCtl=['stopped-by-user','stopped','culled-by-memory','culled-by-cpu','culled-idle','no-work','ramping','blocked-by-memory','blocked-by-cpu'].includes(w.status);
   const btn=w.group==='core'||w.group==='dashboard'?'':(w.alive?'<button data-cmd="wstop" data-name="'+esc(w.name)+'" style="padding:2px 10px;font-size:11px">stop</button>':canCtl?'<button data-cmd="wstart" data-name="'+esc(w.name)+'" style="padding:2px 10px;font-size:11px">start</button>':'');
   const ev=w.last_event?(w.last_event.stage||'')+(w.last_event.detail?' · '+String(w.last_event.detail).slice(0,60):''):'—';
   return '<tr><td><b>'+esc(friendlyName(w.name))+'</b> <span class="dim small">'+esc(w.name)+'</span><div class="dim small">'+esc(friendlyDesc(w.name))+'</div></td>'
@@ -825,6 +845,7 @@ document.addEventListener('click',async e=>{
  const b=e.target&&e.target.closest?e.target.closest('button[data-cmd],a[data-cmd],#btnSaveLim'):null;if(!b||b.disabled)return;
  const R=(srv&&srv.guard&&srv.guard.researchers)||{};
  const cur=pendingMax&&Date.now()-pendingMax.at<10000?pendingMax.v:(R.max!=null?R.max:16);
+ const ceil=R.ceiling||64;
  try{
   if(b.id==='btnSaveLim'){
    const rv=Number($('inReserve').value),bv=Number($('inBudget').value);
@@ -837,8 +858,8 @@ document.addEventListener('click',async e=>{
   if(c==='ny-more'){e.preventDefault();nyShowAll=!nyShowAll;render();return;}
   if(c==='mode-auto')await srvCmd('researchers',{mode:'auto'});
   else if(c==='mode-manual')await srvCmd('researchers',{mode:'manual'});
-  else if(c==='max-inc'||c==='max-dec'){const v=c==='max-inc'?Math.min(16,cur+1):Math.max(0,cur-1);pendingMax={v,at:Date.now()};const el=$('resmax');if(el)el.textContent=v;await srvCmd('researchers',{mode:'manual',max:v});}
-  else if(c==='killres'){if(!confirm('Stop all researchers now? They restart automatically when you raise the count or switch back to Auto.'))return;await srvCmd('researchers',{max:0});}
+  else if(c==='max-inc'||c==='max-dec'){const v=c==='max-inc'?Math.min(ceil,cur+1):Math.max(0,cur-1);pendingMax={v,at:Date.now()};const el=$('resmax');if(el)el.textContent=v;await srvCmd('researchers',{mode:'manual',max:v});}
+  else if(c==='killres'){if(!confirm('Stop all researchers now? They stay off until you pick a mode or count again.'))return;await srvCmd('researchers',{killall:true});}
   else if(c==='wstop')await srvCmd('worker',{name:b.dataset.name,action:'stop'});
   else if(c==='wstart')await srvCmd('worker',{name:b.dataset.name,action:'start'});
  }catch(err){alert(err.message);}

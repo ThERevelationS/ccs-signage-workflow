@@ -10,7 +10,7 @@ const tmp = mkdtempSync(path.join(tmpdir(), 'permit-server-test-'));
 process.env.PERMIT_AUDIT_DIR = tmp; // must land before the lib imports
 
 const { readControl, waitWhilePaused, heartbeat, heartbeatFile, DEFAULT_CONTROL, HEARTBEAT_DIR } = await import('./lib/server-control.mjs');
-const { activeSetFor, guardPausedNames, isEmergency, pressureDeficit, downScaleCount, spawnMarginsOk, maySpawnResearcher, researcherCap, nextSliceIndex, memoryAllowance, admitResearcher, cullOrder, reserveBytesOf, fleetBudgetBytesOf, nextBackoff, lockStale, rotateIfBig } = await import('./permit-server.mjs');
+const { activeSetFor, guardPausedNames, isEmergency, pressureDeficit, downScaleCount, spawnMarginsOk, maySpawnResearcher, spawnHoldReason, workAvailable, idleCullList, cpuAvg30, researcherCap, nextSliceIndex, memoryAllowance, admitResearcher, cullOrder, reserveBytesOf, fleetBudgetBytesOf, nextBackoff, lockStale, rotateIfBig } = await import('./permit-server.mjs');
 
 const ctl = path.join(tmp, 'server-control.json');
 const writeCtl = (o) => writeFileSync(ctl, JSON.stringify({ ...DEFAULT_CONTROL, ...o, updated_at: new Date().toISOString() }));
@@ -31,8 +31,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 {
   const run = { state: 'running', verification: true, expansion: false, expansion_locked: true };
   const active = activeSetFor(run);
-  assert.equal(active.length, 23); // dash + flusher + mirror + 16 local-res + seed + verifier + hygiene + profile-relink
-  assert.ok(active.includes('write-flusher') && active.includes('local-res-15') && active.includes('dashboard'));
+  assert.equal(active.length, 71); // dash + flusher + mirror + 64 local-res slots + seed + verifier + hygiene + profile-relink
+  assert.ok(active.includes('write-flusher') && active.includes('local-res-15') && active.includes('local-res-63') && active.includes('dashboard'));
   assert.ok(!active.includes('office-sweep-0') && !active.includes('forever-runner'));
   // paused keeps the same process set — workers self-idle, none are killed
   assert.deepEqual(activeSetFor({ ...run, state: 'paused' }).sort(), active.sort());
@@ -42,24 +42,24 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const locked = activeSetFor({ ...run, expansion: true, expansion_locked: true });
   assert.ok(!locked.includes('office-sweep-0'));
   const open = activeSetFor({ ...run, expansion: true, expansion_locked: false });
-  assert.equal(open.length, 29);
+  assert.equal(open.length, 77);
   assert.ok(open.includes('office-sweep-3') && open.includes('parcel-resolver') && open.includes('forever-runner'));
   // verification OFF drops its whole group, keeps core
   const off = activeSetFor({ ...run, verification: false });
   assert.ok(!off.includes('local-res-0') && !off.includes('authority-verifier') && off.includes('write-flusher'));
-  // researcherAllowed culls slices outside the wanted set — they leave
+  // researcherAllowed culls slots outside the wanted set — they leave
   // the active set entirely so reconcile stops (not pauses) them.
   const wanted = ['local-res-3', 'local-res-4', 'local-res-5', 'local-res-6', 'local-res-7'];
   const culled = activeSetFor(run, undefined, wanted);
   const culledRes = culled.filter((n) => /^local-res-/.test(n));
   assert.deepEqual(culledRes.sort(), [...wanted].sort());
   assert.equal(culledRes.length, 5);
-  assert.equal(culled.length, 23 - 16 + 5); // window replaces the full slice set
+  assert.equal(culled.length, 71 - 64 + 5); // window replaces the full slot set
   assert.ok(culled.includes('authority-verifier') && culled.includes('write-flusher'));
   // empty wanted set → no researcher processes at all
   assert.equal(activeSetFor(run, undefined, []).filter((n) => /^local-res-/.test(n)).length, 0);
-  // null → legacy behavior, all slices
-  assert.equal(activeSetFor(run, undefined, null).filter((n) => /^local-res-/.test(n)).length, 16);
+  // null → legacy behavior, all slots
+  assert.equal(activeSetFor(run, undefined, null).filter((n) => /^local-res-/.test(n)).length, 64);
 }
 
 // ── emergency + pause set ────────────────────────────────────────────────
@@ -131,18 +131,67 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   assert.equal(spawnMarginsOk(band), false);
 }
 
-// ── researcher cap + slice rotation pointer ──────────────────────────────
+// ── uncapped up-scale gate: every gate can hold, in order ────────────────
+{
+  const GB = 1024 ** 3, MB = 1024 ** 2;
+  const ok = { freeBytes: 8 * GB, reserveBytes: 4 * GB, commitHeadroomBytes: 10 * GB, fleetRssBytes: 4 * GB, budgetBytes: 12 * GB, avgRssBytes: 500 * MB, cpuPct: 30, workAvail: 40, liveCount: 10, now: 100000, lastSpawnAt: null, lastSpawnAliveMs: null };
+  assert.equal(spawnHoldReason(ok), null);                                  // all gates pass
+  assert.equal(spawnHoldReason({ ...ok, freeBytes: 5 * GB }), 'memory');    // 5−0.5 < 5
+  assert.equal(spawnHoldReason({ ...ok, commitHeadroomBytes: null }), 'memory'); // missing probe fails closed
+  assert.equal(spawnHoldReason({ ...ok, fleetRssBytes: 12 * GB }), 'memory');
+  assert.equal(spawnHoldReason({ ...ok, cpuPct: 86 }), 'cpu');              // >85 blocks
+  assert.equal(spawnHoldReason({ ...ok, cpuPct: 85 }), null);               // 85 is the limit, not over it
+  assert.equal(spawnHoldReason({ ...ok, cpuPct: null }), null);             // missing CPU reading fails open
+  assert.equal(spawnHoldReason({ ...ok, workAvail: 10, liveCount: 10 }), 'work'); // fleet outnumbers work
+  assert.equal(spawnHoldReason({ ...ok, workAvail: 0, liveCount: 0 }), 'work');   // nothing claimable → nothing to add
+  assert.equal(spawnHoldReason({ ...ok, workAvail: null }), null);          // stale/missing probe fails open (bootstrap)
+  assert.equal(spawnHoldReason({ ...ok, lastSpawnAt: 95000 }), 'pace');     // 5s since last spawn
+  assert.equal(spawnHoldReason({ ...ok, lastSpawnAliveMs: 4000 }), 'pace'); // previous spawn not settled
+  // memory wins over the later gates when several fail at once
+  assert.equal(spawnHoldReason({ ...ok, freeBytes: 1 * GB, cpuPct: 99, workAvail: 0 }), 'memory');
+  assert.equal(spawnHoldReason({ ...ok, cpuPct: 99, workAvail: 0 }), 'cpu');
+}
+
+// ── work availability probe + rolling CPU average + idle cull ────────────
+{
+  const now = Date.now();
+  const tf = path.join(tmp, 'targets.json');
+  writeFileSync(tf, JSON.stringify({ at: now, gap: 3, queue: 12, fulfill: 40 }));
+  assert.equal(workAvailable(now, tf), 19);     // 3+12+min(40,4)
+  writeFileSync(tf, JSON.stringify({ at: now, gap: 0, queue: 0, fulfill: 2 }));
+  assert.equal(workAvailable(now, tf), 2);      // fulfill alone still counts (small)
+  writeFileSync(tf, JSON.stringify({ at: now - 61e3, gap: 50, queue: 50 }));
+  assert.equal(workAvailable(now, tf), null);   // stale probe → unknown → fail open
+  assert.equal(workAvailable(now, path.join(tmp, 'missing.json')), null);
+  // rolling 30s CPU average
+  const samples = [{ t: now - 40e3, pct: 90 }, { t: now - 10e3, pct: 80 }, { t: now - 2e3, pct: 70 }];
+  assert.equal(Math.round(cpuAvg30(now, samples)), 75);          // old sample dropped
+  assert.equal(cpuAvg30(now, [{ t: now - 31e3, pct: 99 }]), null); // nothing in window → unknown
+  // idle cull: heartbeats idle ≥2min on 'no work', newest-spawned first —
+  // a paused fleet ('paused'/'stopped'/'memory guard' items) never triggers it
+  const rec = (n, startedAt) => ({ spec: { name: `local-res-${n}` }, startedAt });
+  const hbs = { 'local-res-1': { state: 'idle', item: 'no work', at: new Date(now - 3 * 60e3).toISOString() }, 'local-res-2': { state: 'busy', at: new Date(now - 30e3).toISOString() }, 'local-res-3': { state: 'idle', item: 'no work', at: new Date(now - 90e3).toISOString() }, 'local-res-4': { state: 'idle', item: 'no work', at: new Date(now - 5 * 60e3).toISOString() }, 'local-res-5': { state: 'idle', item: 'paused', at: new Date(now - 10 * 60e3).toISOString() } };
+  const victims = idleCullList([rec(1, 100), rec(2, 200), rec(3, 300), rec(4, 400), rec(5, 500)], (n) => hbs[n], now);
+  assert.deepEqual(victims.map((r) => r.spec.name), ['local-res-4', 'local-res-1']); // newest first; 90s idle + paused-worker skipped
+  assert.equal(idleCullList([rec(2, 200)], (n) => hbs[n], now).length, 0); // busy workers never culled
+}
+
+// ── researcher cap + slot rotation pointer ───────────────────────────────
 {
   const GB = 1024 ** 3, MB = 1024 ** 2;
   const ctl = { researchers: { mode: 'auto', max: 16, disabled: [] }, limits: { reserve_gb: 4 } };
-  // cap = the user's number, both modes — memory fit is the gate's job
-  assert.equal(researcherCap(ctl), 16);
+  // auto = UNCAPPED up to the 64 safety ceiling — memory/CPU/work gates
+  // decide the real count. Manual = exactly the user's count. killall = 0.
+  assert.equal(researcherCap(ctl), 64);
+  assert.equal(researcherCap({ ...ctl, researchers: { mode: 'auto', max: 4 } }), 64); // auto ignores max
   assert.equal(researcherCap({ ...ctl, researchers: { mode: 'manual', max: 8 } }), 8);
-  assert.equal(researcherCap({ ...ctl, researchers: { mode: 'manual', max: 0 } }), 0); // kill-all
-  assert.equal(researcherCap({ ...ctl, researchers: { mode: 'auto', max: 99 } }), 16); // clamped to slices
-  assert.equal(researcherCap({}), 16); // defaults
+  assert.equal(researcherCap({ ...ctl, researchers: { mode: 'manual', max: 200 } }), 64); // clamped to ceiling
+  assert.equal(researcherCap({ ...ctl, researchers: { mode: 'manual', max: 0 } }), 0);
+  assert.equal(researcherCap({ ...ctl, researchers: { mode: 'auto', max: 16, killall: true } }), 0); // kill-all pins 0
+  assert.equal(researcherCap({}), 64); // defaults = auto
   // memoryAllowance — display estimate of what memory could host
-  assert.equal(memoryAllowance(12 * GB, 400 * MB, 4 * GB), 16);   // 8GB/400MB=20 → cap
+  assert.equal(memoryAllowance(12 * GB, 400 * MB, 4 * GB), 20);   // 8GB/400MB=20 — no cap under 64
+  assert.equal(memoryAllowance(200 * GB, 400 * MB, 4 * GB), 64);  // ceiling still applies
   assert.equal(memoryAllowance(6 * GB, 400 * MB, 4 * GB), 5);     // 2GB/400MB=5
   assert.equal(memoryAllowance(4.1 * GB, 400 * MB, 4 * GB), 0);
   assert.equal(memoryAllowance(9 * GB, NaN, 4 * GB), 10);         // unmeasured → 500MB default
@@ -162,11 +211,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   assert.equal(nextSliceIndex(0, taken, new Set(), new Set()), 0);
   assert.equal(nextSliceIndex(3, taken, new Set(), new Set()), 4); // skips index 3
   assert.equal(nextSliceIndex(15, taken, new Set(), new Set()), 15);
-  assert.equal(nextSliceIndex(15, new Set(['local-res-15']), new Set(), new Set()), 0); // wraps
+  assert.equal(nextSliceIndex(15, new Set(['local-res-15']), new Set(), new Set()), 16); // next free slot
+  assert.equal(nextSliceIndex(63, new Set(['local-res-63']), new Set(), new Set()), 0); // wraps at the ceiling
   assert.equal(nextSliceIndex(0, new Set(), new Set(['local-res-0']), new Set()), 1);   // disabled skipped
   assert.equal(nextSliceIndex(0, new Set(), new Set(), new Set(['local-res-0'])), 1);   // mem-blocked skipped
-  const all = new Set(Array.from({ length: 16 }, (_, i) => `local-res-${i}`));
+  const all = new Set(Array.from({ length: 64 }, (_, i) => `local-res-${i}`));
   assert.equal(nextSliceIndex(0, all, new Set(), new Set()), -1);
+  assert.equal(nextSliceIndex(0, new Set(Array.from({ length: 16 }, (_, i) => `local-res-${i}`)), new Set(), new Set()), 16); // slots go past 16 now
   // pointer walk covers all 16 slices — every slice gets runtime
   const covered = new Set(); const t2 = new Set();
   for (let p = 0, i = 0; i < 16; i++) { const idx = nextSliceIndex(p, t2, new Set(), new Set()); covered.add(idx); t2.add(`local-res-${idx}`); p = idx + 1; }

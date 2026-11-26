@@ -21,27 +21,23 @@ import { pdfPages } from './lib/pdf-extract.mjs';
 import { rosterContact } from './lib/office-research.mjs';
 import { regionalProvidersFor } from '../base44/shared/regionalProviders.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
+import { claim, releaseClaim, claimedIds, readCooldowns, writeCooldown, migrateSliceClaims, publishTargets } from './lib/research-claims.mjs';
 
 const args = process.argv.slice(2);
 const arg = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
-const SLICE = Number(arg('--slice', 0));
-const SLICES = Number(arg('--slices', 1));
-const sliceOf = (key) => { let h = 0; for (const c of String(key)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % SLICES; };
+// Dynamic work-claim model: workers are interchangeable `local-res-<id>`
+// instances; claims+cooldowns are shared files, no fixed slicing.
+const ID = Number(arg('--id', arg('--slice', 0)));
+const WORKER = `local-res-${ID}`;
 const EVENTS = '.live-events.jsonl';
 const SLEEP = Number(arg('--sleep', 1200));
 const PAGE_SLEEP = Number(arg('--page-sleep', 300));
 const MAX_PAGES = Number(arg('--max-pages', 9));
 const ONCE = args.includes('--once');
-// Per-slice claims file — 16 slices each own their own ledger; a shared file
-// would lose cooldown entries to read-modify-write races across processes.
-const CLAIMS_FILE = `.audit-work/local-research-claims-${SLICE}.json`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const evFd = openSync(EVENTS, 'a');
-const emit = (e) => { try { writeFileSync(evFd, JSON.stringify({ t: Date.now(), worker: `local-res-${SLICE}`, ...e }) + '\n', { flag: 'a' }); } catch {} };
+const emit = (e) => { try { writeFileSync(evFd, JSON.stringify({ t: Date.now(), worker: WORKER, ...e }) + '\n', { flag: 'a' }); } catch {} };
 
-let claims = {};
-try { claims = JSON.parse(readFileSync(CLAIMS_FILE, 'utf8')); } catch {}
-const saveClaims = () => { try { writeFileSync(CLAIMS_FILE, JSON.stringify(claims)); } catch {} };
 const claimKey = (r) => r.id || `${r.jurisdiction_name}|${r.state}`;
 
 // Research an office_research pool for one jurisdiction.
@@ -202,25 +198,36 @@ function extractContacts(pages, office) {
   return best;
 }
 
-async function fulfillPass(profiles) {
-  const locs = getMirror('localities')?.rows || [];
-  const profById = new Map(profiles.map((p) => [p.id, p]));
+// Fulfill candidates for the whole fleet — claimable means not in cooldown
+// and not currently claimed by another researcher.
+export function fulfillCandidates(locs, cooldowns, now = Date.now()) {
   const CD = { filled: 24 * 3600 * 1000, none: 12 * 3600 * 1000, no_site: 24 * 3600 * 1000 };
   const targets = [];
-  for (const l of locs) {
+  for (const l of locs || []) {
+    if (l?.duplicate_of) continue;
     for (const o of l.offices || []) {
       if (String(o.contact_phone || o.contact_email || o.contact_website || o.contact_address || '').trim()) continue;
-      const c = claims[`ff-${o.id}`];
-      if (c && Date.now() - new Date(c.at).getTime() < (CD[c.result] || CD.none)) continue;
-      if (sliceOf(o.id || l.id) !== SLICE) continue;
+      const c = cooldowns[`ff-${o.id}`];
+      if (c && now - new Date(c.at).getTime() < (CD[c.result] || CD.none)) continue;
       targets.push({ loc: l, office: o });
     }
   }
+  return targets;
+}
+
+async function fulfillPass(profiles, cooldowns, claimed) {
+  const locs = getMirror('localities')?.rows || [];
+  const profById = new Map(profiles.map((p) => [p.id, p]));
+  const targets = fulfillCandidates(locs, cooldowns);
   if (!targets.length) return false;
   emit({ stage: 'office_fill_pass', detail: `${targets.length} office(s) missing all contact channels — fulfilling` });
+  let worked = 0;
   for (const t of targets.slice(0, 40)) {
     const { loc, office } = t;
     const label = `${office.name || 'office'} — ${loc.name}, ${loc.state}`;
+    const key = `ff-${office.id}`;
+    if (claimed.has(key) || !claim(key, WORKER)) continue;
+    worked++;
     try {
       const profile = profById.get(loc.jurisdiction_profile_id);
       const { site } = await discoverSite({ name: String(loc.name || '').replace(/\s+(city|village|township|county)$/i, ''), state: loc.state, type: 'city', county: loc.parent_county_name, profile, profiles });
@@ -262,12 +269,12 @@ async function fulfillPass(profiles) {
           }
         }
       }
-      claims[`ff-${office.id}`] = { result, at: new Date().toISOString() };
-      saveClaims();
+      writeCooldown(`ff-${office.id}`, { result });
     } catch (e) { emit({ stage: 'office_fill_error', address: label, ok: false, detail: String(e?.message || e).slice(0, 140) }); }
+    finally { releaseClaim(`ff-${office.id}`); }
     await sleep(SLEEP);
   }
-  return true;
+  return worked > 0;
 }
 
 // ── Verification gap targeting (§1E) — the verifier's office-state file
@@ -281,7 +288,7 @@ const REVIEW_ATTEMPTS = 3; // held offices belong to a person, not this pass
 // evidence; a 'none' claim cools 24h — re-crawling the same site the same
 // week produces the same evidence.
 export const GAP_CD = { new: 45 * 60e3, none: 24 * 3600e3 };
-export function gapTargets(state, locs, slice, slices, claims, now = Date.now()) {
+export function gapTargets(state, locs, claims, now = Date.now()) {
   const byLoc = new Map();
   for (const rec of Object.values(state?.offices || {})) {
     if (!rec || rec.status !== 'needs_verification') continue;
@@ -295,7 +302,6 @@ export function gapTargets(state, locs, slice, slices, claims, now = Date.now())
   const locById = new Map((locs || []).map((l) => [l.id, l]));
   const out = [];
   for (const [locId, t] of byLoc) {
-    if (sliceOf(locId) !== slice) continue;
     const c = claims[`gap-${locId}`];
     if (c && now - new Date(c.at).getTime() < (GAP_CD[c.result] ?? GAP_CD.none)) continue;
     const loc = locById.get(locId);
@@ -308,62 +314,80 @@ export function gapTargets(state, locs, slice, slices, claims, now = Date.now())
 const readJSON = (f, d) => { try { return JSON.parse(readFileSync(f, 'utf8')); } catch { return d; } };
 const readControl = () => readJSON('.audit-work/server-control.json', {});
 
-async function gapPass(profiles, profById, budget = 8) {
+async function gapPass(profiles, profById, cooldowns, claimed, budget = 8) {
   if (readControl().verification === false) return 0;
   const locs = getMirror('localities')?.rows || [];
   const state = readJSON(OFFICE_STATE, { offices: {} });
-  const targets = gapTargets(state, locs, SLICE, SLICES, claims);
-  if (!targets.length) return 0;
-  emit({ stage: 'gap_target_pass', detail: `${targets.length} localities with verification gaps this slice` });
+  const targets = gapTargets(state, locs, cooldowns);
+  const open = targets.filter((t) => !claimed.has(`gap-${t.locality_id}`));
+  if (!open.length) return 0;
+  emit({ stage: 'gap_target_pass', detail: `${targets.length} localities with verification gaps (${open.length} unclaimed)` });
   let worked = 0;
-  for (const t of targets.slice(0, budget)) {
+  for (const t of open) {
+    if (worked >= budget) break;
     const { loc } = t;
     const label = `${loc.name}, ${loc.state}`;
-    await waitWhilePaused(`local-res-${SLICE}`, { item: label });
+    const key = `gap-${loc.id}`;
+    if (!claim(key, WORKER)) continue;
+    await waitWhilePaused(WORKER, { item: label });
     try {
       const profile = profById.get(loc.jurisdiction_profile_id);
       if (!profile || profile.verification_status === 'historical') {
-        claims[`gap-${loc.id}`] = { result: 'none', at: new Date().toISOString() }; // profile gap belongs to relink/sweep
-        saveClaims();
+        writeCooldown(key, { result: 'none' }); // profile gap belongs to relink/sweep
         continue;
       }
       const row = {
-        id: `gap-${loc.id}`, jurisdiction_name: loc.name, state: loc.state,
+        id: key, jurisdiction_name: loc.name, state: loc.state,
         jurisdiction_type: loc.jurisdiction_type, parent_county_name: loc.parent_county_name || profile.parent_county?.name || profile.county_name,
         demand_weight: 10, // deep crawl — these localities block verification
       };
       emit({ stage: 'gap_target', address: label, detail: `${t.gap_offices} office(s) failing — missing ${t.missing_roles.join(', ') || 'research'}` });
       const { result, added } = await research(row, profile, profiles, { wanted: new Set(t.missing_roles), queueClose: false, merge: true });
-      claims[`gap-${loc.id}`] = { result: added > 0 ? 'new' : 'none', result_detail: result, at: new Date().toISOString() };
-      saveClaims();
+      writeCooldown(key, { result: added > 0 ? 'new' : 'none', result_detail: result });
       if (added > 0) {
         try { appendFileSync(VERIFY_FIRST, JSON.stringify({ name: loc.name, state: loc.state, at: Date.now() }) + '\n'); } catch {}
         emit({ stage: 'gap_target_done', address: label, ok: true, detail: `+${added} role evidence → verify-first` });
       }
       worked++;
     } catch (e) { emit({ stage: 'gap_target_error', address: label, ok: false, detail: String(e?.message || e).slice(0, 140) }); }
+    finally { releaseClaim(key); }
     await sleep(SLEEP);
   }
   return worked;
 }
 
 async function main() {
-  emit({ stage: 'office_res_boot', address: 'local researcher', ok: true, start: true, detail: 'deterministic local research v2 — sitemap + PDF evidence + directory parse + county fallback · ZERO spend' });
+  const migrated = migrateSliceClaims();
+  emit({ stage: 'office_res_boot', address: 'local researcher', ok: true, start: true, detail: `deterministic local research v2 — sitemap + PDF evidence + directory parse + county fallback · ZERO spend · shared claims${migrated ? ` (migrated ${migrated} slice cooldowns)` : ''}` });
   do {
-    await waitWhilePaused(`local-res-${SLICE}`, { item: 'research pass' });
+    await waitWhilePaused(WORKER, { item: 'research pass' });
     const queue = getMirror('queue')?.rows || [];
     const profiles = [...(getMirror('profiles-oh.slim')?.rows || []), ...(getMirror('profiles-ky.slim')?.rows || [])];
     const profById = new Map(profiles.map((p) => [p.id, p]));
+    const cooldowns = readCooldowns();
+    const claimed = claimedIds();
+    const locs = getMirror('localities')?.rows || [];
+    const NO_SITE_COOLDOWN = 12 * 60 * 60 * 1000;
+    // Queue candidates the same order the fleet drains them — gap targets
+    // first, then queue rows by demand, then office fulfillment.
+    const state = readJSON(OFFICE_STATE, { offices: {} });
+    const gapOpen = gapTargets(state, locs, cooldowns).filter((t) => !claimed.has(`gap-${t.locality_id}`)).length;
+    const queueOpen = queue.filter((r) => {
+      if (!['not_started', 'partial_gaps'].includes(String(r.status || ''))) return false;
+      const c = cooldowns[claimKey(r)];
+      if (c && !(c.result === 'no_site' && Date.now() - new Date(c.at).getTime() > NO_SITE_COOLDOWN)) return false;
+      return true;
+    }).filter((r) => !claimed.has(claimKey(r))).length;
+    const fulfillOpen = fulfillCandidates(locs, cooldowns).filter((t) => !claimed.has(`ff-${t.office.id}`)).length;
+    publishTargets({ gap: gapOpen, queue: queueOpen, fulfill: fulfillOpen });
     // Verification gap targeting comes FIRST — unblocking needs_verification
     // offices outranks widening the discovery queue.
-    await gapPass(profiles, profById).catch((e) => emit({ stage: 'gap_target_error', detail: String(e?.message || e).slice(0, 140) }));
+    await gapPass(profiles, profById, cooldowns, claimed).catch((e) => emit({ stage: 'gap_target_error', detail: String(e?.message || e).slice(0, 140) }));
     const base = (n) => String(n || '').toLowerCase().replace(/\s+(city|village|township|county)$/i, '').trim();
     const profileOf = (row) => profiles.find((p) => base(p.name) === base(row.jurisdiction_name) && String(p.state || '').toUpperCase() === String(row.state || '').toUpperCase());
-    const NO_SITE_COOLDOWN = 12 * 60 * 60 * 1000;
     const pending = queue.filter((r) => {
       if (!['not_started', 'partial_gaps'].includes(String(r.status || ''))) return false;
-      if (sliceOf(claimKey(r)) !== SLICE) return false;
-      const c = claims[claimKey(r)];
+      const c = cooldowns[claimKey(r)];
       if (!c) return true;
       if (c.result === 'no_site' && Date.now() - new Date(c.at).getTime() > NO_SITE_COOLDOWN) return true;
       return false;
@@ -375,25 +399,33 @@ async function main() {
     if (!pending.length) {
       // Self-balancing: the research queue only holds ~500 rows total — when
       // it's dry, fulfill office contact records instead of idling.
-      const didWork = await fulfillPass(profiles).catch(() => false);
+      const didWork = await fulfillPass(profiles, cooldowns, claimed).catch(() => false);
       if (!didWork) {
         emit({ stage: 'office_res_idle', address: 'local researcher', ok: true, detail: 'queue empty · offices fulfilled — standing by' });
         if (ONCE) break;
-        heartbeat(`local-res-${SLICE}`, 'idle', 'queue empty');
+        heartbeat(WORKER, 'idle', 'no work');
         await sleep(5 * 60 * 1000);
       }
       if (ONCE) break;
       continue;
     }
-    for (const row of pending.slice(0, 200)) {
-      await waitWhilePaused(`local-res-${SLICE}`, { item: row.jurisdiction_name });
+    let worked = 0;
+    for (const row of pending) {
+      if (worked >= 200) break;
+      const key = claimKey(row);
+      if (!claim(key, WORKER)) continue;
+      await waitWhilePaused(WORKER, { item: row.jurisdiction_name });
       try {
         const { result } = await research(row, profileOf(row), profiles);
-        claims[claimKey(row)] = { result, at: new Date().toISOString() };
-        saveClaims();
+        writeCooldown(key, { result });
+        worked++;
       } catch (e) { emit({ stage: 'office_res_error', address: `${row.jurisdiction_name}, ${row.state}`, ok: false, detail: String(e?.message || e).slice(0, 140) }); }
+      finally { releaseClaim(key); }
       await sleep(SLEEP);
     }
+    // Everything pending is claimed by fleet-mates — wait out their work
+    // instead of spinning on the claims directory.
+    if (!worked && !ONCE) { heartbeat(WORKER, 'idle', 'work claimed'); await sleep(30000); }
     if (ONCE) break;
   } while (true);
 }
