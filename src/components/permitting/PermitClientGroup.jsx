@@ -134,6 +134,8 @@ export default function PermitClientGroup({
   });
   const pendingLocalityName = String(wo?.pending_permit_locality_name || '').trim();
   const pendingLocalityId = String(wo?.pending_permit_locality_id || '').trim();
+  const awaitingOffice = !hasLines && Boolean(pendingLocalityId || pendingLocalityName);
+  const startSetup = () => { setWizardStep(0); setShowSetupWizard(true); };
   // Live pending-apply status — a static chip says nothing, so poll the
   // locality: show verification progress, and the moment the worker consumes
   // this job's pending_applies entry reload the page data so the finished
@@ -196,16 +198,20 @@ export default function PermitClientGroup({
           {expanded ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
           <span className="min-w-0">
             <strong className="block break-words text-sm text-slate-900">{wo?.client_name || "Permit job"}</strong>
-            <span className="block text-xs text-slate-600">{wo?.current_task_assigned_to || "No owner assigned"} · {progress.completedCount}/{progress.totalCount} permits complete</span>
+            <span className="block text-xs text-slate-600">{wo?.current_task_assigned_to || "No owner assigned"} · {hasLines ? `${progress.completedCount}/${progress.totalCount} permits complete` : "No permits yet"}</span>
           </span>
         </button>
         {queueState && <div className="min-w-0 border-l-2 border-purple-200 pl-3">
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className={`rounded border px-2 py-0.5 font-semibold ${PERMIT_QUEUE_META[queueState.key]?.className || ""}`}>{PERMIT_QUEUE_META[queueState.key]?.label}</span>
+            <span className={`rounded border px-2 py-0.5 font-semibold ${PERMIT_QUEUE_META[queueState.key]?.className || ""}`}>{awaitingOffice ? "Awaiting office verification" : PERMIT_QUEUE_META[queueState.key]?.label}</span>
             {group.lines.some(li => li.urgent) && <strong className="text-red-700">Urgent</strong>}
             {queueState.followupDate && <span>{queueState.timingLabel}</span>}
           </div>
-          <div className="mt-1 text-sm text-slate-800"><strong>Next: </strong>{queueState.nextAction}</div>
+          <div className="mt-1 text-sm text-slate-800">{awaitingOffice ? <span role="status">{pendStatus || `Setup will continue automatically when ${pendingLocalityName || "the selected jurisdiction"} is verified.`}</span>
+              : <><strong>Next: </strong>{hasLines ? queueState.nextAction : "Confirm the job site and choose the permit offices."}</>}</div>
+          {!hasLines && !awaitingOffice && wo && isRegistered && (
+            <Button type="button" size="sm" className="mt-2" onClick={startSetup}>Set up permit</Button>
+          )}
           {queueState.nextLineId && <button type="button" className="mt-1 rounded py-1 text-xs font-semibold text-purple-800 underline" onClick={() => {
             setExpanded(true); setOpenLines(new Set([queueState.nextLineId])); setFocusLine({ id: queueState.nextLineId, section: queueState.nextSection });
           }}>{SECTION_ACTIONS[queueState.nextSection] || "Open permit"}</button>}
@@ -217,7 +223,7 @@ export default function PermitClientGroup({
           <button type="button" className="text-xs text-purple-800 underline" onClick={() => onOpenWorkOrder(group.work_order_id)}>Open work order</button>
         {/* Live auto-apply indicator — visible collapsed AND expanded so
             background work is always on screen, not buried in the body. */}
-        {pendingLocalityName && (
+        {pendingLocalityName && !awaitingOffice && (
           <span
             className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800 max-w-full"
             onClick={e => e.stopPropagation()}
@@ -409,7 +415,7 @@ export default function PermitClientGroup({
       {/* EXPANDED BODY */}
       {expanded && (
         <div>
-          {pendingLocalityName && (
+          {pendingLocalityName && !awaitingOffice && (
             <div className="px-4 py-2">
               <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -461,20 +467,16 @@ export default function PermitClientGroup({
 
           </div>}
           {!hasLines ? (
-            <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
-              <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> set up this job's permit — office, lines, and an AI plan in one pass.</span>
-              <Button
-                onClick={() => { setWizardStep(0); setShowSetupWizard(true); }}
-                disabled={!isRegistered}
-                size="sm"
-                className="min-h-11 text-xs gap-1 bg-purple-600 text-white hover:bg-purple-700"
-              >
-                <MapPin className="w-3.5 h-3.5" /> New permit setup…
-              </Button>
-              <button type="button" onClick={() => setShowLocalityPicker(true)} disabled={!isRegistered}
-                className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600 disabled:opacity-40">
-                advanced lookup
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t px-3 py-2">
+              <span className="text-xs text-slate-600">{awaitingOffice ? "Office verification is already queued." : "Permit setup starts with the job site address."}</span>
+              {!queueState && !awaitingOffice && wo && isRegistered && <Button size="sm" onClick={startSetup}>Set up permit</Button>}
+              {wo && isRegistered && <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button type="button" variant="outline" size="sm">Setup options <ChevronDown className="ml-1 h-3 w-3" /></Button></DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {awaitingOffice && <DropdownMenuItem onSelect={startSetup}>Review permit setup</DropdownMenuItem>}
+                  <DropdownMenuItem onSelect={() => setShowLocalityPicker(true)}>Advanced office lookup</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>}
             </div>
           ) : (
             <>
