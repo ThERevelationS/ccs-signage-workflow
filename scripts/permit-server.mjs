@@ -423,6 +423,13 @@ export function workAvailable(now = Date.now(), file = TARGETS_FILE) {
   if (!j || !Number.isFinite(j.at) || now - j.at > 60000) return null;
   return Math.max(0, (Number(j.gap) || 0) + (Number(j.queue) || 0) + Math.min(Number(j.fulfill) || 0, 4));
 }
+// The whole probe — cooling-down counts, exhausted jurisdictions, next
+// release and the per-tier breakdown the dashboard's Verification tab shows.
+export function workProbe(now = Date.now(), file = TARGETS_FILE) {
+  const j = readJSON(file, null);
+  if (!j || !Number.isFinite(j.at) || now - j.at > 60000) return null;
+  return j;
+}
 // Scale-up margins: another researcher only starts when all three limits
 // still hold after its projected RSS lands — reserve plus a 1GB cushion,
 // commit headroom minus 4GB, fleet under budget. A missing commit reading
@@ -707,11 +714,16 @@ function statusJSON() {
     else if (headroom - a < SCALE_UP_COMMIT) holdReason = `Windows memory headroom is ${GB(headroom)} GB — a new researcher needs ${GB(SCALE_UP_COMMIT)} GB + ${GB(a)} GB`;
     else if (guard.fleetRss + a > budget) holdReason = `the server is already using ${GB(guard.fleetRss)} GB of its ${GB(budget)} GB memory limit`;
     else if (cpu != null && cpu > CPU_SPAWN_MAX) holdReason = `the processor is busy — CPU has averaged ${Math.round(cpu)}% for 30 seconds (limit ${CPU_SPAWN_MAX}%)`;
-    else if (wa != null && liveRes().length >= wa) holdReason = `only ${wa} piece${wa === 1 ? '' : 's'} of research work are waiting — no point running more researchers than that`;
+    else if (wa != null && liveRes().length >= wa) {
+      const probe = workProbe(), exh = Number(probe?.exhausted) || 0;
+      if (wa === 0 && exh > 0) holdReason = `all ${exh} remaining jurisdictions ran every research tier — they need a person to look`;
+      else if (wa === 0 && probe?.next_release) holdReason = `all research is cooling down — the next batch unlocks at ${new Date(probe.next_release).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+      else holdReason = `only ${wa} piece${wa === 1 ? '' : 's'} of research work are waiting — no point running more researchers than that`;
+    }
     else if (resCap >= RES_MAX && liveRes().length >= RES_MAX) holdReason = `at the safety ceiling of ${RES_MAX}`;
     else holdReason = 'ramping up — researchers start one at a time, every 10 seconds';
   }
-  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: resWanted.size, requested: res.mode === 'manual' ? res.max : null, memory_allows: memoryAllowance(os.freemem(), guard.avgRss, reserveBytesOf(control)), mode: res.mode, max: res.max, disabled: res.disabled, mem_blocked: [...memBlocked], total: RES_MAX, ceiling: RES_MAX, killall: Boolean(res.killall), work_available: workAvailable(), cpu_pct: cpuAvg30() != null ? Math.round(cpuAvg30()) : null, next_slice: guard.resNext, hold_reason: holdReason, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, limits: { reserve_gb: Number(control.limits?.reserve_gb) || RESERVE_DEFAULT_GB, fleet_budget_gb: Number(control.limits?.fleet_budget_gb) || FLEET_BUDGET_DEFAULT_GB }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()), fleet_rss_gb: GB(guard.fleetRss || 0), cpu_pct: memProbe.cpu != null ? Math.round(memProbe.cpu) : null, commit_used_gb: Number.isFinite(memProbe.committed) ? GB(memProbe.committed) : null, commit_limit_gb: Number.isFinite(memProbe.limit) ? GB(memProbe.limit) : null, commit_headroom_gb: headroom != null ? GB(headroom) : null, history: memHistory.map((h) => ({ t: h.t, free_gb: GB(h.free), fleet_gb: GB(h.fleet), headroom_gb: h.headroom != null ? GB(h.headroom) : null })) }, updated_at: control.updated_at || null, workers, verification_progress: vp ? { at: vp.at, jurisdictions: vp.jurisdictions, offices: vp.offices, gap_reasons: vp.gap_reasons, missing_roles: vp.missing_roles, promotions: vp.promotions, eta: vp.eta, held_relinks: (vp.held_relinks || []).length, needs_review_total: vp.needs_review_total || 0 } : null };
+  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: resWanted.size, requested: res.mode === 'manual' ? res.max : null, memory_allows: memoryAllowance(os.freemem(), guard.avgRss, reserveBytesOf(control)), mode: res.mode, max: res.max, disabled: res.disabled, mem_blocked: [...memBlocked], total: RES_MAX, ceiling: RES_MAX, killall: Boolean(res.killall), work_available: workAvailable(), work_detail: (() => { const p = workProbe(); return p ? { cooling: Number(p.cooling) || 0, exhausted: Number(p.exhausted) || 0, next_release: p.next_release || null, tiers: p.tiers || {} } : null; })(), cpu_pct: cpuAvg30() != null ? Math.round(cpuAvg30()) : null, next_slice: guard.resNext, hold_reason: holdReason, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, limits: { reserve_gb: Number(control.limits?.reserve_gb) || RESERVE_DEFAULT_GB, fleet_budget_gb: Number(control.limits?.fleet_budget_gb) || FLEET_BUDGET_DEFAULT_GB }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()), fleet_rss_gb: GB(guard.fleetRss || 0), cpu_pct: memProbe.cpu != null ? Math.round(memProbe.cpu) : null, commit_used_gb: Number.isFinite(memProbe.committed) ? GB(memProbe.committed) : null, commit_limit_gb: Number.isFinite(memProbe.limit) ? GB(memProbe.limit) : null, commit_headroom_gb: headroom != null ? GB(headroom) : null, history: memHistory.map((h) => ({ t: h.t, free_gb: GB(h.free), fleet_gb: GB(h.fleet), headroom_gb: h.headroom != null ? GB(h.headroom) : null })) }, updated_at: control.updated_at || null, workers, verification_progress: vp ? { at: vp.at, jurisdictions: vp.jurisdictions, offices: vp.offices, gap_reasons: vp.gap_reasons, missing_roles: vp.missing_roles, promotions: vp.promotions, eta: vp.eta, held_relinks: (vp.held_relinks || []).length, needs_review_total: vp.needs_review_total || 0 } : null };
 }
 
 // ── stop: pause → flusher drains → kill trees ────────────────────────────

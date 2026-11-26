@@ -31,6 +31,7 @@ import { ohioCertifiedDept, kyElectricalRoster } from './lib/rosters/certified-d
 import { paceCall } from './lib/read-ledger.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 import { buildIdentityIndex, withUnionResearch } from './lib/profile-identity.mjs';
+import { readCooldowns, tierExhausted, tiersDone } from './lib/research-claims.mjs';
 
 const APP = '68dfcc5e57bbbc35387da97c';
 const FN = `https://base44.app/api/apps/${APP}/functions`;
@@ -84,11 +85,12 @@ const emit = (e) => { try { writeFileSync(evFd, JSON.stringify({ t: Date.now(), 
 const LEDGER_FILE = '.audit-work/verification-ledger.json';
 const OFFICE_STATE_FILE = '.audit-work/verify-office-state.json';
 const PROMOTIONS_LOG = '.audit-work/verify-promotions.jsonl';
-const REVIEW_ATTEMPTS = 3; // failed evaluations before an office is held
-// ...spread over ≥12h — an attempt counts only once per ATTEMPT_SPACING so
-// restart-bunched passes re-judging the SAME research can't hold an office
+const REVIEW_ATTEMPTS = 20; // strikes before an office is held — and even then
+// only once its locality's research tiers are exhausted (research-claims.mjs).
+// ...spread out — an attempt counts only once per ATTEMPT_SPACING so
+// restart-bunched passes re-judging the SAME research can't burn strikes
 // while new research is still flowing in.
-const ATTEMPT_SPACING_MS = 6 * 3600e3;
+const ATTEMPT_SPACING_MS = 1 * 3600e3;
 const GAP_CATEGORY = {
   no_official_source: 'unofficial_source',
   no_responsibility_quote: 'no_quote',
@@ -507,6 +509,12 @@ function writeVerificationLedger(localities, officeState, passStart) {
     const offices = { total: 0, staff_verified: 0, needs_verification: 0, needs_review: 0 };
     const gapReasons = {}, missingRoles = {};
     const tomb = new Set(localities.filter((l) => l?.duplicate_of).map((l) => l.id));
+    // Needs-a-person requires both strikes AND research exhaustion — offices
+    // with untried tiers stay workable needs_verification. Cooldown entries
+    // record which tiers ran; any attempts count as T1 done.
+    const cds = readCooldowns();
+    const exh = (locId, attempts) => tierExhausted(cds[`gap-${locId}`], (attempts || 0) > 0);
+    const tried = (locId, attempts) => [...tiersDone(cds[`gap-${locId}`], (attempts || 0) > 0)].sort();
     // Localities declared as having no permitting authority (paper records
     // tombstoned onto the county/state jurisdiction that actually permits).
     const notPermitting = localities
@@ -524,20 +532,27 @@ function writeVerificationLedger(localities, officeState, passStart) {
         const ok = o.authority_verification_status === 'staff_verified';
         if (ok) { offices.staff_verified++; continue; }
         const rec = st[`${l.id}:${o.id || o.name}`];
-        if ((rec?.attempts || 0) >= REVIEW_ATTEMPTS) { offices.needs_review++; continue; }
+        if ((rec?.attempts || 0) >= REVIEW_ATTEMPTS && exh(l.id, rec.attempts)) { offices.needs_review++; continue; }
         offices.needs_verification++;
       }
     }
     // Failing-office breakdown from the per-office state written this pass
-    // AND prior passes — a held office's reason stays attached.
+    // AND prior passes — a held office's reason stays attached. Records for
+    // renamed/soft-retired offices are dead weight — the live key set drops
+    // them from gap tallies and the needs-a-person list.
+    const live = new Set();
+    for (const l of localities) {
+      if (l?.duplicate_of) continue;
+      for (const o of l.offices || []) live.add(`${l.id}:${o.id || o.name}`);
+    }
     const held = [];
     for (const [k, rec] of Object.entries(st)) {
       if (!rec || rec.status !== 'needs_verification') continue;
-      if (tomb.has(rec.locality_id)) continue; // records for tombstoned localities are dead weight
+      if (tomb.has(rec.locality_id) || !live.has(k)) continue;
       const primary = (rec.reasons || [])[0] || 'other';
       gapReasons[primary] = (gapReasons[primary] || 0) + 1;
       for (const r of rec.missing_roles || []) missingRoles[r] = (missingRoles[r] || 0) + 1;
-      if ((rec.attempts || 0) >= REVIEW_ATTEMPTS) held.push({ locality_id: rec.locality_id, jurisdiction: rec.jurisdiction, office: rec.office_name, reasons: rec.reasons, missing_roles: rec.missing_roles, attempts: rec.attempts, last_at: rec.last_at });
+      if ((rec.attempts || 0) >= REVIEW_ATTEMPTS && exh(rec.locality_id, rec.attempts)) held.push({ locality_id: rec.locality_id, jurisdiction: rec.jurisdiction, office: rec.office_name, reasons: rec.reasons, missing_roles: rec.missing_roles, attempts: rec.attempts, last_at: rec.last_at, tiers_tried: tried(rec.locality_id, rec.attempts) });
     }
     held.sort((a, b) => b.attempts - a.attempts || String(a.jurisdiction).localeCompare(b.jurisdiction));
     const hour = Date.now() - 3600e3, day = Date.now() - 86400e3;

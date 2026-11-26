@@ -600,8 +600,8 @@ function needsYou(){
   for(const r of (ledger.needs_review||[])){
    const key='rev:'+String(r.jurisdiction||'')+'|'+String(r.office||'');
    if(seen.has(key))continue;seen.add(key);
-   const rs=(r.reasons||[]).map(x=>GAP_LABEL[x]||x).join('; ')||'verification stuck after several tries';
-   out.push({loc:String(r.jurisdiction||'?'),office:r.office,reason:rs});
+   const rs=[...new Set((r.reasons||[]).map(x=>GAP_LABEL[x]||x))].slice(0,3).join('; ')||'verification stuck after several tries';
+   out.push({loc:String(r.jurisdiction||'?'),office:r.office,reason:rs,tiers:r.tiers_tried});
   }
  }
  return out;
@@ -712,10 +712,21 @@ function renderVerification(){
  const plist=(promos&&promos.items)||[];
  const ny=needsYou();
  const np=(ledger&&ledger.not_permitting)||[];
+ const wd=((srv&&srv.guard&&srv.guard.researchers)||{}).work_detail||{};
+ const tierN=t=>num((wd.tiers||{})[t]||0);
+ // Group needs-a-person rows under their jurisdiction — one header per place,
+ // office rows beneath, reasons already deduped by needsYou().
+ const nyGroups=[];const gmap=new Map();
+ for(const x of ny){let g=gmap.get(x.loc);if(!g){g={loc:x.loc,items:[]};gmap.set(x.loc,g);nyGroups.push(g);}g.items.push(x);}
  setH('tab-verification',
  '<div class="card"><h2>Jurisdictions</h2>'
  +'<div class="bar" style="height:18px">'+seg(j.all_verified||0,'var(--green)')+seg(j.some_verified||0,'#86efac')+seg(j.none_verified||0,'var(--amber)')+seg(j.no_offices||0,'#3b4a6b')+'</div>'
  +'<div class="legend" style="margin-top:8px">'+legend.map(l=>'<span><i style="background:'+l[2]+'"></i>'+l[0]+' <b class="num" style="color:var(--txt)">'+num(l[1]||0)+'</b></span>').join('')+'</div></div>'
+ +'<div class="card"><h2>Research depth</h2><div class="dim small" style="margin-bottom:8px">Researchers work each jurisdiction in deeper passes until it verifies: a standard crawl, then a deep crawl, then county &amp; regional sites, then alternate official sites.</div>'
+ +'<table><tr><td>Pass 1 — standard crawl</td><td class="num" style="width:90px">'+tierN(1)+'</td><td class="dim small" rowspan="4" style="vertical-align:middle">'+num(wd.exhausted||0)+' ran every pass and need a person'+(wd.next_release?'<br>Next cooldown lifts '+esc(new Date(wd.next_release).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})):'')+'</td></tr>'
+ +'<tr><td>Pass 2 — deep crawl</td><td class="num">'+tierN(2)+'</td></tr>'
+ +'<tr><td>Pass 3 — county &amp; regional sites</td><td class="num">'+tierN(3)+'</td></tr>'
+ +'<tr><td>Pass 4 — alternate official sites</td><td class="num">'+tierN(4)+'</td></tr></table></div>'
  +(np.length?'<div class="card"><h2>Not a permitting authority ('+np.length+')</h2><div class="dim small" style="margin-bottom:8px">These places don’t issue their own permits — they’re counted under the county or state office that actually does. They’re kept for records but skipped by the checker.</div><table>'+np.map(x=>'<tr><td style="width:260px"><b>'+esc(x.name)+(x.state?', '+esc(x.state):'')+'</b></td><td class="dim">'+esc(x.handled_by||'no permitting authority of its own')+'</td></tr>').join('')+'</table></div>':'')
  +'<div class="card"><h2>Why offices aren’t verified yet</h2>'
  +(gaps.length?'<table><tr><th>Reason</th><th style="width:90px">Offices</th><th>What happens next</th></tr>'+gaps.map(g=>'<tr><td>'+esc(GAP_LABEL[g[0]]||g[0])+'</td><td class="num">'+num(g[1])+'</td><td class="dim">'+esc(GAP_NEXT[g[0]]||'The checker will try again.')+'</td></tr>').join('')+'</table>':'<div class="empty">No gaps recorded yet.</div>')+'</div>'
@@ -723,7 +734,7 @@ function renderVerification(){
   +'<table>'+roles.map(r=>'<tr><td>'+esc(roleLabel(r[0]))+'</td><td class="num" style="width:90px">'+num(r[1])+'</td></tr>').join('')+'</table></div>':'')
  +'<div class="card"><h2>Recently verified</h2>'
  +(plist.length?'<table><tr><th>Jurisdiction</th><th>Office</th><th>What was verified</th><th style="width:110px">When</th></tr>'+plist.slice(0,20).map(p=>'<tr><td>'+esc(p.jurisdiction||'?')+'</td><td class="dim">'+esc(p.office||'—')+'</td><td>'+esc((p.roles||[]).map(roleLabel).join(', ')||'office verified')+'</td><td class="dim small">'+agoT(p.at)+'</td></tr>').join('')+'</table>':'<div class="empty">Nothing verified yet — recent verifications will appear here.</div>')+'</div>'
- +(ny.length?'<div class="card"><h2>Needs a person ('+ny.length+')</h2><table>'+ny.map(x=>'<tr><td style="width:260px"><b>'+esc(x.loc)+'</b>'+(x.office?'<div class="dim small">'+esc(x.office)+'</div>':'')+'</td><td class="dim">'+esc(x.reason)+'</td></tr>').join('')+'</table></div>':''));
+ +(ny.length?'<div class="card"><h2>Needs a person ('+ny.length+')</h2><table>'+nyGroups.map(g=>'<tr><td colspan="2" style="padding-top:12px"><b>'+esc(g.loc)+'</b></td></tr>'+g.items.map(x=>'<tr><td class="dim" style="width:260px;padding-left:18px">'+esc(x.office||'—')+(x.tiers&&x.tiers.length?'<div class="dim small">tried '+x.tiers.map(t=>'pass '+t).join(', ')+'</div>':'')+'</td><td class="dim">'+esc(x.reason)+'</td></tr>').join('')).join('')+'</table></div>':''));
 }
 // — Memory tab —
 function renderMemory(){

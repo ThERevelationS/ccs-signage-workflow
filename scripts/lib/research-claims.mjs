@@ -148,3 +148,29 @@ export function migrateSliceClaims(dir = AUDIT_DIR) {
 export function publishTargets(counts) {
   try { fs.writeFileSync(TARGETS_FILE, JSON.stringify({ at: Date.now(), pid: process.pid, ...counts })); } catch {}
 }
+
+// ── Tier ladder — escalating research depth per locality ─────────────────
+// T1 standard crawl → T2 deep crawl (sitemap, ~40 pages, PDFs, directories,
+// site search, code host) → T3 county site + regional providers → T4
+// alternate official domains / Wikidata / past source URLs. TIER_CD between
+// tiers; all four tried with no better evidence = exhausted → needs_review.
+export const TIER_CD = 2 * 3600e3; // 2h between tier attempts
+export const GAP_TIERS = 4;
+// Which tiers a locality already completed, from its cooldown entry plus the
+// pre-tier legacy signal (any attempts or a migrated entry means T1 ran).
+export function tiersDone(cd, hasAttempts = false) {
+  if (cd?.tiers?.length) return new Set(cd.tiers);
+  if (cd || hasAttempts) return new Set([1]);
+  return new Set();
+}
+export function nextTierFor(cd, hasAttempts = false) {
+  const done = tiersDone(cd, hasAttempts);
+  for (let t = 1; t <= GAP_TIERS; t++) if (!done.has(t)) return t;
+  return null; // exhausted
+}
+export function tierExhausted(cd, hasAttempts = false) {
+  return nextTierFor(cd, hasAttempts) == null;
+}
+export function readCooldown(key) {
+  return readJSON(cooldownPath(key));
+}

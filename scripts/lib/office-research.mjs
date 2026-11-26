@@ -303,12 +303,17 @@ export async function crawlSite(site, { maxPages = 9, pageSleep = 300, roleKey =
     }
     if (deep && urls.length < maxPages + 4) {
       // Second-level harvest: department listings found on index pages join
-      // the frontier — metro depts are never linked from the homepage.
+      // the frontier — metro depts are never linked from the homepage. Linked
+      // PDFs found on any page count too (permit applications, fee schedules).
       for (const p of got) {
         if (!p) continue;
         for (const l of pageLinkPairs(p.html, p.url)) {
-          if (!internal(l.url) || seen.has(l.url.toLowerCase())) continue;
-          if (!(kwHit(l) || DIR_KEY.test(l.url))) continue;
+          if (!internal(l.url)) continue;
+          if (/\.pdf(\?|$)/i.test(l.url)) {
+            for (const pe of pdfEvidence([l.url])) if (!pdf.some((x) => x.url === pe.url)) pdf.push(pe);
+            continue;
+          }
+          if (seen.has(l.url.toLowerCase()) || !(kwHit(l) || DIR_KEY.test(l.url))) continue;
           seen.add(l.url.toLowerCase());
           urls.push(l.url);
         }
@@ -316,11 +321,59 @@ export async function crawlSite(site, { maxPages = 9, pageSleep = 300, roleKey =
     }
     await sleep(pageSleep);
   }
+  if (deep) await crawlTier2Extras(home, host, internal, seen, pages, pdf, maxPages, pageSleep);
   // MP-3.2 — HTML application-form links (PDFs land separately via `pdf`).
   const forms = linkPairs
     .filter((l) => internal(l.url) && !/\.pdf(\?|$)/i.test(l.url) && (FORM_LINK_RE.test(l.url) || (l.text && FORM_LINK_RE.test(l.text))))
     .slice(0, 8);
   return { pages, pdf, forms, site: home.url, crawled: pages.length, links: allLinks };
+}
+
+// Tier-2 deep-crawl extras — only run when `deep` is set. Two extra sources:
+// WordPress-style /?s=<term> search pages (small township sites hide permit
+// text behind search) and the municipality's official code host when the
+// homepage links one (amlegal/municode/ecode360 & friends).
+const CODE_HOST = /codelibrary\.amlegal|library\.municode|ecode360|codepublishing|sterlingcodifiers|generalcode|qcode\.us|americanlegal|conwaygreene|municipalcode|library\.qcode|rwbaird|elaws\.us|legalstrain|govcode/i;
+async function crawlTier2Extras(home, host, internal, seen, pages, pdf, maxPages, pageSleep) {
+  const origin = `https://${host}`;
+  for (const q of ['zoning', 'permit', 'sign']) {
+    const sp = await fetchText(`${origin}/?s=${encodeURIComponent(q)}`, 10000).catch(() => null);
+    if (!sp) continue;
+    pages.push({ url: sp.url, title: `site search: ${q}`, text: stripHtml(sp.html), mailto: mailtoLinks(sp.html), tel: telLinks(sp.html) });
+    for (const l of pageLinkPairs(sp.html, sp.url)) {
+      if (!internal(l.url) || seen.has(l.url.toLowerCase()) || !PAGE_KEY.test(l.url)) continue;
+      if (pages.length >= maxPages + 8) break;
+      seen.add(l.url.toLowerCase());
+      const rp = await fetchText(l.url, 10000).catch(() => null);
+      if (rp) pages.push({ url: rp.url, title: clean(sBetween(rp.html, /<title[^>]*>([\s\S]*?)<\/title>/i)), text: stripHtml(rp.html), mailto: mailtoLinks(rp.html), tel: telLinks(rp.html) });
+      await sleep(pageSleep);
+    }
+    await sleep(pageSleep);
+  }
+  // Municipal code host — ordinances/zoning text live off-site on a hosted
+  // code library. Follow a homepage link into it and pull keyword pages.
+  const codeLink = pageLinkPairs(home.html, home.url).map((l) => l.url).find((u) => CODE_HOST.test(u));
+  if (!codeLink) return;
+  const cHome = await fetchText(codeLink, 12000).catch(() => null);
+  if (!cHome) return;
+  pages.push({ url: cHome.url, title: `code: ${clean(sBetween(cHome.html, /<title[^>]*>([\s\S]*?)<\/title>/i))}`, text: stripHtml(cHome.html), mailto: [], tel: [] });
+  const cHost = new URL(cHome.url).host;
+  const cSeen = new Set();
+  for (const l of pageLinkPairs(cHome.html, cHome.url)) {
+    if (cSeen.size >= 12) break;
+    const u = l.url;
+    let h;
+    try { h = new URL(u).host; } catch { continue; }
+    if (h !== cHost || cSeen.has(u.toLowerCase())) continue;
+    if (!PAGE_KEY.test(u) && !PAGE_KEY.test(l.text || '') && !DEEP_KEY.test(l.text || '')) continue;
+    cSeen.add(u.toLowerCase());
+    const rp = await fetchText(u, 10000).catch(() => null);
+    if (rp) {
+      if (/\.pdf(\?|$)/i.test(rp.url)) { for (const pe of pdfEvidence([rp.url])) if (!pdf.some((x) => x.url === pe.url)) pdf.push(pe); }
+      else pages.push({ url: rp.url, title: `code: ${clean(sBetween(rp.html, /<title[^>]*>([\s\S]*?)<\/title>/i))}`, text: stripHtml(rp.html), mailto: [], tel: [] });
+    }
+    await sleep(pageSleep);
+  }
 }
 
 // Best-of merge for research entries — per role keep entries already
