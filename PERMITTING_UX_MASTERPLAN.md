@@ -27,6 +27,8 @@ The queue chose the correct line ID in all six cases. The competing instructions
 
 **P1 exit test:** repeat these six fixtures plus ordinary unfiled, completed, read-only and conflicting-save controls. All three surfaces must agree on the action and target *when referring to the same line*. The job-level queue may correctly prioritize a different permit after a save. No popup on inspection, no write on navigation, and no success recommendation after an unconfirmed save. Optional staff testing later can evaluate wording and speed; it does not block the engineering sequence.
 
+**P1 implementation - in preview, not staff-validated or published.** The selected permit and confirmed-save dialog use the same queue decision scoped to that line and the page date. Only a decision pointing to an actual checklist step offers a checklist continuation. Other steps remain available without being presented as the priority. The existing section shortcuts and job-level selection order are unchanged. Synthetic browser verification: all six baseline mismatches resolved; ordinary checklist continuation, newly filed-to-follow-up transition, completed, read-only, and refused-save controls also passed (11 cases). No production reads or writes. P2 is next: reduce duplicated status, owner, and date information without hiding the primary action.
+
 ## What the staff member should see
 
 | Level | Visible by default | Intentionally one level deeper |
