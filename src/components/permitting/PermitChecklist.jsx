@@ -80,14 +80,16 @@ export function PermitHandoff({ initial, today, onSave, onClose, canEdit }) {
         <p role="status" className="rounded border-l-4 border-emerald-600 bg-emerald-50 p-3 text-sm">
           {recommendation.nextAction}
         </p>
+        {step.type === "followup_date" && <p className="text-sm">Next follow-up reminder: <strong>{result.next_followup_date || "Not scheduled"}</strong></p>}
         <DialogFooter><Button variant="outline" onClick={onClose}>Back to permits</Button>
           {next && <Button className="h-auto whitespace-normal" onClick={() => { setRecord({ line: result, step: next }); setValue(next.type === "checkbox" ? !next.checked : valueOf(next)); setResult(null); }}>Continue to {stepName(next)}</Button>}
         </DialogFooter>
       </> : <form onSubmit={save} className="space-y-4">
         {checkbox ? <label className="flex items-center gap-2"><input type="checkbox" checked={value} disabled={busy || !canEdit} onChange={e => setValue(e.target.checked)} />Mark this step complete</label> :
-          <label className="block text-sm font-semibold">{dateTypes.has(step.type) ? "Date" : stepName(step)}
+          <label className="block text-sm font-semibold">{step.type === "followup_date" ? "Follow-up step date" : dateTypes.has(step.type) ? "Date" : stepName(step)}
             <input type={dateTypes.has(step.type) ? "date" : "text"} className="mt-1 block min-h-10 w-full rounded border px-3" value={value} disabled={busy || !canEdit} onChange={e => setValue(e.target.value)} />
           </label>}
+        {step.type === "followup_date" && <p className="text-sm text-slate-700">This step sets a reminder {step.followup_interval_days || 14} days after the date you enter. It does not record office contact.</p>}
         {step.type === "submitted_date" && !line.submitted_date && <p className="text-sm text-slate-700">Confirm only if the application was sent. Saving records the filing date and starts the submission workflow.</p>}
         {step.type === "permit_received_date" && <p className="text-sm text-slate-700">Recording receipt does not close the permit.</p>}
         {error && <p role="alert" className="rounded bg-red-50 p-2 text-sm text-red-800">{error}</p>}
