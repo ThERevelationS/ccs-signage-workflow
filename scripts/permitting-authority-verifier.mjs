@@ -22,6 +22,8 @@
 //        [--slice i --slices n] [--delay-ms 900]
 // Emits auth_verify_* stages to .live-events.jsonl.
 import { openSync, writeFileSync, readFileSync, appendFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { normalizePermitJurisdictionName } from '../src/components/permitting/jurisdictionPermitBridge.js';
 import { mirrorRead, mirrorApply } from './lib/entity-mirror.mjs';
 import { idleWait } from './lib/event-tail.mjs';
@@ -115,7 +117,7 @@ const REJECT_HOST = /facebook|linkedin|twitter|instagram|yelp|wikipedia|blogspot
 const NOT_FOUND = /information not found|not available|unknown/i;
 const STOP_WORDS = new Set(['city', 'township', 'village', 'of', 'the', 'county', 'town', 'oh', 'ky', 'ohio', 'kentucky', 'new', 'north', 'south', 'east', 'west', 'upper', 'lower']);
 const nameTokens = (n) => norm(n).split(' ').filter((t) => t.length >= 4 && !STOP_WORDS.has(t));
-function isOfficialSource(url, profile) {
+export function isOfficialSource(url, profile) {
   const u = clean(url);
   if (!/^https?:\/\//i.test(u) || REJECT_HOST.test(u) || NOT_FOUND.test(u)) return false;
   const host = u.replace(/^https?:\/\//i, '').split('/')[0].toLowerCase().replace(/^www\./, '');
@@ -169,7 +171,7 @@ const ROLE_FUNC = {
 // "Community Corrections Planning Board" passed the zoning dept check on the
 // word "Planning" and was promoted as three townships' zoning office.
 const NON_PERMIT_BODY = /correction|probation|parole|\btax\b|taxation|auditor|treasurer|sheriff|police|court|coroner|recorder|prosecutor|library|school|cemetery|senior|veteran|election|board of health|health (dep|dist)|animal|dog warden|jail|\b911\b|\bems\b|emergency management|soil (and|&) water|job and family|children services|mental health|developmental disabilit/i;
-function roleEvidence(role, entry, profile) {
+export function roleEvidence(role, entry, profile) {
   const gaps = [];
   const src = clean(entry?.official_source_url);
   if (!src || !isOfficialSource(src, profile)) gaps.push(`${role}:no_official_source`);
@@ -710,4 +712,7 @@ async function main() {
     }, { emit }); }
   } while (!ONCE);
 }
-main();
+// isMain guard — the researcher and ai-auditor import isOfficialSource /
+// roleEvidence from this module; without it every import spawns a verifier.
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
+if (isMain) main();

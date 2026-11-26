@@ -10,7 +10,7 @@
 // Output is a needs_verification research draft in the SAME shape the LLM
 // produced — the evidence-gated verifier still decides what gets promoted,
 // so weak extractions stay needs_verification, never wrong-verified.
-import { openSync, writeFileSync, readFileSync, appendFileSync } from 'node:fs';
+import { openSync, writeFileSync, readFileSync, appendFileSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { getMirror, mirrorApply } from './lib/entity-mirror.mjs';
@@ -22,6 +22,10 @@ import { rosterContact } from './lib/office-research.mjs';
 import { regionalProvidersFor } from '../base44/shared/regionalProviders.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 import { claim, releaseClaim, claimedIds, readCooldowns, readCooldown, writeCooldown, migrateSliceClaims, publishTargets, tiersDone, nextTierFor, tierExhausted, TIER_CD, GAP_TIERS } from './lib/research-claims.mjs';
+import { pendingBoosts, markBoostDone, boostTargets } from './lib/research-boost.mjs';
+import { enqueueUnit } from './lib/devin-llm.mjs';
+import { keywordWindows } from './lib/ai-extract-guard.mjs';
+import { isOfficialSource } from './permitting-authority-verifier.mjs';
 
 const args = process.argv.slice(2);
 const arg = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
@@ -88,6 +92,7 @@ async function research(row, profile, profiles, opts = {}) {
   const deep = opts.deep ?? (Number(row.demand_weight || 0) >= 10 || /city/i.test(String(row.jurisdiction_type || '')));
   const crawl = await crawlSite(site, { maxPages: opts.maxPages || (deep ? 15 : 9), deep });
   if (!crawl) { emit({ stage: 'office_res_review', address: label, ok: false, detail: `site unreachable: ${site}` }); return { result: 'no_site', added: 0 }; }
+  const crawledPages = [...(crawl.pages || [])];
   emit({ stage: 'office_res_step', address: label, step: true, detail: `crawled ${crawl.crawled} page(s) · ${crawl.pdf.length} permit PDF(s)` });
 
   // MP-3.1 — PDF text joins extraction: permit PDFs carry office names, fees,
@@ -113,6 +118,7 @@ async function research(row, profile, profiles, opts = {}) {
     if (csite && csite !== site) {
       const ccrawl = await crawlSite(csite);
       if (ccrawl) {
+        crawledPages.push(...(ccrawl.pages || []));
         roles.push(...extract(ccrawl.pages, opts.wanted || null));
         for (const p of ccrawl.pdf) {
           if (roles.find((r) => r.role === p.role)) continue;
@@ -123,7 +129,7 @@ async function research(row, profile, profiles, opts = {}) {
       }
     }
   }
-  if (!roles.length) { emit({ stage: 'office_res_review', address: label, ok: false, detail: `site found but no office evidence on ${crawl.crawled} page(s)` }); return { result: 'no_evidence', added: 0 }; }
+  if (!roles.length) { emit({ stage: 'office_res_review', address: label, ok: false, detail: `site found but no office evidence on ${crawl.crawled} page(s)` }); return { result: 'no_evidence', added: 0, pages: crawledPages }; }
   // MP-3.2 — application-form links attach to sign_permit (the filing the
   // user actually submits); first match wins, name from anchor text.
   const form = (crawl.forms || [])[0];
@@ -156,7 +162,7 @@ async function research(row, profile, profiles, opts = {}) {
     mirrorApply('queue', { id: row.id, status: covered >= 3 ? 'sources_found' : 'partial_gaps' });
   }
   emit({ stage: 'office_res_done', address: label, ok: true, detail: `LOCAL research — ${covered}/7 roles${opts.merge ? ` (+${added} new)` : ''}${countyFallback ? ' (county-administered)' : ''} from ${site} → ${covered >= 3 ? 'sources_found' : 'partial_gaps'}` });
-  return { result: 'researched', added };
+  return { result: 'researched', added, pages: crawledPages };
 }
 
 // ── Office fulfillment — when the research queue is dry, fill offices that
@@ -353,8 +359,8 @@ const readControl = () => readJSON('.audit-work/server-control.json', {});
 
 // Shared write tail for T3/T4 — normalize the extracted roles, union them
 // into the profile's existing office_research (never drop evidence), enqueue.
-function finishRoles(row, profile, roles, label, tag) {
-  if (!roles.length) { emit({ stage: 'office_res_review', address: label, ok: false, detail: `${tag} — no office evidence` }); return { result: 'no_evidence', added: 0 }; }
+function finishRoles(row, profile, roles, label, tag, pages = []) {
+  if (!roles.length) { emit({ stage: 'office_res_review', address: label, ok: false, detail: `${tag} — no office evidence` }); return { result: 'no_evidence', added: 0, pages }; }
   const normalized = normalizeOfficeResearch({ roles }, { jurisdiction: { id: profile?.id, name: row.jurisdiction_name, state: row.state, type: row.jurisdiction_type } });
   const prev = profile.office_research?.roles || [];
   const seen = new Set(prev.map(roleKey));
@@ -363,7 +369,7 @@ function finishRoles(row, profile, roles, label, tag) {
   enqueue({ entity: 'JurisdictionProfile', op: 'update', id: profile.id, data: { office_research: out }, mirror: `profiles-${String(profile.state || row.state).toLowerCase()}`, note: `local research — ${label}` });
   mirrorApply(`profiles-${String(profile.state || row.state).toLowerCase()}`, { id: profile.id, office_research: out });
   emit({ stage: 'office_res_done', address: label, ok: true, detail: `${tag} — +${fresh.length} new role evidence (${normalized.roles.length} extracted)` });
-  return { result: 'researched', added: fresh.length };
+  return { result: 'researched', added: fresh.length, pages };
 }
 
 // County-scope coverage statement — the verifier's county_scope guard reads
@@ -394,9 +400,11 @@ async function countyRegionalResearch(row, profile, profiles, wanted, t) {
   if (!sites.length) { emit({ stage: 'office_res_review', address: label, ok: false, detail: 'T3 — no county site or regional provider to try' }); return { result: 'no_site', added: 0 }; }
   const scopeNeed = (t.reasons || []).includes('county_scope');
   const roles = [];
+  const t3Pages = [];
   for (const s of sites.slice(0, 4)) {
     const crawl = await crawlSite(s.url, { maxPages: s.kind === 'county' ? 15 : 8, deep: s.kind === 'county' }).catch(() => null);
     if (!crawl) continue;
+    t3Pages.push(...(crawl.pages || []));
     const got = extract([...crawl.pages, ...await pdfPages(crawl.pdf)], wanted);
     for (const p of crawl.pdf) {
       if (got.find((r) => r.role === p.role)) continue;
@@ -410,7 +418,7 @@ async function countyRegionalResearch(row, profile, profiles, wanted, t) {
     roles.push(...got);
     emit({ stage: 'office_res_step', address: label, step: true, detail: `T3 ${s.kind} ${s.url} → ${got.length} role(s)${scope ? ' + coverage statement' : ''}` });
   }
-  return finishRoles(row, profile, roles, label, 'T3');
+  return finishRoles(row, profile, roles, label, 'T3', t3Pages);
 }
 
 // T4 — alternate official domains: source URLs already on identity-equal
@@ -447,6 +455,45 @@ async function altSiteResearch(row, profile, profiles, wanted) {
   return finishRoles(row, profile, roles, label, 'T4');
 }
 
+// ── SWE extraction feed ────────────────────────────────────────────────
+// After a T1–T3 crawl that still can't quote or match an office, hand the
+// fetched official-domain pages to the ai-extractor queue: the model hunts
+// verbatim proof sentences the regex pass missed. One pending unit per
+// locality; unchanged page sets aren't re-sent.
+const AI_FEED_REASONS = new Set(['no_quote', 'no_role_match', 'no_research']);
+const SENT_DIR = '.audit-work/extract-sent';
+const pageHash = (p) => { const s = `${p.url}|${(p.text || '').length}`; let h = 0; for (let i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) | 0; return h; };
+function feedExtractUnit(t, pages, profile, state) {
+  try {
+    if (!pages?.length || t.tier > 3) return false;
+    if (!(t.reasons || []).some((r) => AI_FEED_REASONS.has(r))) return false;
+    const official = pages.filter((p) => isOfficialSource(p.url, profile));
+    if (!official.length) return false;
+    const recs = Object.values(state?.offices || {}).filter((r) => r.locality_id === t.locality_id && (r.reasons || []).some((r2) => AI_FEED_REASONS.has(r2)));
+    const offices = recs.map((r) => {
+      const o = (t.loc.offices || []).find((x) => (x.id || x.name) === r.office_id);
+      return { office_id: r.office_id, name: o?.name || r.office_name || r.office_id, roles_missing: r.missing_roles || o?.authority_roles || [] };
+    });
+    if (!offices.length) offices.push({ office_id: null, name: `${t.loc.name} offices`, roles_missing: t.missing_roles || [] });
+    const sent = readJSON(`${SENT_DIR}/${t.locality_id}.json`, null);
+    const hashes = official.map(pageHash).sort((a, b) => a - b);
+    const pending = existsSync(`.audit-work/extract-queue/loc-${t.locality_id}.json`);
+    if (pending || (sent && JSON.stringify(sent.hashes) === JSON.stringify(hashes))) return false;
+    const trim = official.slice(0, 12).map((p) => ({ url: p.url, text: keywordWindows(p.text, 12000 / Math.min(official.length, 12) | 0 || 12000), full_text: String(p.text || '').slice(0, 60000) }));
+    const unit = {
+      id: `loc-${t.locality_id}`,
+      prompt: `Permit-office evidence hunt for ${t.loc.name}, ${t.loc.state}${t.loc.county_name ? ` (${t.loc.county_name})` : ''}. Each office below is missing permitting roles — regex extraction already failed, so hunt for VERBATIM sentences proving which office handles each role. OFFICES: ${JSON.stringify(offices)} PAGES (official sources only): ${JSON.stringify(trim.map((p) => ({ url: p.url, text: p.text })))} For EACH missing role return an object {role, office_name, phone, email, address, quote, source_url} where quote is copied VERBATIM from the page at source_url, or null if the page doesn't state it.`,
+      schema: { answers: [{ role: 'sign_permit', office_name: 'string', phone: 'string|null', email: 'string|null', address: 'string|null', quote: 'verbatim sentence from page', source_url: 'one of the page urls' }] },
+      kind: 'ai-extract', meta: { locality_id: t.locality_id, jurisdiction: t.loc.name, state: t.loc.state, county: t.loc.county_name || null, tier: t.tier, offices, pages: trim },
+    };
+    enqueueUnit(unit);
+    mkdirSync(SENT_DIR, { recursive: true });
+    writeFileSync(`${SENT_DIR}/${t.locality_id}.json`, JSON.stringify({ at: Date.now(), hashes }));
+    emit({ stage: 'ai_extract_feed', address: `${t.loc.name}, ${t.loc.state}`, ok: true, detail: `T${t.tier} still missing → extract unit (${offices.length} office(s), ${trim.length} page(s))` });
+    return true;
+  } catch { return false; }
+}
+
 // Dispatch a claimed gap target to its next untried tier.
 async function tierResearch(t, profile, profiles) {
   const { loc, tier } = t;
@@ -475,6 +522,15 @@ async function gapPass(profiles, profById, cooldowns, claimed, budget = 8) {
     open = scan.cooling.filter((t) => !claimed.has(`gap-${t.locality_id}`));
     relaxed = open.length > 0;
   }
+  // The audit lane leads EVERYTHING — localities the auditor routed here
+  // (demoted verified offices, jurisdiction/contact/duplicate findings) are
+  // claimed first, ahead of tier and gap order. They skip the tier cooldown
+  // but not claim locks or pacing; each boost clears once worked.
+  const locById = new Map(locs.map((l) => [l.id, l]));
+  const boosts = boostTargets(
+    pendingBoosts().filter((b) => !claimed.has(`gap-${b.locality_id}`)),
+    locById, (id) => nextTierFor(readCooldown(`gap-${id}`), false));
+  if (boosts.length) open = [...boosts, ...open];
   if (!open.length) return 0;
   emit({ stage: 'gap_target_pass', detail: `${scan.targets.length + scan.cooling.length} localities with verification gaps (${open.length} unclaimed${relaxed ? ', cooldown relaxed' : ''}) · ${scan.exhausted.length} exhausted` });
   let worked = 0;
@@ -493,7 +549,7 @@ async function gapPass(profiles, profById, cooldowns, claimed, budget = 8) {
       // skip the cooldown check by design).
       const freshCd = readCooldown(key);
       if (nextTierFor(freshCd, t.attempts > 0) !== t.tier) continue;
-      if (!relaxed && freshCd?.at && Date.now() - new Date(freshCd.at).getTime() < TIER_CD) continue;
+      if (!t.boost && !relaxed && freshCd?.at && Date.now() - new Date(freshCd.at).getTime() < TIER_CD) continue;
       const profile = profById.get(loc.jurisdiction_profile_id);
       if (!profile || profile.verification_status === 'historical') {
         // Profile gap belongs to relink/sweep — mark the tier done so the
@@ -503,14 +559,16 @@ async function gapPass(profiles, profById, cooldowns, claimed, budget = 8) {
         continue;
       }
       emit({ stage: 'gap_target', address: label, detail: `T${t.tier} — ${t.gap_offices} office(s) failing (${[...new Set(t.reasons)].join(', ')}) — missing ${t.missing_roles.join(', ') || 'research'}` });
-      const { result, added } = await tierResearch(t, profile, profiles);
+      const { result, added, pages } = await tierResearch(t, profile, profiles);
+      if (added === 0) feedExtractUnit(t, pages, profile, state);
       const prev = tiersDone(readCooldown(key), t.attempts > 0);
       const tiers = [...new Set([...prev, t.tier])];
       writeCooldown(key, { result: added > 0 ? 'new' : 'none', tier: t.tier, tiers, result_detail: result, exhausted: tiers.length >= GAP_TIERS });
       // The checker re-judges after every tier — new evidence promotes fast,
       // and the attempt stays spaced by the verifier's own clock either way.
       try { appendFileSync(VERIFY_FIRST, JSON.stringify({ name: loc.name, state: loc.state, at: Date.now(), tier: t.tier, result }) + '\n'); } catch {}
-      emit({ stage: 'gap_target_done', address: label, ok: added > 0, detail: `T${t.tier} ${result}${added > 0 ? ` +${added} role evidence` : ''}${tiers.length >= GAP_TIERS ? ' — all tiers tried' : ''} → verify-first` });
+      emit({ stage: 'gap_target_done', address: label, ok: added > 0, detail: `T${t.tier} ${result}${added > 0 ? ` +${added} role evidence` : ''}${tiers.length >= GAP_TIERS ? ' — all tiers tried' : ''}${t.boost ? ` — audit fix (${t.boostCls})` : ''} → verify-first` });
+      if (t.boost) markBoostDone(t.boost); // one boost per finding — cleared once worked
       worked++;
     } catch (e) { emit({ stage: 'gap_target_error', address: label, ok: false, detail: String(e?.message || e).slice(0, 140) }); }
     finally { releaseClaim(key); }
@@ -548,7 +606,7 @@ async function main() {
     const fulfillOpen = fulfillCandidates(locs, cooldowns).filter((t) => !claimed.has(`ff-${t.office.id}`)).length;
     const byTier = {};
     for (const t of [...gapScan.targets, ...gapScan.cooling]) byTier[t.tier] = (byTier[t.tier] || 0) + 1;
-    publishTargets({ gap: gapOpen, queue: queueOpen, fulfill: fulfillOpen, cooling: gapScan.cooling.length, exhausted: gapScan.exhausted.length, next_release: gapScan.nextRelease ? new Date(gapScan.nextRelease).toISOString() : null, tiers: byTier });
+    publishTargets({ gap: gapOpen, queue: queueOpen, fulfill: fulfillOpen, cooling: gapScan.cooling.length, exhausted: gapScan.exhausted.length, audit_boost: pendingBoosts().filter((b) => !claimed.has(`gap-${b.locality_id}`)).length, next_release: gapScan.nextRelease ? new Date(gapScan.nextRelease).toISOString() : null, tiers: byTier });
     // Verification gap targeting comes FIRST — unblocking needs_verification
     // offices outranks widening the discovery queue.
     await gapPass(profiles, profById, cooldowns, claimed).catch((e) => emit({ stage: 'gap_target_error', detail: String(e?.message || e).slice(0, 140) }));

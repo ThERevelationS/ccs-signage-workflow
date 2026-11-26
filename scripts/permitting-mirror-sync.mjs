@@ -6,7 +6,7 @@
 //
 // Usage: node scripts/permitting-mirror-sync.mjs [--once] [--sync-ms 600000]
 // Emits mirror_synced / mirror_error to .live-events.jsonl.
-import { appendFileSync } from 'node:fs';
+import { appendFileSync, writeFileSync } from 'node:fs';
 import { putMirrorSnapshot, getMirror } from './lib/entity-mirror.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
@@ -84,6 +84,14 @@ while (true) {
     // worker's mirrorApply and its outbox flush would otherwise roll the
     // mirror back to older remote state (apply-ready oscillated this way).
     putMirrorSnapshot(s.name, rows);
+    // The dashboard's verified count comes from the RAW remote rows — never
+    // the folded mirror, which carries unflushed local upserts and has
+    // overstated progress before.
+    if (s.name === 'localities') {
+      let verified = 0, offices = 0;
+      for (const l of rows) { if (l.duplicate_of) continue; for (const o of l.offices || []) { offices++; if (o.authority_verification_status === 'staff_verified') verified++; } }
+      try { writeFileSync('.audit-work/live-verified-count.json', JSON.stringify({ at: new Date().toISOString(), rows: rows.length, offices, staff_verified: verified }, null, 1)); } catch {}
+    }
     emit({ stage: 'mirror_synced', address: 'mirror sync', ok: true, detail: `${s.name}: ${rows.length} rows` });
     await sleep(2000); // breathe between sources
   }
