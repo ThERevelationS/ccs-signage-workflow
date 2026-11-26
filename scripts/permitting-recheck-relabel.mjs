@@ -167,16 +167,15 @@ async function applyPass() {
 
   let done = 0, officesChanged = 0, skipped = 0;
   // Below normal traffic: enqueues are FIFO (no priority lane) behind the
-  // whole existing backlog, paced ~50 loc/min. The yield is on TREND not
-  // depth — a fixed gate deadlocks against the system's standing backlog.
-  // Relabel waits only while the outbox is actively RISING between checks;
-  // a plateau means the flusher is keeping up and FIFO pacing keeps
-  // relabel writes below normal traffic regardless of absolute depth.
-  let prevDepth = await outboxDepth();
+  // whole existing backlog and paced ~24 loc/min — bounded marginal load.
+  // A depth gate can only deadlock here (the fleet's standing backlog
+  // perpetually grows): normal writes are never displaced because every
+  // relabel item lands behind everything already queued. The only hard
+  // stop is a genuine backlog blowout ceiling.
   for (const t of liveTargets) {
     await waitWhilePaused(WORKER, { item: `relabel ${t.loc.name}` });
     if (readControl().needs_recheck === false) { emit({ stage: 'recheck_paused', detail: 'needs_recheck flag off — stopping', ok: true }); break; }
-    for (;;) { const d = await outboxDepth(); if (d <= prevDepth) { prevDepth = d; break; } prevDepth = d; heartbeat(WORKER, 'idle', `outbox rising (${d}) — waiting`); await sleep(15000); }
+    while (await outboxDepth() > 10000) { heartbeat(WORKER, 'idle', `outbox blowout — waiting`); await sleep(15000); }
     const r = await relabelLoc(t);
     done++;
     if (r.changed) {
@@ -187,7 +186,7 @@ async function applyPass() {
     else skipped++;
     heartbeat(WORKER, 'busy', `relabel ${done}/${liveTargets.length}`);
     if (done % 25 === 0) writeFileSync(STATS_FILE, JSON.stringify({ at: new Date().toISOString(), done, targets: liveTargets.length, offices_changed: officesChanged, skipped }, null, 1));
-    await sleep(1200); // ~50 localities/min ceiling, well under flush rate
+    await sleep(2500); // ~24 localities/min — bounded marginal load on the FIFO
   }
   // Breaker baseline reset: the 22.6% trip measured pre-tightening data.
   try { writeFileSync(BREAKER_FILE, JSON.stringify({ at: new Date().toISOString(), flagged: 0, audited: 0, pct: 0, reset: 'baseline reset after strict-relabel pass' })); } catch {}
