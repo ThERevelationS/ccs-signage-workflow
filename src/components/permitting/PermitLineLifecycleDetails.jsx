@@ -149,6 +149,41 @@ function DetailSection({ section, title, hint, children }) {
   </details>;
 }
 
+export function PermitContactDetails({ lineItem, isRegistered, onUpdateField }) {
+  const update = (field, value) => onUpdateField(lineItem.id, field, value);
+  return <DetailSection section="contact" title="Office contact & follow-up" hint="Record the last time someone contacted the office. This does not move the reminder.">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <DateField
+          label="Last contacted"
+          value={lineItem.office_contacted_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("office_contacted_date", value)}
+        />
+        <DateField
+          label="Last office reply"
+          value={lineItem.office_responded_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("office_responded_date", value)}
+        />
+        {isRegistered && (
+          <button
+            type="button"
+            className="self-center rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100"
+            title="Copy a follow-up email you can paste to the office"
+            onClick={async () => {
+              const ref = lineItem.permit_number || lineItem.application_reference_number || lineItem.row_name || "our application";
+              const text = `Hi,\n\nFollowing up on ${ref} for ${lineItem.work_order_title || "our job"} in ${lineItem.locality_name || "your jurisdiction"} — could you share an update on its status?${lineItem.expected_response_date ? ` We were hoping to hear back by ${lineItem.expected_response_date}.` : ""}\n\nThank you!`;
+              try { await navigator.clipboard.writeText(text); } catch {}
+            }}
+          >Copy follow-up email</button>
+        )}
+          <div className="text-xs text-slate-700"><strong className="block">Next follow-up reminder</strong>
+            {formatDate(lineItem.next_followup_date) || "Not scheduled"}
+          </div>
+        </div>
+      </DetailSection>;
+}
+
 export default function PermitLineLifecycleDetails({ lineItem, locality = null, onUpdateField, isRegistered, today }) {
   const lifecycleSummary = useMemo(() => getPermitLineLifecycleSummary(lineItem), [lineItem]);
   const handoffReadiness = useMemo(() => getPermitLineHandoffReadiness(lineItem, today), [lineItem, today]);
@@ -239,7 +274,7 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
           onCommit={(value) => update("next_action", value)}
         />
         <DateField
-          label="Check back on"
+          label="Manual check-back date (separate from queue reminder)"
           value={lineItem.follow_up_date}
           disabled={!isRegistered}
           onCommit={(value) => update("follow_up_date", value)}
@@ -405,30 +440,6 @@ export default function PermitLineLifecycleDetails({ lineItem, locality = null, 
           disabled={!isRegistered}
           onCommit={(value) => update("correction_resolved_date", value)}
         />
-        <DateField
-          label="Office contacted"
-          value={lineItem.office_contacted_date}
-          disabled={!isRegistered}
-          onCommit={(value) => update("office_contacted_date", value)}
-        />
-        <DateField
-          label="Office replied"
-          value={lineItem.office_responded_date}
-          disabled={!isRegistered}
-          onCommit={(value) => update("office_responded_date", value)}
-        />
-        {isRegistered && (
-          <button
-            type="button"
-            className="self-center rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100"
-            title="Copy a follow-up email you can paste to the office"
-            onClick={async () => {
-              const ref = lineItem.permit_number || lineItem.application_reference_number || lineItem.row_name || "our application";
-              const text = `Hi,\n\nFollowing up on ${ref} for ${lineItem.work_order_title || "our job"} in ${lineItem.locality_name || "your jurisdiction"} — could you share an update on its status?${lineItem.expected_response_date ? ` We were hoping to hear back by ${lineItem.expected_response_date}.` : ""}\n\nThank you!`;
-              try { await navigator.clipboard.writeText(text); } catch {}
-            }}
-          >Copy follow-up email</button>
-        )}
         <CommitTextField
           label="Inspector contact"
           value={lineItem.inspector_contact}
