@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
+import { hasWorkflowInvocationCapability } from "../../shared/workflowInvocationCapability.ts";
 import { withEntityRateLimitRetry } from "../../shared/entityRateLimitRetry.ts";
 import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 import { memo, bust } from "../../shared/invokeMemo.ts";
@@ -52,6 +53,13 @@ const DISMISSED_ITEMS_CAP = 300;
 // scans are recipient-agnostic, so a 5-minute cache lets one warm isolate
 // serve every caller without multiplying entity reads. (Same pattern as
 // attentionFeedRowsCache in opportunityWorkspaceAction.)
+// Fast in-isolate gate for the global eval throttle — checked before the
+// (single-row) GlobalSettings read so repeat browser calls cost nothing at
+// all within a warm isolate. Cross-isolate coordination lives in the
+// notification_eval_state GlobalSettings row; the dedupe index keeps any
+// rare overlapping eval correct.
+let evalMemoryAt = 0;
+
 const scanCache = new Map<string, { rows: any[]; expires: number }>();
 async function cachedScan<T>(key: string, loader: () => Promise<T[]>): Promise<T[]> {
   const hit = scanCache.get(key);
@@ -134,12 +142,23 @@ Deno.serve(async (req) => {
   try {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
-    const user = await authenticateSignShopSession(base44, body?.session_token);
-    const me = clean(user?.email).toLowerCase() || clean(user?.id).toLowerCase();
-    if (!me) throw bad("A signed-in user is required.", 401);
-    const actorName = clean(user?.full_name) || clean(user?.name) || me;
+    // Scheduled workflows invoke with a backend-only capability instead of a
+    // staff session; the ONLY action they may run is evaluate_triggers (the
+    // global scan suite). Everything else still requires a staff session.
+    const isWorkflowRun = await hasWorkflowInvocationCapability(body, "notificationAction");
     const action = clean(body?.action);
     if (!action) throw bad("An action is required.");
+    let user: any = null;
+    let me = "";
+    if (isWorkflowRun) {
+      if (action !== "evaluate_triggers") throw bad("Workflow runs may only evaluate triggers.", 403);
+      me = "system";
+    } else {
+      user = await authenticateSignShopSession(base44, body?.session_token);
+      me = clean(user?.email).toLowerCase() || clean(user?.id).toLowerCase();
+      if (!me) throw bad("A signed-in user is required.", 401);
+    }
+    const actorName = clean(user?.full_name) || clean(user?.name) || me;
 
     // Anything that isn't a pure read can create/alter notification or pref
     // rows — drop memoized reads so the next poll refetches.
@@ -472,12 +491,7 @@ Deno.serve(async (req) => {
     // transition notifies exactly once; throttled per caller because the
     // detectors do real scans.
     if (action === "evaluate_triggers") {
-      const prefRow = await ensureOwnPrefRow(Pref, me);
-      const lastEval = Date.parse(clean(prefRow?.last_evaluated_at));
       const force = body?.force === true;
-      if (!force && Number.isFinite(lastEval) && nowMs - lastEval < EVAL_THROTTLE_MS) {
-        return Response.json({ success: true, action, throttled: true, next_eval_in_ms: EVAL_THROTTLE_MS - (nowMs - lastEval) });
-      }
 
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const entities = base44.asServiceRole.entities as any;
@@ -487,6 +501,25 @@ Deno.serve(async (req) => {
       const BuilderPart = entities.BuilderPart;
       const Activity = entities.OpportunityActivity;
       const GlobalSettings = entities.GlobalSettings;
+
+      // Global throttle: the scan suite is recipient-agnostic and dedupe keys
+      // embed the recipient, so ONE evaluation per EVAL_THROTTLE_MS serves the
+      // whole app — the old per-user throttle multiplied the full scan suite
+      // by the signed-in user count. Browser callers degrade to this cheap
+      // check; the scheduled workflow is what keeps evaluations running.
+      if (!force) {
+        if (evalMemoryAt && nowMs - evalMemoryAt < EVAL_THROTTLE_MS) {
+          return Response.json({ success: true, action, throttled: true, next_eval_in_ms: EVAL_THROTTLE_MS - (nowMs - evalMemoryAt) });
+        }
+        const stateRows = await GlobalSettings.filter({ setting_key: "notification_eval_state" }, null, 1).catch(() => []);
+        const stateRow = list(stateRows)[0] || null;
+        let lastGlobal = 0;
+        try { lastGlobal = Date.parse(JSON.parse(String(stateRow?.setting_value || "{}"))?.last_eval_at || "") || 0; } catch { lastGlobal = 0; }
+        if (lastGlobal && nowMs - lastGlobal < EVAL_THROTTLE_MS) {
+          evalMemoryAt = lastGlobal; // align the fast in-isolate gate with shared state
+          return Response.json({ success: true, action, throttled: true, next_eval_in_ms: EVAL_THROTTLE_MS - (nowMs - lastGlobal) });
+        }
+      }
 
       const directory = await cachedScan("staff_directory", () =>
         loadAllEntityRows({ entity: entities.AuthorizedEmail, label: "Notification staff directory" }));
@@ -700,14 +733,25 @@ Deno.serve(async (req) => {
       const watchRows = await GlobalSettings.filter({ config_name: "watch_rules" }).catch(() => []);
       let watchMap: Record<string, any[]> = {};
       try { watchMap = JSON.parse(String(watchRows?.[0]?.watch_rules || "{}") || "{}"); } catch { watchMap = {}; }
-      for (const w of (watchMap[me] || watchMap[clean(user?.email)] || [])) {
+      // Watches are evaluated for EVERY subscribed user, not just the caller
+      // — the scheduled workflow is now the primary evaluator and it has no
+      // user context. Capped so a large watch inventory cannot blow the read
+      // budget in a single pass.
+      const WATCH_READ_CAP = 25;
+      let watchReads = 0;
+      for (const [watchUser, userWatches] of Object.entries(watchMap)) {
+        const watchRecipient = clean(watchUser).toLowerCase();
+        if (!watchRecipient || !Array.isArray(userWatches)) continue;
+        for (const w of userWatches) {
+        if (watchReads >= WATCH_READ_CAP) break;
+        watchReads += 1;
         try {
           const rec = await entities[w.entity]?.filter({ id: w.record_id }).catch(() => []);
           const row0 = Array.isArray(rec) ? rec[0] : rec;
           const cur = row0 ? String(row0[w.field] ?? "") : null;
           if (cur == null || (w.equals != null && cur !== w.equals)) continue;
           push({
-            recipient: me, category: "watch_hit", severity: "info",
+            recipient: watchRecipient, category: "watch_hit", severity: "info",
             title: `Watch hit — ${clean(w?.label) || clean(w?.record_id)}`,
             body: `${clean(w?.entity)} ${clean(w?.field)} is now "${cur}"`,
             deep_link: "/MainWorkflow",
@@ -716,6 +760,7 @@ Deno.serve(async (req) => {
             meta: { watch: w, current: cur },
           });
         } catch { /* unreadable entity — skip */ }
+        }
       }
 
       let created = 0;
@@ -727,8 +772,17 @@ Deno.serve(async (req) => {
         });
         if (saved) created += 1;
       }
+      // Stamp the global throttle — in-isolate fast gate plus the shared
+      // GlobalSettings row other isolates coordinate through.
       let evalStampWarning = "";
-      if (prefRow?.id) await Pref.update(prefRow.id, { last_evaluated_at: iso() }).catch((e: any) => { evalStampWarning = String(e?.message || e); });
+      evalMemoryAt = Date.now();
+      try {
+        const stampRows = await GlobalSettings.filter({ setting_key: "notification_eval_state" }, null, 1).catch(() => []);
+        const stampRow = list(stampRows)[0] || null;
+        const stampValue = JSON.stringify({ last_eval_at: iso() });
+        if (stampRow?.id) await GlobalSettings.update(stampRow.id, { setting_value: stampValue });
+        else await GlobalSettings.create({ setting_key: "notification_eval_state", setting_value: stampValue });
+      } catch (e: any) { evalStampWarning = String(e?.message || e); }
       return Response.json({
         success: true, action, throttled: false, created,
         candidates: candidates.length, deferred: Math.max(0, candidates.length - MAX_CREATES_PER_EVAL),
