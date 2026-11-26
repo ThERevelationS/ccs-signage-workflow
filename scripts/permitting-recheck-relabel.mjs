@@ -132,6 +132,15 @@ async function relabelLoc(t) {
   return { loc: t.loc, changed };
 }
 
+// Offices already enqueued (revert log) must not re-enqueue on the next
+// hourly pass: the remote still reads staff_verified until the flusher
+// drains the backlog, so both the mirror and the live read look "undone".
+const alreadyDone = () => {
+  const ids = new Set();
+  for (const row of revertRows()) for (const o of row.offices || []) if (o.id) ids.add(o.id);
+  return ids;
+};
+
 async function applyPass() {
   const [locs, oh, ky] = await Promise.all([
     mirrorRead('localities', 15 * 60e3, async () => null),
@@ -141,6 +150,9 @@ async function applyPass() {
   const profById = new Map([...(oh || []), ...(ky || [])].map((p) => [p.id, p]));
   const countyIndex = buildCountyIndex([...(oh || []), ...(ky || [])]);
   const { targets, excluded } = scan(locs || [], profById, countyIndex);
+  const doneIds = PLAN ? new Set() : alreadyDone();
+  if (doneIds.size) for (const t of targets) t.badOffices = t.badOffices.filter((b) => !doneIds.has(b.id));
+  const liveTargets = targets.filter((t) => t.badOffices.length);
   const plan = {
     at: new Date().toISOString(), localities: targets.length,
     offices: targets.reduce((n, t) => n + t.badOffices.length, 0),
@@ -148,9 +160,10 @@ async function applyPass() {
     by_subcheck: {}, examples: targets.flatMap((t) => t.badOffices.map((b) => ({ jurisdiction: `${t.loc.name}, ${t.loc.state}`, office: b.name, subs: b.subs, reason: recheckReason(b) }))).slice(0, 15),
   };
   for (const t of targets) for (const b of t.badOffices) for (const s of b.subs) plan.by_subcheck[s] = (plan.by_subcheck[s] || 0) + 1;
+  plan.enqueued_already = doneIds.size;
   writeFileSync(PLAN_FILE, JSON.stringify(plan, null, 1));
   if (PLAN) { console.log(JSON.stringify(plan, null, 1)); return; }
-  emit({ stage: 'recheck_plan', detail: `${plan.offices} offices on ${plan.localities} localities fail strict`, ok: true });
+  emit({ stage: 'recheck_plan', detail: `${plan.offices} offices on ${plan.localities} localities fail strict (${doneIds.size} already enqueued)`, ok: true });
 
   let done = 0, officesChanged = 0, skipped = 0;
   // Below normal traffic: enqueues are FIFO (no priority lane) behind the
@@ -159,7 +172,7 @@ async function applyPass() {
   // instead refuse to run if the backlog is GROWING well past where the
   // pass started.
   let depthBaseline = await outboxDepth();
-  for (const t of targets) {
+  for (const t of liveTargets) {
     await waitWhilePaused(WORKER, { item: `relabel ${t.loc.name}` });
     if (readControl().needs_recheck === false) { emit({ stage: 'recheck_paused', detail: 'needs_recheck flag off — stopping', ok: true }); break; }
     while (await outboxDepth() > depthBaseline + 500) { heartbeat(WORKER, 'idle', `outbox growing — waiting`); await sleep(15000); }
@@ -171,13 +184,13 @@ async function applyPass() {
       addBoost({ locality_id: t.loc.id, type: 'needs_recheck', finding: { type: 'needs_recheck', roles: failedRoles, offices: t.badOffices.map((b) => b.name), reason: `strict re-check: ${r.changed} office(s) — needs proof: ${failedRoles.join(', ')}` } });
     }
     else skipped++;
-    heartbeat(WORKER, 'busy', `relabel ${done}/${targets.length}`);
-    if (done % 25 === 0) writeFileSync(STATS_FILE, JSON.stringify({ at: new Date().toISOString(), done, targets: targets.length, offices_changed: officesChanged, skipped }, null, 1));
+    heartbeat(WORKER, 'busy', `relabel ${done}/${liveTargets.length}`);
+    if (done % 25 === 0) writeFileSync(STATS_FILE, JSON.stringify({ at: new Date().toISOString(), done, targets: liveTargets.length, offices_changed: officesChanged, skipped }, null, 1));
     await sleep(1200); // ~50 localities/min ceiling, well under flush rate
   }
   // Breaker baseline reset: the 22.6% trip measured pre-tightening data.
   try { writeFileSync(BREAKER_FILE, JSON.stringify({ at: new Date().toISOString(), flagged: 0, audited: 0, pct: 0, reset: 'baseline reset after strict-relabel pass' })); } catch {}
-  writeFileSync(STATS_FILE, JSON.stringify({ at: new Date().toISOString(), done, targets: targets.length, offices_changed: officesChanged, skipped, complete: done >= targets.length }, null, 1));
+  writeFileSync(STATS_FILE, JSON.stringify({ at: new Date().toISOString(), done, targets: liveTargets.length, offices_changed: officesChanged, skipped, complete: done >= liveTargets.length }, null, 1));
   emit({ stage: 'recheck_done', detail: `${officesChanged} offices → needs_recheck on ${done - skipped} localities (${skipped} skipped)`, ok: true });
 }
 
