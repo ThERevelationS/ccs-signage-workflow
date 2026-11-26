@@ -444,7 +444,7 @@ export default function PermitClientGroup({
                 )}
                 <span
                   className="text-[9px]"
-                  title={o.authority_verification_status === 'staff_verified' ? 'Verified by our team' : o.authority_verification_status ? `Status: ${String(o.authority_verification_status).replaceAll('_', ' ')}` : 'Not verified yet'}
+                  title={o.authority_verification_status === 'staff_verified' ? 'Verified by our team' : o.authority_verification_status === 'needs_recheck' ? 'Verified — needs re-check' : o.authority_verification_status ? `Status: ${String(o.authority_verification_status).replaceAll('_', ' ')}` : 'Not verified yet'}
                 >
                   {o.authority_verification_status === 'staff_verified' ? '●●●' : o.authority_verification_status ? '●●○' : '●○○'}
                 </span>
