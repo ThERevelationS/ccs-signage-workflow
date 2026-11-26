@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
 import { ChevronDown, ChevronRight, ExternalLink, Info, Loader2, MapPin, ShieldAlert, Trash2, UserRoundPlus } from "lucide-react";
-import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
+import PermitLineLifecycleDetails, { PermitContactDetails } from "./PermitLineLifecycleDetails";
 import { getPermitLineRecommendation, getPermitLineHandoffReadiness, isPermitLineEffectivelyComplete } from "./permitQueue";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { normalizePermitJurisdictionName } from "./jurisdictionPermitBridge";
@@ -182,7 +182,7 @@ export default function PermitSpreadsheetRow({
             {blockers.length > 0 && <strong className="block text-red-800">{blockers[0]}</strong>}
             {(expectedReplyOverdue || permitExpired) && <strong className="block text-amber-800">{permitExpired ? "Renewal needed" : "Reply overdue"}</strong>}
           </span>
-          <span className="pl-6 text-slate-700 sm:pl-0">{lineItem.assigned_to || "Unassigned"}<span className="block text-slate-500">Follow-up: {lineItem.next_followup_date || "Not scheduled"}</span></span>
+          <span className="pl-6 text-slate-700 sm:pl-0">{lineItem.assigned_to || "Unassigned"}<span className="block text-slate-500">Next follow-up: {lineItem.next_followup_date || "Not scheduled"}</span></span>
         </button>;
       })() : (
       <>
@@ -224,8 +224,9 @@ export default function PermitSpreadsheetRow({
       </div>
 
       {blockers.length > 0 && <ul aria-label="Permit blockers" className="mb-2 border-l-4 border-red-500 bg-red-50 px-3 py-2 text-xs text-red-900">{blockers.map(message => <li key={message}>{message}</li>)}</ul>}
-      <p className="mb-2 text-xs text-slate-600">Owner: {lineItem.assigned_to || "Unassigned"} · Follow-up: {lineItem.next_followup_date || "Not scheduled"}</p>
+      <p className="mb-2 text-xs text-slate-600">Owner: {lineItem.assigned_to || "Unassigned"} · Last contacted: {lineItem.office_contacted_date || "Not recorded"} · Next follow-up: {lineItem.next_followup_date || "Not scheduled"}</p>
       <PermitChecklist today={today} line={lineItem} canEdit={isRegistered} onOpen={onOpenStep} />
+      <PermitContactDetails lineItem={lineItem} isRegistered={isRegistered} onUpdateField={onUpdateField} />
       <details className="mt-2 rounded border px-3 py-2"><summary className="cursor-pointer text-xs font-semibold text-slate-700">Permit actions &amp; office settings</summary>
         <div className="space-y-2 pt-2">
             <div className="flex items-center gap-1.5">
