@@ -21,7 +21,7 @@ import { resolve as pathResolve } from 'node:path';
 import { mirrorRead, mirrorApply } from './lib/entity-mirror.mjs';
 import { enqueue, outboxDepth } from './lib/outbox.mjs';
 import { addBoost } from './lib/research-boost.mjs';
-import { strictRoleEvidence, researchForOffice } from './permitting-authority-verifier.mjs';
+import { strictRoleEvidence, researchForOffice, buildCountyIndex, countyProfileFor } from './permitting-authority-verifier.mjs';
 import { cleanOfficeName, isGenericOfficeName, isNonPermitOfficeName, isPlaceholderOffice } from './lib/office-name-clean.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
@@ -69,28 +69,47 @@ async function readLocLive(id) {
 }
 
 // ── strict-fail scan (mirror data, same rules the audit estimate uses) ────
-function scan(localities, profById) {
-  const targets = [];
+// Offices whose ONLY failure is no_matching_entry are excluded — their
+// promote-time evidence hasn't been located, so there is nothing strict can
+// judge. They're listed separately and relabelled only once real evidence
+// exists to check. Per-role proven/failed drives recheck_reason.
+function scan(localities, profById, countyIndex) {
+  const targets = [], excluded = [];
   for (const loc of localities) {
     if (loc.duplicate_of) continue;
     const profile = profById.get(loc.jurisdiction_profile_id);
+    const countyProfile = countyProfileFor(loc, countyIndex);
     const badOffices = [];
     for (const o of loc.offices || []) {
       if (o.authority_verification_status !== 'staff_verified') continue;
       const cname = cleanOfficeName(o.name).clean;
       const subs = new Set();
-      if (!cname || isGenericOfficeName(cname) || isNonPermitOfficeName(o.name) || isPlaceholderOffice(o.name, loc.name)) subs.add('office_name_junk');
+      const proven = [], failed = [];
+      const nameJunk = !cname || isGenericOfficeName(cname) || isNonPermitOfficeName(o.name) || isPlaceholderOffice(o.name, loc.name);
+      if (nameJunk) subs.add('office_name_junk');
       for (const role of o.authority_roles || []) {
-        const entries = researchForOffice(profile, o.name, loc, o.authority_roles || [], o.id).filter((e) => e.role === role && String(e?.applicability) === 'potentially_applicable');
-        if (!entries.length) { subs.add('no_matching_entry'); continue; }
+        const entries = researchForOffice(profile, o.name, loc, o.authority_roles || [], o.id, countyProfile).filter((e) => e.role === role && String(e?.applicability) === 'potentially_applicable');
+        if (!entries.length) { subs.add('no_matching_entry'); failed.push(role); continue; }
         const best = entries.map((e) => strictRoleEvidence(role, e, o.name, loc.name, profile)).sort((a, b) => a.length - b.length)[0];
+        if (!best.length && !nameJunk) { proven.push(role); continue; }
+        failed.push(role);
         for (const g of best) subs.add(subCheck(g));
       }
-      if (subs.size) badOffices.push({ id: o.id, name: o.name, subs: [...subs].sort() });
+      if (!subs.size) continue;
+      const rec = { id: o.id, name: o.name, subs: [...subs].sort(), proven, failed };
+      if (subs.size === 1 && subs.has('no_matching_entry')) excluded.push({ ...rec, jurisdiction: `${loc.name}, ${loc.state}` });
+      else badOffices.push(rec);
     }
     if (badOffices.length) targets.push({ loc, badOffices });
   }
-  return targets;
+  return { targets, excluded };
+}
+
+// "proven: building · needs proof: sign_permit" — office-level status, but
+// the reason names which roles still need evidence (researchers target
+// only those; the verifier re-promotes when every assigned role passes).
+function recheckReason(b) {
+  return `${b.proven.length ? `proven: ${b.proven.join(', ')} · ` : ''}needs proof: ${b.failed.join(', ')}${b.subs.includes('office_name_junk') ? ' · office name flagged' : ''}`;
 }
 
 // ── merge one locality live → enqueue needs_recheck updates ──────────────
@@ -103,7 +122,7 @@ async function relabelLoc(t) {
     const b = want.get(o.id);
     if (!b || o.authority_verification_status !== 'staff_verified') return o;
     changed++;
-    return { ...o, authority_verification_status: 'needs_recheck', recheck_reason: `strict: ${b.subs.join('+')}`, recheck_at: new Date().toISOString() };
+    return { ...o, authority_verification_status: 'needs_recheck', recheck_reason: recheckReason(b), recheck_at: new Date().toISOString() };
   });
   if (!changed) return { loc: t.loc, skipped: 'already_changed' };
   enqueue({ entity: 'PermitLocality', op: 'update', id: t.loc.id, data: { offices }, mirror: 'localities', note: `recheck relabel — ${t.loc.name}, ${t.loc.state}` });
@@ -120,11 +139,13 @@ async function applyPass() {
     mirrorRead('profiles-ky', 30 * 60e3, async () => null),
   ]);
   const profById = new Map([...(oh || []), ...(ky || [])].map((p) => [p.id, p]));
-  const targets = scan(locs || [], profById);
+  const countyIndex = buildCountyIndex([...(oh || []), ...(ky || [])]);
+  const { targets, excluded } = scan(locs || [], profById, countyIndex);
   const plan = {
     at: new Date().toISOString(), localities: targets.length,
     offices: targets.reduce((n, t) => n + t.badOffices.length, 0),
-    by_subcheck: {}, examples: targets.flatMap((t) => t.badOffices.map((b) => ({ jurisdiction: `${t.loc.name}, ${t.loc.state}`, office: b.name, subs: b.subs }))).slice(0, 15),
+    excluded_no_matching_entry: { count: excluded.length, offices: excluded },
+    by_subcheck: {}, examples: targets.flatMap((t) => t.badOffices.map((b) => ({ jurisdiction: `${t.loc.name}, ${t.loc.state}`, office: b.name, subs: b.subs, reason: recheckReason(b) }))).slice(0, 15),
   };
   for (const t of targets) for (const b of t.badOffices) for (const s of b.subs) plan.by_subcheck[s] = (plan.by_subcheck[s] || 0) + 1;
   writeFileSync(PLAN_FILE, JSON.stringify(plan, null, 1));
@@ -139,7 +160,11 @@ async function applyPass() {
     while (await outboxDepth() > 400) { heartbeat(WORKER, 'idle', `outbox deep — waiting`); await sleep(15000); }
     const r = await relabelLoc(t);
     done++;
-    if (r.changed) { officesChanged += r.changed; addBoost({ locality_id: t.loc.id, type: 'needs_recheck', finding: { type: 'needs_recheck', reason: `strict re-check: ${r.changed} office(s) failed strict evidence` } }); }
+    if (r.changed) {
+      officesChanged += r.changed;
+      const failedRoles = [...new Set(t.badOffices.flatMap((b) => b.failed))];
+      addBoost({ locality_id: t.loc.id, type: 'needs_recheck', finding: { type: 'needs_recheck', roles: failedRoles, offices: t.badOffices.map((b) => b.name), reason: `strict re-check: ${r.changed} office(s) — needs proof: ${failedRoles.join(', ')}` } });
+    }
     else skipped++;
     heartbeat(WORKER, 'busy', `relabel ${done}/${targets.length}`);
     if (done % 25 === 0) writeFileSync(STATS_FILE, JSON.stringify({ at: new Date().toISOString(), done, targets: targets.length, offices_changed: officesChanged, skipped }, null, 1));

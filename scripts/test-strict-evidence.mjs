@@ -76,6 +76,36 @@ for (const [name, role, quote] of real) {
 // official-source guard still applies inside strict
 ok(strictRoleEvidence('building', ent('Building Department', 'The Building Department issues building permits for construction', 'https://facebook.com/testville'), 'Building Department', 'Testville', PROF).some((g) => g.includes('no_official_source')), 'unofficial source still fails');
 
+// ── path/title rescue of role_keyword_missing (approved loosening) ───────
+// Bainbridge — real entry: responsibility quote, official /departments/zoning/
+// path → zoning passes even though the quote lacks the word "zoning".
+{
+  const e = { office_name: 'Bainbridge Township Zoning Department', official_source_url: 'https://bainbridgetwp.com/departments/zoning/', responsibility_quote: 'It is in the permitting process that it is determined that the proposed use is permitted at a given location.', applicability: 'potentially_applicable' };
+  const gaps = strictRoleEvidence('zoning', e, 'Bainbridge Township Zoning Department', 'Bainbridge Township', { name: 'Bainbridge Township', state: 'OH', website_url: 'https://bainbridgetwp.com' });
+  ok(gaps.length === 0, `Bainbridge zoning rescued by /zoning path (${gaps.join(',')})`);
+  // Findlay zoning — /zoning path but the quote has no responsibility verb → NOT rescued
+  const f = { office_name: 'City of Findlay Zoning Department', official_source_url: 'https://www.findlayohio.gov/government/city-departments/zoning', responsibility_quote: 'Construction or alteration of any building or structure, including accessory buildings or structures and temporary or permanent signs.', applicability: 'potentially_applicable' };
+  ok(strictRoleEvidence('zoning', f, 'City of Findlay Zoning Department', 'Findlay', { name: 'Findlay', state: 'OH', website_url: 'https://www.findlayohio.gov' }).some((g) => g.includes('role_keyword_missing')), 'Findlay zoning not rescued — quote has no verb');
+}
+// Must-NOT-rescue cases (real entries from the sample)
+const noRescue = [
+  // Wickliffe — /Building-Department path cannot rescue sign_permit
+  ['Wickliffe Building Department', 'sign_permit', 'https://www.cityofwickliffe.com/158/Building-Department', 'The Building Department is responsible for the enforcement of residential building and zoning codes and the department issues most of the required permits within the City of Wickliffe.'],
+  // West Liberty — code-enforcement path cannot rescue sign_permit
+  ['Village of West Liberty Code Enforcement', 'sign_permit', 'https://www.mywestliberty.com/code-enforcement-officer.html', 'The Code Enforcement Officer handles zoning certificates and building permits.'],
+  // Winchester — generic building-inspections page cannot rescue electrical
+  ['Building Inspection Department', 'electrical_inspection', 'https://www.winchesterky.com/Departments/3/building-inspections', 'Inspection requests should be made at least 24 hours in advance and can be scheduled by calling 859-744-7019.'],
+  // Orwell — community-directory page cannot rescue sign_permit
+  ['Orwell Township Zoning Inspector', 'sign_permit', 'https://www.ashtabulacounty.gov/DocumentCenter/View/2229/Orwell-Twp---2023-Community-Directory', 'The zoning inspector is responsible for the general administration of zoning functions in the Township.'],
+];
+for (const [name, role, url, quote] of noRescue) {
+  const gaps = strictRoleEvidence(role, { office_name: name, official_source_url: url, responsibility_quote: quote, applicability: 'potentially_applicable' }, name, 'X', { name: 'X', state: 'OH', website_url: 'https://' + new URL(url).host });
+  ok(gaps.length > 0, `must not rescue: ${name} [${role}]`);
+}
+// And the positive control: same Wickliffe quote DOES satisfy zoning (quote
+// itself carries the zoning keyword — no rescue needed).
+ok(strictRoleEvidence('zoning', { office_name: 'Wickliffe Building Department', official_source_url: 'https://www.cityofwickliffe.com/158/Building-Department', responsibility_quote: 'The Building Department is responsible for the enforcement of residential building and zoning codes and issues most required permits.', applicability: 'potentially_applicable' }, 'Wickliffe Building Department', 'Wickliffe', { name: 'Wickliffe', state: 'OH', website_url: 'https://www.cityofwickliffe.com' }).length === 0, 'Wickliffe zoning passes on quote keyword');
+
 // ── researchForOffice: the fixed lookup levels ────────────────────────────
 const prof = { office_research: { roles: [
   { office_id: 'o-77', role: 'sign_permit', office_name: 'Wholly Different Name' },
@@ -97,6 +127,18 @@ ok(researchForOffice(prof, 'Sign Permit Issuer', { name: 'X' }, ['sign_permit'])
 }
 // office with no same-role research at all → empty
 ok(researchForOffice(prof, 'Nope', { name: 'X' }, ['right_of_way']).length === 0, 'no same-role entries → empty');
+// L2-county — a county-dept office's evidence lives on the parent county
+// profile (Waite Hill / Lake County Building Department pattern)
+{
+  const countyProf = { type: 'county', office_research: { roles: [
+    { role: 'building', office_name: 'Lake County Building Department', official_source_url: 'https://lakecountyohio.gov/building', responsibility_quote: 'x' },
+  ] } };
+  const hits = researchForOffice(prof, 'Lake County Building Department', { name: 'Waite Hill' }, ['building'], null, countyProf);
+  ok(hits.length === 1 && hits[0].office_name === 'Lake County Building Department', 'L2 county-profile name match');
+  // and the county union feeds L3 for role-typed lookups
+  const union = researchForOffice(prof, 'Odd Stub Name', { name: 'Waite Hill' }, ['building'], null, countyProf);
+  ok(union.some((r) => /lake county/i.test(r.office_name || '')), 'L3 union includes county entries');
+}
 
 console.log(`\n${fail ? 'FAIL' : 'PASS'} strict-evidence — ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

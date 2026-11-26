@@ -222,18 +222,33 @@ const WRONG_DEPT = /police|fire\b|ems\b|sheriff|water\b|sewer|utility|sanitation
 //   L3 profile union — every same-role entry in the profile (minus
 //      wrong-domain providers). Candidates only: the tightened check below
 //      still requires the office name in the quote or the entry name.
-export function researchForOffice(profile, officeName, loc, officeRoles = [], officeId = null) {
+export function researchForOffice(profile, officeName, loc, officeRoles = [], officeId = null, countyProfile = null) {
   const roles = Array.isArray(profile?.office_research?.roles) ? profile.office_research.roles : [];
+  // Provider-county profiles: a village office named "X County Building
+  // Department" is county-administered — its evidence was researched on the
+  // parent county's profile, which the own-profile lookup can never see.
+  const countyRoles = countyProfile && countyProfile !== profile
+    ? (Array.isArray(countyProfile?.office_research?.roles) ? countyProfile.office_research.roles : []) : [];
   // L1 — research stamped with the office record id.
   if (officeId) {
     const byId = roles.filter((r) => r?.office_id && r.office_id === officeId);
     if (byId.length) return byId;
   }
-  // L2 — name/alias, trying the entry's office_name AND label.
+  // L2 — name/alias, trying the entry's office_name AND label, in the own
+  // profile and the county profile's research. An exact normalized match in
+  // either pool outranks a substring containment in the other — "Test County
+  // Building Department" is the county entry verbatim, not the village's own
+  // "Building Department" which merely sits inside the longer name.
   const keys = new Set([norm(officeName), norm(cleanOfficeName(officeName).clean)].filter(Boolean));
   const namesOf = (r) => [r?.office_name, r?.label].map(norm).filter(Boolean);
-  const hits = roles.filter((r) => namesOf(r).some((rn) => [...keys].some((k) => rn === k || rn.includes(k) || k.includes(rn))));
+  const exactHit = (r) => namesOf(r).some((rn) => keys.has(rn));
+  const nameHit = (r) => namesOf(r).some((rn) => [...keys].some((k) => rn === k || rn.includes(k) || k.includes(rn)));
+  const exact = [...roles.filter(exactHit), ...countyRoles.filter(exactHit)];
+  if (exact.length) return exact;
+  const hits = roles.filter(nameHit);
   if (hits.length) return hits;
+  const countyHits = countyRoles.filter(nameHit);
+  if (countyHits.length) return countyHits;
   // Stub offices: county-administered / shared-service / loc-named loose
   // match (unchanged — see block comment above).
   let loose = [];
@@ -250,11 +265,12 @@ export function researchForOffice(profile, officeName, loc, officeRoles = [], of
     });
     if (loose.length) return loose;
   }
-  // L3 — profile union: a same-role entry IS the discovered authority for a
-  // stub, and a candidate for a drifted real name. The strict check gates
-  // misattribution (office name must appear in the quote or the entry name).
+  // L3 — profile union (+ county union): a same-role entry IS the discovered
+  // authority for a stub, and a candidate for a drifted real name. The
+  // strict check gates misattribution (office name must appear in the quote
+  // or the entry name).
   if (officeRoles.length) {
-    const byRole = roles.filter((r) => officeRoles.includes(r?.role) && !WRONG_DEPT.test(String(r?.office_name || r?.label || '')));
+    const byRole = [...roles, ...countyRoles].filter((r) => officeRoles.includes(r?.role) && !WRONG_DEPT.test(String(r?.office_name || r?.label || '')));
     if (byRole.length) return byRole;
   }
   return loose;
@@ -266,10 +282,23 @@ export function researchForOffice(profile, officeName, loc, officeRoles = [], of
 // generic / non-permit / placeholder, AND its distinctive tokens appear in
 // the quote or in the entry's provider name (the alias path — a "Sign permit
 // issuer" entry still counts when it names this office's real provider).
+// A quote missing the role keyword may still be rescued by its own page:
+// the role keyword in the URL path or the stored page title counts when the
+// quote is a real responsibility sentence (permit/issue/review/administer/
+// inspect/enforce verb, ≥40 chars — nav and title-only quotes never qualify)
+// and the source is official. sign_permit is NOT rescued by a /zoning or
+// /building path; electrical is not rescued by /building-inspections.
+const RESP_VERB = /permits?|issu|review|administ|inspect|enforc/i;
+const urlPath = (u) => { try { return new URL(u).pathname; } catch { return String(u || ''); } };
 export function strictRoleEvidence(role, entry, officeName, locName, profile) {
   const gaps = roleEvidence(role, entry, profile);
   const q = clean(entry?.responsibility_quote);
-  if (ROLE_FUNC[role] && !ROLE_FUNC[role].test(q)) gaps.push(`${role}:role_keyword_missing`);
+  let kwOk = !ROLE_FUNC[role] || ROLE_FUNC[role].test(q);
+  if (!kwOk && ROLE_FUNC[role] && q.length >= 40 && RESP_VERB.test(q)) {
+    const src = clean(entry?.official_source_url);
+    if (src && isOfficialSource(src, profile) && (ROLE_FUNC[role].test(urlPath(src)) || ROLE_FUNC[role].test(clean(entry?.page_title) || clean(entry?.title)))) kwOk = true;
+  }
+  if (!kwOk) gaps.push(`${role}:role_keyword_missing`);
   const cname = cleanOfficeName(officeName).clean;
   if (!cname || isGenericOfficeName(cname) || isNonPermitOfficeName(officeName) || isPlaceholderOffice(officeName, locName)) {
     gaps.push(`${role}:office_name_junk`);
@@ -303,6 +332,35 @@ async function loadLocalities() {
   return (await mirrorRead('localities', 20 * 60 * 1000, async () => null)) || [];
 }
 
+// Provider-county index: `${state}|${norm(county name)}` → county profile.
+// A village office named "X County Building Department" is county-administered
+// — its evidence was researched on the county's profile, which its own
+// linked profile never contains (the 650-office no_matching_entry class).
+export function buildCountyIndex(rows) {
+  const m = new Map();
+  for (const p of rows || []) {
+    if (String(p?.type) !== 'county' || !p?.name) continue;
+    const k = `${String(p.state || '').toUpperCase().trim()}|${normalizePermitJurisdictionName(p.name)}`;
+    const prev = m.get(k);
+    if (!prev) { m.set(k, p); continue; }
+    // Identity-equal county dupes carry research too (Darke County has an
+    // 8-entry row and an empty one) — union the roles so the empty row
+    // can't shadow the researched one.
+    const extra = p.office_research?.roles || [];
+    if (extra.length) m.set(k, { ...prev, office_research: { ...(prev.office_research || {}), roles: [...(prev.office_research?.roles || []), ...extra] } });
+  }
+  return m;
+}
+export function countyProfileFor(loc, countyIndex) {
+  if (!loc || !countyIndex) return null;
+  const st = String(loc.state || '').toUpperCase().trim();
+  for (const part of String(loc.county_name || loc.parent_county_name || '').split('/')) {
+    const hit = countyIndex.get(`${st}|${normalizePermitJurisdictionName(part.trim())}`);
+    if (hit) return hit;
+  }
+  return null;
+}
+
 function profileFor(loc, idx) {
   if (loc.jurisdiction_profile_id && idx.byId.has(loc.jurisdiction_profile_id)) return idx.byId.get(loc.jurisdiction_profile_id);
   return idx.byKey.get(`${loc.state}|${normalizePermitJurisdictionName(loc.name || '')}|${normalizePermitJurisdictionName(loc.county_name || '')}`) ||
@@ -323,6 +381,7 @@ const pageText = (html) => comparableText(String(html || '').replace(/<script[\s
 
 async function pass(onlyNames = null) {
   const [idx, localities] = await Promise.all([loadProfiles(), loadLocalities()]);
+  const countyIndex = buildCountyIndex(idx.rows);
   const only = onlyNames ? new Set(onlyNames.map((h) => `${String(h.name || '').toLowerCase().trim()}|${String(h.state || '').toUpperCase().trim()}`)) : null;
   // Fresh-first ordering: enrichers append name|state to verify-first.jsonl
   // the moment evidence lands — re-judging those localities immediately cuts
@@ -383,13 +442,14 @@ async function pass(onlyNames = null) {
     // Research union: the linked profile's roles PLUS every identity-equal
     // profile's (historical dupes carry research too), deduped role+url+quote.
     const researchProfile = withUnionResearch(idx.identity, profile);
+    const countyProfile = countyProfileFor(loc, countyIndex);
     let changed = false;
     const okList = [];
     const next = offices.map((o) => ({ ...o }));
     for (const o of next) {
       if ((o?.authority_verification_status !== 'needs_verification' && o?.authority_verification_status !== 'needs_recheck') || !Array.isArray(o?.authority_roles) || !o.authority_roles.length) continue;
       scanned += 1;
-      const hits = researchForOffice(researchProfile, o.name, loc, o.authority_roles, o.id);
+      const hits = researchForOffice(researchProfile, o.name, loc, o.authority_roles, o.id, countyProfile);
       // Research hasn't reached this office yet — WIP, not a gap. Recorded
       // as no_research but no attempt is burned (nothing evaluated).
       if (!hits.length) { recordOffice(loc, o, { status: 'needs_verification', reasons: ['no_research'], missing: o.authority_roles }); continue; }

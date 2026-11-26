@@ -50,7 +50,7 @@ export function boostTargets(boosts, locById, nextTierFor) {
   return [...byLoc.values()].sort((a, z) => BOOST_CLASS[a.b.cls] - BOOST_CLASS[z.b.cls]).map(({ b, loc }) => ({
     boost: b.bid, boostCls: b.cls, locality_id: loc.id, loc,
     offices: (loc.offices || []).filter((o) => o.authority_verification_status !== 'staff_verified').map((o) => o.id || o.name),
-    reasons: [b.finding?.type || 'audit_finding'], missing_roles: [],
+    reasons: [b.finding?.type || 'audit_finding'], missing_roles: b.finding?.roles || [],
     finding: b.finding || null,
     tier: typeof nextTierFor === 'function' ? nextTierFor(loc.id) || 1 : 1,
   }));
