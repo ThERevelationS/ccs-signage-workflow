@@ -18,7 +18,7 @@ import {
 import { format, differenceInDays } from "date-fns";
 import { ChevronDown, ChevronRight, ExternalLink, Info, Loader2, MapPin, ShieldAlert, Trash2, UserRoundPlus } from "lucide-react";
 import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
-import { isPermitLineEffectivelyComplete } from "./permitQueue";
+import { firstIncompleteStep, isPermitLineEffectivelyComplete } from "./permitQueue";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { normalizePermitJurisdictionName } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust, isJurisdictionPlaceholder } from "./jurisdictionTrust";
@@ -119,6 +119,8 @@ export default function PermitSpreadsheetRow({
   users,
   currentUser,
   today,
+  expanded,
+  onToggle: toggleExpanded,
   installDate = ""
 }) {
   const [openDatePopover, setOpenDatePopover] = useState(null);
@@ -131,20 +133,6 @@ export default function PermitSpreadsheetRow({
   const [jurisdictionPreviewLoading, setJurisdictionPreviewLoading] = useState(false);
   const [jurisdictionPreviewError, setJurisdictionPreviewError] = useState("");
   const [jurisdictionMatches, setJurisdictionMatches] = useState(null);
-  // Collapsed-by-default completed lines; expanded by default for active work.
-  const expandKey = `permitline_expanded_${lineItem.id}`;
-  const [expanded, setExpanded] = useState(() => {
-    try {
-      const saved = localStorage.getItem(expandKey);
-      if (saved != null) return saved === "1";
-    } catch {}
-    return !isPermitLineEffectivelyComplete(lineItem);
-  });
-  const toggleExpanded = () => setExpanded(v => {
-    const n = !v;
-    try { localStorage.setItem(expandKey, n ? "1" : "0"); } catch {}
-    return n;
-  });
   const headerScrollRef = useRef(null);
   const dataScrollRef = useRef(null);
   const linkOfficeTriggerRef = useRef(null);
@@ -257,30 +245,21 @@ export default function PermitSpreadsheetRow({
       style={followupStyle}
     >
       {!expanded ? (() => {
-        const filledSteps = steps.filter(s => s.type === 'checkbox' ? s.checked : String(s.value || '').trim()).length;
-        return (
-          <button type="button" onClick={toggleExpanded} aria-expanded={false}
-            className="flex w-full items-center gap-2 text-left py-0.5">
-            <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-            <span className="flex items-center gap-1 flex-wrap flex-shrink-0">
-              {expectedReplyOverdue && <span className="text-[9px] font-bold px-1.5 py-px rounded-full bg-amber-100 text-amber-800 border border-amber-400">PAST DUE</span>}
-              {permitExpired && <span className="text-[9px] font-bold px-1.5 py-px rounded-full bg-red-50 text-red-800 border border-red-400">RENEWAL</span>}
-              {officeTypes.slice(0, 3).map((t, i) => {
-                const st = getTypeStyle(t);
-                return <span key={i} className="text-[9px] font-bold px-1.5 py-px rounded-full" style={{ backgroundColor: st.bg, color: st.text, border: `1px solid ${st.border}` }}>{t}</span>;
-              })}
-            </span>
-            <span className="truncate font-medium text-[12px] text-gray-800 flex-1">{localityLabel}</span>
-            <span className="text-[10px] text-gray-500 flex-shrink-0">{filledSteps}/{steps.length} steps</span>
-            {lineItem.next_followup_date && !isCompleted && (
-              <span className="text-[10px] text-amber-700 flex-shrink-0">follow-up {lineItem.next_followup_date.slice(5)}</span>
-            )}
-            {lineItem.assigned_to && <span className="text-[10px] text-gray-400 flex-shrink-0 truncate max-w-[100px]">{lineItem.assigned_to}</span>}
-            {lineItem.permit_number && <span className="text-[10px] font-semibold text-emerald-700 flex-shrink-0">#{lineItem.permit_number}</span>}
-          </button>
-        );
+        const next = firstIncompleteStep(lineItem);
+        return <button type="button" onClick={toggleExpanded} aria-expanded={false}
+          className="grid w-full min-w-0 gap-2 rounded py-2 text-left text-xs sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,.8fr)] sm:items-center">
+          <span className="flex min-w-0 items-start gap-2"><ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-purple-700" /><span className="min-w-0">
+            <strong className="block break-words text-sm text-slate-900">{lineItem.row_name || officeAuthority?.office_name || officeTypes.join(", ") || "Permit"}</strong>
+            <span className="text-slate-600">{localityLabel}{lineItem.permit_number && ` · #${lineItem.permit_number}`}</span>
+          </span></span>
+          <span className="pl-6 sm:pl-0"><span className="block text-slate-500">Current step</span>{isCompleted ? "Complete" : next?.name || "Review permit"}
+            {(expectedReplyOverdue || permitExpired) && <strong className="block text-amber-800">{permitExpired ? "Renewal needed" : "Reply overdue"}</strong>}
+          </span>
+          <span className="pl-6 text-slate-700 sm:pl-0">{lineItem.assigned_to || "Unassigned"}<span className="block text-slate-500">Follow-up: {lineItem.next_followup_date || "Not scheduled"}</span></span>
+        </button>;
       })() : (
       <>
+      <p className="mb-2 text-sm font-semibold text-slate-900">{lineItem.row_name || officeAuthority?.office_name || "Permit details"} · {localityLabel}</p>
       {/* MICRO HEADER — office-type badges + column labels */}
       <div
         className="mb-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1.5 sm:grid-cols-[130px_minmax(0,1fr)_auto] sm:gap-x-3"
