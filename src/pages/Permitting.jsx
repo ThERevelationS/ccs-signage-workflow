@@ -1568,7 +1568,7 @@ export default function Permitting() {
         />
       )}
 
-      {handoff && <PermitHandoff initial={handoff} canEdit={isRegistered} onSave={updateStep} onClose={() => setHandoff(null)} />}
+      {handoff && <PermitHandoff today={today} initial={handoff} canEdit={isRegistered} onSave={updateStep} onClose={() => setHandoff(null)} />}
     </div>
   );
 }
