@@ -514,7 +514,11 @@ Deno.serve(async (req) => {
         const stateRows = await GlobalSettings.filter({ setting_key: "notification_eval_state" }, null, 1).catch(() => []);
         const stateRow = list(stateRows)[0] || null;
         let lastGlobal = 0;
-        try { lastGlobal = Date.parse(JSON.parse(String(stateRow?.setting_value || "{}"))?.last_eval_at || "") || 0; } catch { lastGlobal = 0; }
+        try {
+          const sv = stateRow?.setting_value;
+          const parsed = sv && typeof sv === "object" ? sv : JSON.parse(String(sv || "{}"));
+          lastGlobal = Date.parse(parsed?.last_eval_at || "") || 0;
+        } catch { lastGlobal = 0; }
         if (lastGlobal && nowMs - lastGlobal < EVAL_THROTTLE_MS) {
           evalMemoryAt = lastGlobal; // align the fast in-isolate gate with shared state
           return Response.json({ success: true, action, throttled: true, next_eval_in_ms: EVAL_THROTTLE_MS - (nowMs - lastGlobal) });
@@ -779,7 +783,7 @@ Deno.serve(async (req) => {
       try {
         const stampRows = await GlobalSettings.filter({ setting_key: "notification_eval_state" }, null, 1).catch(() => []);
         const stampRow = list(stampRows)[0] || null;
-        const stampValue = JSON.stringify({ last_eval_at: iso() });
+        const stampValue = { last_eval_at: iso() };
         if (stampRow?.id) await GlobalSettings.update(stampRow.id, { setting_value: stampValue });
         else await GlobalSettings.create({ setting_key: "notification_eval_state", setting_value: stampValue });
       } catch (e: any) { evalStampWarning = String(e?.message || e); }
