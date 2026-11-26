@@ -548,6 +548,7 @@ export function getPermitGroupQueueState(group, today) {
   if (storedCompletionConflictLine) {
     return {
       key: "needs_action",
+      nextSection: "handoff",
       nextLineId: storedCompletionConflictLine.id,
       nextAction: `Reopen ${lineLabel(storedCompletionConflictLine)} before continuing its recorded permit work.`,
       followupDate: "",
@@ -561,6 +562,7 @@ export function getPermitGroupQueueState(group, today) {
   if (feeDueLine) {
     return {
       key: "needs_action",
+      nextSection: "fee",
       nextLineId: feeDueLine.id,
       nextAction: `Resolve the recorded jurisdiction fee due for ${lineLabel(feeDueLine)}.`,
       followupDate: "",
@@ -574,6 +576,7 @@ export function getPermitGroupQueueState(group, today) {
   if (failedInspectionLine) {
     return {
       key: "needs_action",
+      nextSection: "inspection",
       nextLineId: failedInspectionLine.id,
       nextAction: `Resolve the failed inspection items for ${lineLabel(failedInspectionLine)} and prepare for reinspection.`,
       followupDate: "",
@@ -587,6 +590,7 @@ export function getPermitGroupQueueState(group, today) {
   if (inspectionRequiredLine) {
     return {
       key: "needs_action",
+      nextSection: "inspection",
       nextLineId: inspectionRequiredLine.id,
       nextAction: `Book the inspection for ${lineLabel(inspectionRequiredLine)}.`,
       followupDate: "",
@@ -602,6 +606,7 @@ export function getPermitGroupQueueState(group, today) {
     if (!inspectionDate) {
       return {
         key: "needs_action",
+        nextSection: "inspection",
         nextLineId: inspectionScheduledLine.id,
         nextAction: `Record the scheduled inspection date for ${lineLabel(inspectionScheduledLine)}.`,
         followupDate: "",
@@ -615,6 +620,7 @@ export function getPermitGroupQueueState(group, today) {
       const daysPast = Math.abs(daysUntilInspection || 0);
       return {
         key: "overdue",
+        nextSection: "inspection",
         nextLineId: inspectionScheduledLine.id,
         nextAction: `Confirm the inspection outcome for ${lineLabel(inspectionScheduledLine)}.`,
         followupDate: inspectionDate,
@@ -625,6 +631,7 @@ export function getPermitGroupQueueState(group, today) {
     if (todayKey && inspectionDate === todayKey) {
       return {
         key: "due_today",
+        nextSection: "inspection",
         nextLineId: inspectionScheduledLine.id,
         nextAction: `Inspection is scheduled today for ${lineLabel(inspectionScheduledLine)}.`,
         followupDate: inspectionDate,
@@ -634,6 +641,7 @@ export function getPermitGroupQueueState(group, today) {
     }
     return {
       key: "waiting",
+      nextSection: "inspection",
       nextLineId: inspectionScheduledLine.id,
       nextAction: `Inspection is scheduled for ${formatDateKey(inspectionDate)} for ${lineLabel(inspectionScheduledLine)}.`,
       followupDate: inspectionDate,
@@ -648,6 +656,7 @@ export function getPermitGroupQueueState(group, today) {
   if (inspectionPassedLine) {
     return {
       key: "needs_action",
+      nextSection: "inspection",
       nextLineId: inspectionPassedLine.id,
       nextAction: `Complete permit closeout for ${lineLabel(inspectionPassedLine)}.`,
       followupDate: "",
@@ -661,6 +670,7 @@ export function getPermitGroupQueueState(group, today) {
   if (receivedButOpenLine) {
     return {
       key: "needs_action",
+      nextSection: "handoff",
       nextLineId: receivedButOpenLine.id,
       nextAction: `The permit for ${lineLabel(receivedButOpenLine)} came back — check it over and mark the line done when everything's finished.`,
       followupDate: "",
@@ -704,6 +714,7 @@ export function getPermitGroupQueueState(group, today) {
   if (correctionLine) {
     return {
       key: "needs_action",
+      nextSection: "corrections",
       nextLineId: correctionLine.id,
       nextAction: `Address corrections for ${lineLabel(correctionLine)} and prepare the resubmission.`,
       followupDate: "",
