@@ -376,7 +376,7 @@ async function pass(onlyNames = null) {
     if (only && !only.has(`${String(loc.name || '').toLowerCase().trim()}|${String(loc.state || '').toUpperCase().trim()}`)) continue;
     if (SLICES > 1 && Math.abs(hash(loc.id)) % SLICES !== SLICE) continue;
     const offices = Array.isArray(loc.offices) ? loc.offices : [];
-    const candidates = offices.filter((o) => o?.authority_verification_status === 'needs_verification' && Array.isArray(o?.authority_roles) && o.authority_roles.length);
+    const candidates = offices.filter((o) => (o?.authority_verification_status === 'needs_verification' || o?.authority_verification_status === 'needs_recheck') && Array.isArray(o?.authority_roles) && o.authority_roles.length);
     if (!candidates.length) continue;
     const profile = profileFor(loc, idx);
     if (!profile) { for (const o of candidates) recordOffice(loc, o, { status: 'needs_verification', reasons: ['no_profile'], missing: o.authority_roles }); continue; } // no repository identity — the sweep/research pipeline owns that gap
@@ -387,7 +387,7 @@ async function pass(onlyNames = null) {
     const okList = [];
     const next = offices.map((o) => ({ ...o }));
     for (const o of next) {
-      if (o?.authority_verification_status !== 'needs_verification' || !Array.isArray(o?.authority_roles) || !o.authority_roles.length) continue;
+      if ((o?.authority_verification_status !== 'needs_verification' && o?.authority_verification_status !== 'needs_recheck') || !Array.isArray(o?.authority_roles) || !o.authority_roles.length) continue;
       scanned += 1;
       const hits = researchForOffice(researchProfile, o.name, loc, o.authority_roles, o.id);
       // Research hasn't reached this office yet — WIP, not a gap. Recorded
@@ -478,6 +478,7 @@ async function pass(onlyNames = null) {
         if (Array.isArray(o.office_types)) o.office_types = proven.map((r) => RT[r] || r);
         if (o.office_type) o.office_type = RT[proven[0]] || o.office_type;
         o.authority_verification_status = 'staff_verified';
+        delete o.recheck_reason; delete o.recheck_at; // re-proven — the needs_recheck label clears
         o.verified_by = 'evidence-pipeline';
         o.verified_at = new Date().toISOString();
         // MP-5.2 — office-level tier: 'verified' only when EVERY proven role
@@ -513,7 +514,10 @@ async function pass(onlyNames = null) {
         const NAME_STRUCT = /office_name_junk|office_name_absent_from_evidence/;
         const burnable = trimmed.some((g) => !NAME_STRUCT.test(g));
         const missing = trimmed.map((g) => g.split(':')[0]).filter((v, i, a) => a.indexOf(v) === i);
-        recordOffice(loc, o, { status: 'needs_verification', reasons: trimmed.map((g) => gapCat(g.split(':').slice(1).join(':'))), missing, countAttempt: burnable });
+        // A needs_recheck office that still fails keeps its recheck status in
+        // the office-state ledger — it is its own bucket, not a fresh gap.
+        const outStatus = o.authority_verification_status === 'needs_recheck' ? 'needs_recheck' : 'needs_verification';
+        recordOffice(loc, o, { status: outStatus, reasons: trimmed.map((g) => gapCat(g.split(':').slice(1).join(':'))), missing, countAttempt: burnable });
       }
     }
     if (changed && !DRY) {
@@ -555,7 +559,7 @@ function writeVerificationLedger(localities, officeState, passStart) {
   try {
     const st = officeState.offices || {};
     const jur = { all_verified: 0, some_verified: 0, none_verified: 0, no_offices: 0 };
-    const offices = { total: 0, staff_verified: 0, needs_verification: 0, needs_review: 0 };
+    const offices = { total: 0, staff_verified: 0, needs_verification: 0, needs_review: 0, needs_recheck: 0 };
     const gapReasons = {}, missingRoles = {};
     const tomb = new Set(localities.filter((l) => l?.duplicate_of).map((l) => l.id));
     // Needs-a-person requires both strikes AND research exhaustion — offices
@@ -578,6 +582,7 @@ function writeVerificationLedger(localities, officeState, passStart) {
       if (v === offs.length) jur.all_verified++; else if (v) jur.some_verified++; else jur.none_verified++;
       for (const o of offs) {
         offices.total++;
+        if (o.authority_verification_status === 'needs_recheck') { offices.needs_recheck++; continue; }
         const ok = o.authority_verification_status === 'staff_verified';
         if (ok) { offices.staff_verified++; continue; }
         const rec = st[`${l.id}:${o.id || o.name}`];

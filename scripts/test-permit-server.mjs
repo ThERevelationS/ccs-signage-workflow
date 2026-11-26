@@ -31,9 +31,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 {
   const run = { state: 'running', verification: true, expansion: false, expansion_locked: true };
   const active = activeSetFor(run);
-  assert.equal(active.length, 73); // dash + flusher + mirror + 64 local-res slots + seed + verifier + hygiene + profile-relink + ai-extractor + ai-auditor
+  assert.equal(active.length, 74); // dash + flusher + mirror + 64 local-res slots + seed + verifier + hygiene + profile-relink + ai-extractor + ai-auditor + recheck-relabel
   assert.ok(active.includes('write-flusher') && active.includes('local-res-15') && active.includes('local-res-63') && active.includes('dashboard'));
   assert.ok(!active.includes('office-sweep-0') && !active.includes('forever-runner'));
+  // needs_recheck flag off → the relabel worker stays dormant
+  const dormant = activeSetFor({ ...run, needs_recheck: false });
+  assert.ok(!dormant.includes('recheck-relabel'));
   // paused keeps the same process set — workers self-idle, none are killed
   assert.deepEqual(activeSetFor({ ...run, state: 'paused' }).sort(), active.sort());
   // stopped leaves only the dashboard so the UI can start it again
@@ -42,7 +45,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const locked = activeSetFor({ ...run, expansion: true, expansion_locked: true });
   assert.ok(!locked.includes('office-sweep-0'));
   const open = activeSetFor({ ...run, expansion: true, expansion_locked: false });
-  assert.equal(open.length, 79);
+  assert.equal(open.length, 80);
   assert.ok(open.includes('office-sweep-3') && open.includes('parcel-resolver') && open.includes('forever-runner'));
   // verification OFF drops its whole group, keeps core
   const off = activeSetFor({ ...run, verification: false });
@@ -59,7 +62,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const culledRes = culled.filter((n) => /^local-res-/.test(n));
   assert.deepEqual(culledRes.sort(), [...wanted].sort());
   assert.equal(culledRes.length, 5);
-  assert.equal(culled.length, 73 - 64 + 5); // window replaces the full slot set
+  assert.equal(culled.length, 74 - 64 + 5); // window replaces the full slot set
   assert.ok(culled.includes('authority-verifier') && culled.includes('write-flusher'));
   // empty wanted set → no researcher processes at all
   assert.equal(activeSetFor(run, undefined, []).filter((n) => /^local-res-/.test(n)).length, 0);
@@ -78,7 +81,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   // the pause set: non-researcher workers only — flusher + dashboard exempt,
   // researchers are culled from the spawn set, never paused
   const l2 = guardPausedNames(2);
-  assert.equal(l2.length, 7); // mirror-sync + seed-scan + verifier + hygiene + profile-relink + ai-extractor + ai-auditor
+  assert.equal(l2.length, 8); // mirror-sync + seed-scan + verifier + hygiene + profile-relink + ai-extractor + ai-auditor + recheck-relabel
   assert.ok(!l2.includes('write-flusher') && !l2.includes('dashboard') && !l2.includes('local-res-3') && !l2.includes('office-sweep-1'));
   assert.ok(l2.includes('mirror-sync') && l2.includes('authority-verifier'));
 }

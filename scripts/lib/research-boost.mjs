@@ -11,11 +11,13 @@ const readJsonl = (f) => { try { return readFileSync(f, 'utf8').split('\n').filt
 const append = (f, o) => { try { writeFileSync(openSync(f, 'a'), JSON.stringify(o) + '\n', { flag: 'a' }); } catch {} };
 
 // Lane classes in priority order — the audit tab's ordering contract:
-// demoted verified offices → wrong_jurisdiction/county → contact/duplicate.
-export const BOOST_CLASS = { demote: 0, jurisdiction: 1, contact: 2 };
+// demoted verified offices → wrong_jurisdiction/county → contact/duplicate,
+// then needs_recheck re-proofs ahead of the normal gap tiers.
+export const BOOST_CLASS = { demote: 0, jurisdiction: 1, contact: 2, recheck: 3 };
 export function boostClassFor(type) {
   if (type === 'demote') return 'demote';
   if (type === 'wrong_jurisdiction' || type === 'wrong_county_or_type') return 'jurisdiction';
+  if (type === 'needs_recheck' || type === 'recheck') return 'recheck';
   return 'contact'; // contact_mismatch, duplicate_office, anything else routed
 }
 

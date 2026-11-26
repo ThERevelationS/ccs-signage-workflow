@@ -144,11 +144,14 @@ function deterministicAgrees(meta, finding) {
 async function demote(locality_id, office_id, reason) {
   const live = await readById('PermitLocality', locality_id).catch(() => null);
   if (!live?.offices) return false;
+  // needs_recheck keeps contacts and visibility but stops counting as
+  // verified; needs_verification is the fallback while the flag is off.
+  const label = readControl().needs_recheck ? 'needs_recheck' : 'needs_verification';
   let changed = false;
   const offices = live.offices.map((o) => {
     if ((o.id || o.name) !== office_id) return o;
     changed = true;
-    return { ...o, authority_verification_status: 'needs_verification' };
+    return { ...o, authority_verification_status: label, ...(label === 'needs_recheck' ? { recheck_reason: `ai-audit: ${reason}`, recheck_at: new Date().toISOString() } : {}) };
   });
   if (!changed) return false;
   enqueue({ entity: 'PermitLocality', op: 'update', id: locality_id, data: { offices }, priority: 1, note: `ai-audit demote — ${reason}` });

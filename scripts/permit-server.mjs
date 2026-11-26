@@ -75,6 +75,8 @@ function catalog() {
     // when their flag is off, so the dashboard can show why.
     { name: 'ai-extractor', group: 'verification', script: 'scripts/permitting-ai-extractor.mjs', env: { DEVIN_LLM_QUEUE: 'extract', DEVIN_LLM_SESSIONS: '2', DEVIN_LLM_BATCH: '5' }, events: ['ai-extractor'], flag: 'ai_extract' },
     { name: 'ai-auditor', group: 'verification', script: 'scripts/permitting-ai-auditor.mjs', env: { DEVIN_LLM_QUEUE: 'audit', DEVIN_LLM_SESSIONS: '1', DEVIN_LLM_BATCH: '5' }, events: ['ai-auditor'], flag: 'ai_audit' },
+    // Strict relabel — dormant until the needs_recheck flag is flipped on.
+    { name: 'recheck-relabel', group: 'verification', script: 'scripts/permitting-recheck-relabel.mjs', events: ['recheck-relabel'], flag: 'needs_recheck' },
   ];
   // 64 interchangeable researcher slots — dynamic claims share work, so the
   // live count is whatever the gates allow (auto) or the user asked (manual).

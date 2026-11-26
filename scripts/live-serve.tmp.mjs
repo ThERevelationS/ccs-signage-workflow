@@ -677,6 +677,7 @@ function renderOverview(){
  +'<div class="tiles">'
  +'<div class="tile"><div class="t">Verified in the last hour</div><div class="v ok">'+num((vp()&&vp().promotions&&vp().promotions.last_hour)||0)+'</div><div class="s">'+num((vp()&&vp().promotions&&vp().promotions.last_24h)||0)+' in the last 24 hours</div></div>'
  +'<div class="tile"><div class="t">Left to verify</div><div class="v">'+num(o.needs_verification||0)+'</div><div class="s">'+num(o.needs_review||0)+' need a person</div></div>'
+ +'<div class="tile"><div class="t">Verified — needs re-check</div><div class="v">'+num(o.needs_recheck||0)+'</div><div class="s">verified earlier, now being re-proven</div></div>'
  +'<div class="tile"><div class="t">Estimated finish</div><div class="v" style="font-size:16px;line-height:1.35">'+esc(etaText())+'</div><div class="s">at the current pace</div></div>'
  +'<div class="tile"><div class="t">Memory</div><div class="v" style="font-size:16px;line-height:1.35">'+gb(mem.free_gb)+' free</div><div class="s">of '+gb(mem.total_gb)+' total · the server uses '+gb(mem.fleet_rss_gb)+'</div></div></div>'
  +'<div class="card"><h2>Needs you <span class="dim" style="font-weight:400">('+ny.length+')</span></h2>'
