@@ -29,17 +29,6 @@ const parseLocalDate = (dateString) => {
   return new Date(year, month - 1, day);
 };
 
-const stepTypeIcon = (type) => {
-  switch (type) {
-    case 'checkbox': return '☑';
-    case 'submitted_date': return '📅';
-    case 'followup_date': return '🔔';
-    case 'permit_received_date': return '✅';
-    case 'text': return '📝';
-    default: return '';
-  }
-};
-
 // Office type color coding — supports multiple types via array
 const officeTypeColors = {
   "Zoning": { bg: '#FEF3C7', text: '#92400E', border: '#F59E0B' },
@@ -56,16 +45,7 @@ const getOfficeTypes = (lineItem) => {
   return [];
 };
 
-// Dynamic column width — checkboxes compact, date/text scale with label
-const getColWidth = (step) => {
-  const name = step?.name || "";
-  if (step.type === 'checkbox') {
-    return Math.max(64, Math.min(200, name.length * 7.5 + 20));
-  }
-  return Math.max(100, Math.min(220, name.length * 7.5 + 30));
-};
-
-function CommitStepTextInput({ value, disabled, onCommit }) {
+function CommitStepTextInput({ value, disabled, onCommit, label }) {
   const normalizedValue = value || "";
   const [draft, setDraft] = useState(normalizedValue);
   const cancelCommitRef = useRef(false);
@@ -97,8 +77,9 @@ function CommitStepTextInput({ value, disabled, onCommit }) {
         }
       }}
       disabled={disabled}
-      placeholder="…"
-      className="h-7 border-none p-0 px-1 text-[13px] shadow-none placeholder:text-gray-300 hover:bg-gray-100 focus:bg-white"
+      aria-label={label}
+      placeholder="Enter details"
+      className="h-10 bg-white text-sm shadow-none"
     />
   );
 }
@@ -133,11 +114,9 @@ export default function PermitSpreadsheetRow({
   const [jurisdictionPreviewLoading, setJurisdictionPreviewLoading] = useState(false);
   const [jurisdictionPreviewError, setJurisdictionPreviewError] = useState("");
   const [jurisdictionMatches, setJurisdictionMatches] = useState(null);
-  const headerScrollRef = useRef(null);
-  const dataScrollRef = useRef(null);
   const linkOfficeTriggerRef = useRef(null);
   const linkOfficeSelectRef = useRef(null);
-  const syncingScrollRef = useRef(false);
+  const nextStep = firstIncompleteStep(lineItem);
 
   const isCompleted = isPermitLineEffectivelyComplete(lineItem);
   const steps = lineItem.steps || [];
@@ -229,16 +208,6 @@ export default function PermitSpreadsheetRow({
     }
   };
 
-  const syncHorizontalScroll = (sourceRef, targetRef) => {
-    if (syncingScrollRef.current) return;
-    const source = sourceRef.current;
-    const target = targetRef.current;
-    if (!source || !target || source.scrollLeft === target.scrollLeft) return;
-    syncingScrollRef.current = true;
-    target.scrollLeft = source.scrollLeft;
-    requestAnimationFrame(() => { syncingScrollRef.current = false; });
-  };
-
   return (
     <div
       className={`group/line px-3 py-2 transition-colors ${isCompleted ? 'opacity-60 bg-gray-50/40' : 'hover:bg-gray-50/40'}`}
@@ -259,19 +228,13 @@ export default function PermitSpreadsheetRow({
         </button>;
       })() : (
       <>
-      <p className="mb-2 text-sm font-semibold text-slate-900">{lineItem.row_name || officeAuthority?.office_name || "Permit details"} · {localityLabel}</p>
-      {/* MICRO HEADER — office-type badges + column labels */}
-      <div
-        className="mb-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1.5 sm:grid-cols-[130px_minmax(0,1fr)_auto] sm:gap-x-3"
-        style={{ fontSize: '12px' }}
-      >
-        {/* Office type badges (possibly multiple) */}
-        <div className="col-start-1 row-start-1 flex min-w-0 flex-wrap items-center gap-1 pt-0.5 sm:w-[130px] sm:flex-shrink-0">
-          <button type="button" onClick={toggleExpanded} aria-expanded={true}
-            className="rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 -ml-1"
-            title="Collapse this line">
-            <ChevronDown className="w-3.5 h-3.5" />
-          </button>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <button type="button" onClick={toggleExpanded} aria-expanded={true} title="Collapse permit"
+          className="flex min-h-10 min-w-0 items-center gap-2 rounded text-left font-semibold text-slate-900 hover:text-purple-800">
+          <ChevronDown className="h-4 w-4 shrink-0" />
+          {lineItem.row_name || officeAuthority?.office_name || "Permit details"} · {localityLabel}
+        </button>
+        <div className="flex flex-wrap items-center gap-1">
           {expectedReplyOverdue && (
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-tight" style={{ backgroundColor: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }} title="The office's stated reply date has passed — time to call them.">PAST DUE</span>
           )}
@@ -300,28 +263,10 @@ export default function PermitSpreadsheetRow({
           })}
         </div>
 
-        <div
-          ref={headerScrollRef}
-          onScroll={() => syncHorizontalScroll(headerScrollRef, dataScrollRef)}
-          className="col-span-2 row-start-2 flex min-w-0 items-end overflow-x-auto overscroll-x-contain sm:col-span-1 sm:col-start-2 sm:row-start-1"
-        >
-          <div className="w-[200px] flex-shrink-0 px-1 font-semibold text-gray-500 uppercase tracking-wide text-[11px]">Office / Locality</div>
-          {steps.map(step => (
-            <div
-              key={step.id}
-              className="flex-shrink-0 px-1 text-center font-semibold text-gray-500"
-              style={{ width: `${getColWidth(step)}px` }}
-            >
-              <div className="text-[12px] leading-tight whitespace-normal break-words" title={step.name}>{step.name}</div>
-              <div className="text-[10px] text-gray-400">{stepTypeIcon(step.type)}</div>
-            </div>
-          ))}
-        </div>
-
         {isRegistered && onDeleteLine && (
           <button type="button"
             onClick={() => setConfirmDeleteOpen(true)}
-            className="col-start-2 row-start-1 flex-shrink-0 rounded p-1.5 opacity-100 transition-opacity hover:bg-red-50 sm:col-start-3 sm:p-0.5 sm:opacity-0 sm:group-hover/line:opacity-100"
+            className="ml-auto shrink-0 rounded p-2 text-gray-500 hover:bg-red-50"
             title="Delete this line"
           >
             <Trash2 className="w-3 h-3 text-red-400 hover:text-red-600" />
@@ -329,20 +274,9 @@ export default function PermitSpreadsheetRow({
         )}
       </div>
 
-      {/* DATA ROW */}
-      <div className="flex items-center gap-0 sm:gap-3" style={{ fontSize: '13px' }}>
-        {/* Desktop spacer keeps the data row aligned with the office-type badge column. */}
-        <div className="hidden flex-shrink-0 invisible sm:block" style={{ width: '130px' }}>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full">—</span>
-        </div>
-
-        <div
-          ref={dataScrollRef}
-          onScroll={() => syncHorizontalScroll(dataScrollRef, headerScrollRef)}
-          className="flex min-w-0 flex-1 items-center overflow-x-auto overscroll-x-contain"
-        >
-          {/* Office / Locality — static text + large info button */}
-          <div className="w-[200px] flex-shrink-0 px-1">
+      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(13rem,17rem)]">
+          <aside aria-label="Permit office and owner" className="min-w-0 rounded-lg border bg-slate-50 p-3 lg:col-start-2 lg:row-start-1">
+            <h4 className="mb-2 text-sm font-semibold text-slate-800">Office &amp; owner</h4>
             <div className="flex items-center gap-1.5">
               <span
                 className="truncate font-medium text-gray-800 text-[13px]"
@@ -562,23 +496,29 @@ export default function PermitSpreadsheetRow({
                 </button>
               )}
             </div>
-          </div>
-
-          {/* Step cells */}
-          {steps.map(step => {
-            const w = getColWidth(step);
+          </aside>
+          <section aria-label="Permit workflow steps" className="order-first min-w-0 lg:col-start-1 lg:row-start-1">
+            <h4 className="mb-2 text-sm font-semibold text-slate-900">Workflow steps</h4>
+            {!steps.length && <p className="text-sm text-slate-600">No steps configured. Use Job actions to edit permit setup.</p>}
+            <ol className="grid min-w-0 gap-2 sm:grid-cols-2">
+          {steps.map((step, index) => {
+            const label = step.name || `Step ${index + 1}`;
             // If this step is tied to a checkbox and that checkbox is checked, dim it to show "completed via tie"
             const tiedStep = step.tied_to_step_id ? steps.find(s => s.id === step.tied_to_step_id) : null;
             const tiedComplete = tiedStep?.checked;
+            const current = !isCompleted && step === nextStep;
+            const renderControl = () => {
             if (step.type === 'checkbox') {
               return (
-                <div key={step.id} className="flex-shrink-0 px-1 flex flex-col items-center" style={{ width: `${w}px` }}>
+                <div className="flex min-h-10 items-center gap-2">
                   <Checkbox
+                    aria-label={label}
                     checked={step.checked || false}
                     onCheckedChange={(checked) => onUpdateStep(lineItem.id, step.id, { checked })}
                     disabled={!isRegistered}
                     className="h-4 w-4"
                   />
+                  <span className="text-sm text-slate-600">{step.checked ? "Complete" : "Not complete"}</span>
                   {step.checked && step.checked_date && (
                     <span className="text-[9px] text-green-600 mt-0.5">{step.checked_date.slice(5)}</span>
                   )}
@@ -593,14 +533,14 @@ export default function PermitSpreadsheetRow({
               const bgColor = tiedComplete ? '#f3f4f6' : isFollowup && dateVal ? '#fef9c3' : step.type === 'permit_received_date' && dateVal ? '#dcfce7' : 'transparent';
 
               return (
-                <div key={step.id} className={`flex-shrink-0 px-1 ${tiedComplete ? 'opacity-60' : ''}`} style={{ width: `${w}px`, background: bgColor }}>
+                <div className="min-w-0" style={{ background: bgColor }}>
                   <Popover
                     open={openDatePopover === popoverId}
                     onOpenChange={(open) => setOpenDatePopover(open ? popoverId : null)}
                   >
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button type="button" className={`h-7 w-full text-[13px] text-center hover:bg-gray-100 rounded font-medium ${isFollowup && dateVal ? 'text-amber-700' : step.type === 'permit_received_date' && dateVal ? 'text-green-700' : ''}`}>
-                        {dateVal ? (() => { const d = parseLocalDate(dateVal); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "—"; })() : "—"}
+                      <button type="button" aria-label={`${label}: ${dateVal || "Set date"}`} className={`min-h-10 w-full rounded border bg-white px-3 text-left text-sm font-medium hover:bg-gray-100 ${isFollowup && dateVal ? 'text-amber-700' : step.type === 'permit_received_date' && dateVal ? 'text-green-700' : ''}`}>
+                        {dateVal ? (() => { const d = parseLocalDate(dateVal); return d && !isNaN(d) ? format(d, "MMM d, yyyy") : dateVal; })() : "Set date"}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -631,16 +571,27 @@ export default function PermitSpreadsheetRow({
 
             // Free-text workflow steps edit locally and commit once, avoiding a backend save per keystroke.
             return (
-              <div key={step.id} className={`flex-shrink-0 px-1 ${tiedComplete ? 'opacity-60 bg-gray-100' : ''}`} style={{ width: `${w}px` }}>
-                <CommitStepTextInput
+              <div className="min-w-0">
+                <CommitStepTextInput label={label}
                   value={step.value}
                   disabled={!isRegistered}
                   onCommit={(value) => onUpdateStep(lineItem.id, step.id, { value })}
                 />
               </div>
             );
+            };
+            return <li key={step.id} className={`min-w-0 rounded-lg border p-3 ${current ? "border-purple-300 bg-purple-50" : "border-slate-200 bg-white"}`}>
+              <div className="mb-1 flex flex-wrap items-baseline justify-between gap-1 text-xs text-slate-600">
+                <span>Step {index + 1}</span>
+                {current && <strong className="text-purple-800">Next step</strong>}
+                {tiedComplete && <span>Covered by {tiedStep.name || "linked step"}</span>}
+              </div>
+              <p className="mb-2 break-words text-sm font-semibold text-slate-900">{label}</p>
+              {renderControl()}
+            </li>;
           })}
-        </div>
+            </ol>
+          </section>
       </div>
 
       <PermitLineLifecycleDetails
