@@ -733,6 +733,7 @@ export function getPermitGroupQueueState(group, today) {
     return {
       key: "needs_action",
       nextLineId: lineWithoutFutureFollowup.id,
+      nextStepId: !hasApproval && !hasSubmission && correctionStatus !== "resubmitted" ? nextStep?.id : undefined,
       nextAction: correctionStatus === "resubmitted"
         ? `Schedule or complete the next follow-up for the resubmitted ${lineLabel(lineWithoutFutureFollowup)} permit.`
         : hasApproval
@@ -762,6 +763,15 @@ export function getPermitGroupQueueState(group, today) {
       ? `Follow up in ${pluralDays(daysUntil)} · ${formatDateKey(nextFuture.date)}`
       : "Waiting",
     urgencyDays: daysUntil,
+  };
+}
+
+// Per-permit views use the same priority order as the job queue, scoped to one line.
+export function getPermitLineRecommendation(line, today) {
+  const state = getPermitGroupQueueState({ lines: [line] }, today);
+  return {
+    ...state,
+    step: state.nextStepId == null ? null : line.steps?.find(s => s.id === state.nextStepId) || null,
   };
 }
 
