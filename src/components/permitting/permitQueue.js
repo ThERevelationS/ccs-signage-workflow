@@ -25,7 +25,7 @@ function pluralDays(count) {
   return `${count} day${count === 1 ? "" : "s"}`;
 }
 
-function isStepComplete(step, steps) {
+export function isStepComplete(step, steps) {
   if (!step) return true;
   if (step.tied_to_step_id) {
     const tied = (steps || []).find((candidate) => candidate?.id === step.tied_to_step_id);
