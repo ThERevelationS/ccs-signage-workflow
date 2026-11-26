@@ -62,8 +62,20 @@ Example: **Drunken Tacos / Historic District** should say **Record submission** 
 - **Closeout:** received permit with a fee, outstanding correction or inspection; then a clear-to-close permit. Never automatically close either.
 - **Failure and access:** failed read is not an empty queue; failed save preserves an understandable next step; keyboard focus survives row movement; no mutation from opening a section or viewing as read-only.
 
+## Visual separation - next preview package
+
+Use a small Permitting-only palette: cool slate for the queue canvas, pale blue-gray headers for active work, warm stone for reference sections, and white editable fields with a darker neutral border. Give dropdown triggers a muted fill and chevron; give open menus an opaque surface, defined edge, and distinct keyboard highlight. Apply consistently to queue, job, permit, setup and handoff views. Reserve amber/red for actual warnings and blockers. Pair color with headings, borders and spacing; do not add height just to distinguish sections.
+
+Verify default, expanded, focused, selected, disabled and error states at 320, 390 and 1280px. Check normal text at 4.5:1 and meaningful control boundaries/focus at 3:1; verify sections remain recognizable without color and no horizontal scrolling appears.
+
+## Autonomous preview checklist
+
+- [x] Independent baseline, unified recommendations, compact job cards and contact/reminder distinction verified in preview.
+- [ ] Apply and verify the visual separation package above.
+- [ ] Finish outstanding P3 follow-up and save/continuation checks against the fixture pack.
+- [ ] Complete P4 exceptions, permissions and closeout checks; fix in-scope failures.
+- [ ] Complete P5 synthetic desktop/mobile and keyboard walkthrough, final sandbox build and evidence report. Staff timing targets are optional later research, not a completion gate.
+
 ## Execution rules
 
-Start the next implementation slice at P1 using the baseline above. Track each package as **planned / in preview / validated with staff / approved to publish**, attaching a checkpoint and test evidence. For implementation, inspect fresh sandbox source first: `Permitting.jsx` for queue state and persistence; `permitQueue.js` for priority; `PermitClientGroup`, `PermitSpreadsheetRow`, `PermitChecklist` and `PermitLineLifecycleDetails` for presentation. Reuse existing saves, conflict checks and audit paths. Do not increase polling or introduce background writes for cosmetic status updates.
-
-Test only with synthetic records. Build and verify each approved slice in preview; retain a pre-change checkpoint for recovery. Do not publish, restore, or change production data as part of this plan.
+While an authorized session is running, take the first unchecked item, inspect fresh sandbox source, implement and verify it using synthetic data, record evidence and checkpoint, then immediately proceed to the next item without waiting for a Continue message. On resumption, use this checklist rather than restarting P1. Mark items complete only with evidence. If blocked, document why and proceed with independent items. Stop only at verified preview completion or a genuine permission, billing, concurrency or safety blocker. This plan is not a background scheduler. No publishing, destructive operations, production records, unrelated modules, or unapproved paid-provider fallback. Never treat a build as evidence of staff testing.
