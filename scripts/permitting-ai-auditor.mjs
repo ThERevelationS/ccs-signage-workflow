@@ -6,9 +6,10 @@
 //   non_permit_body only when the tightened rule agrees, contact/county/
 //   type/duplicate findings go to the researcher boost pool, the rest to
 //   the findings list.
-// Lower priority than ai-extractor — yields when the extract queue is deep.
+// Audit priority (user rule): runs its sessions regardless of the extract
+// queue — memory culling still frees researchers → extractor → auditor last.
 //   node scripts/permitting-ai-auditor.mjs [--once] [--pilot N]
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync, openSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync, openSync, unlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { resolve as pathResolve } from 'node:path';
@@ -58,6 +59,8 @@ const REVERT_LOG = '.audit-work/ai-audit-reverts.jsonl';
 const BOOST = '.audit-work/research-boost.jsonl';
 const STATS = '.audit-work/ai-audit-stats.json';
 const STATE_DIR = '.audit-work/audit-state';
+const BREAKER_FILE = '.audit-work/ai-audit-breaker.json';
+const BREAKER_CLEAR = '.audit-work/ai-audit-breaker-clear';
 const VERIFY_FIRST = '.audit-work/verify-first.jsonl';
 const evFd = openSync('.live-events.jsonl', 'a');
 const emit = (e) => { try { writeFileSync(evFd, JSON.stringify({ t: Date.now(), worker: WORKER, ...e }) + '\n', { flag: 'a' }); } catch {} };
@@ -71,6 +74,12 @@ const auditSettings = () => {
 };
 
 const stats = { sent: 0, answered: 0, failed: 0, audited: 0, findings: 0, demoted: 0, renamed: 0, boosted: 0, logged: 0, discarded: 0, current: null, breaker_tripped: false, demote_tokens: [], verified_flagged: 0, verified_audited: 0 };
+// The breaker survives restarts — a tripped state persisted here is re-armed
+// on boot; only the controller's clear marker releases it.
+{
+  const prior = readJSON(BREAKER_FILE, null);
+  if (prior) { stats.breaker_tripped = true; stats.verified_flagged = prior.flagged || 0; stats.verified_audited = prior.audited || 0; }
+}
 const sessionLast = {}; // session idx → last finding it produced (live panel)
 // Per-session heartbeats for the dashboard's live panel.
 function sessionHeartbeats() {
@@ -187,7 +196,7 @@ async function processOutput(id) {
       demoteTokens: stats.demote_tokens.length, cleanerOutput: office ? cleanOfficeName(office.name).clean : null,
     });
     if (decided === 'discarded_check_passed' || decided === 'discarded_cleaner_noop' || decided === 'review_rule_disagrees') { stats.discarded++; action = decided; }
-    else if (decided === 'breaker_tripped') { stats.breaker_tripped = true; action = decided; emit({ stage: 'ai_audit_breaker', ok: false, detail: `${set.breaker_pct}% breaker tripped — ${stats.verified_flagged}/${stats.verified_audited} verified flagged; auto-demotion paused` }); }
+    else if (decided === 'breaker_tripped') { stats.breaker_tripped = true; action = decided; try { writeFileSync(BREAKER_FILE, JSON.stringify({ at: new Date().toISOString(), flagged: stats.verified_flagged, audited: stats.verified_audited, pct: set.breaker_pct })); } catch {} emit({ stage: 'ai_audit_breaker', ok: false, detail: `${set.breaker_pct}% breaker tripped — ${stats.verified_flagged}/${stats.verified_audited} verified flagged; auto-demotion paused` }); }
     else if (decided === 'cap_limited') action = decided;
     else if (decided === 'demote') {
       if (await demote(meta.locality_id, f.office_id, `${f.type}: ${String(f.reason || '').slice(0, 120)}`)) {
@@ -238,17 +247,14 @@ async function main() {
     // the guard's target file (researchers cut first under pressure).
     const aset = ctrl.ai_audit_settings || {};
     setSessionTarget(resolveTarget({ mode: aset.sessions_mode || 'auto', manual: aset.sessions ?? 3, auto: readJSON('.audit-work/ai-session-targets.json', {}).audit ?? 3 }));
-    // "Resume auto-demotion" — the controller drops this marker file.
-    if (stats.breaker_tripped && existsSync('.audit-work/ai-audit-breaker-clear')) {
-      try { writeFileSync('.audit-work/ai-audit-breaker-clear', ''); } catch {}
+    // "Resume auto-demotion" — the controller drops this marker file; consume
+    // it AND the persisted breaker state so a later re-trip isn't pre-cleared.
+    if (stats.breaker_tripped && existsSync(BREAKER_CLEAR)) {
+      try { unlinkSync(BREAKER_CLEAR); } catch {}
+      try { unlinkSync(BREAKER_FILE); } catch {}
       stats.breaker_tripped = false; stats.verified_flagged = 0; stats.verified_audited = 0;
       emit({ stage: 'ai_audit_breaker', ok: true, detail: 'auto-demotion resumed — breaker cleared by user' });
     }
-    // yield to the extractor — audit is the lower-priority consumer
-    try {
-      const eq = readdirSync('.audit-work/extract-queue').length;
-      if (eq > 20) { heartbeat(WORKER, 'idle', `yielding — extract queue ${eq}`); await sleep(30000); continue; }
-    } catch {}
     const auth = await probeAuth();
     if (auth !== 'ok') { heartbeat(WORKER, 'idle', 'SWE-2.1 not signed in'); saveStats(); await sleep(60000); if (ONCE) return; continue; }
     // Coverage: verified-first, then partial, then the rest; skip duplicates

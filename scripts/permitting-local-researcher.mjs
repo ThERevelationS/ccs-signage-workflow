@@ -22,7 +22,7 @@ import { rosterContact } from './lib/office-research.mjs';
 import { regionalProvidersFor } from '../base44/shared/regionalProviders.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 import { claim, releaseClaim, claimedIds, readCooldowns, readCooldown, writeCooldown, migrateSliceClaims, publishTargets, tiersDone, nextTierFor, tierExhausted, TIER_CD, GAP_TIERS } from './lib/research-claims.mjs';
-import { pendingBoosts, markBoostDone, boostTargets } from './lib/research-boost.mjs';
+import { pendingBoosts, markBoostDone, boostTargets, spliceBoosts } from './lib/research-boost.mjs';
 import { enqueueUnit } from './lib/devin-llm.mjs';
 import { keywordWindows } from './lib/ai-extract-guard.mjs';
 import { isOfficialSource } from './permitting-authority-verifier.mjs';
@@ -530,7 +530,7 @@ async function gapPass(profiles, profById, cooldowns, claimed, budget = 8) {
   const boosts = boostTargets(
     pendingBoosts().filter((b) => !claimed.has(`gap-${b.locality_id}`)),
     locById, (id) => nextTierFor(readCooldown(`gap-${id}`), false));
-  if (boosts.length) open = [...boosts, ...open];
+  if (boosts.length) open = spliceBoosts(boosts, open);
   if (!open.length) return 0;
   emit({ stage: 'gap_target_pass', detail: `${scan.targets.length + scan.cooling.length} localities with verification gaps (${open.length} unclaimed${relaxed ? ', cooldown relaxed' : ''}) · ${scan.exhausted.length} exhausted` });
   let worked = 0;

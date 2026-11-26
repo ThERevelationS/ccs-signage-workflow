@@ -53,3 +53,9 @@ export function boostTargets(boosts, locById, nextTierFor) {
     tier: typeof nextTierFor === 'function' ? nextTierFor(loc.id) || 1 : 1,
   }));
 }
+
+// The audit lane leads every target list — boosts splice AHEAD of tier/gap
+// targets. Kept as a function so the ordering contract is testable.
+export function spliceBoosts(boosts, open) {
+  return boosts && boosts.length ? [...boosts, ...open] : open;
+}
