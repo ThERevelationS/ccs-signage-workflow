@@ -57,6 +57,7 @@ export default function PermitClientGroup({
   sharedOfficeCount = 0,
   onSearchLocality,
   queueState,
+  initialLineId,
   expanded: controlledExpanded,
   onExpandedChange
 }) {
@@ -67,13 +68,23 @@ export default function PermitClientGroup({
   const [showLocalityPicker, setShowLocalityPicker] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
   const [wizardStep, setWizardStep] = useState(3);
-  // Collapse/expand all lines — rows persist their own expanded state in
-  // localStorage, so this stamps every line's key and remounts the list.
-  const [compactNonce, setCompactNonce] = useState(0);
-  const setAllLinesExpanded = (open) => {
-    (group.lines || []).forEach(li => { try { localStorage.setItem(`permitline_expanded_${li.id}`, open ? "1" : "0"); } catch {} });
-    setCompactNonce(n => n + 1);
-  };
+  const [openLines, setOpenLines] = useState(() => new Set(initialLineId ? [initialLineId] : []));
+  const [focusLine, setFocusLine] = useState("");
+  const groupRef = useRef(null);
+  useEffect(() => {
+    if (initialLineId) setOpenLines(previous => new Set([...previous, initialLineId]));
+  }, [initialLineId]);
+  useEffect(() => {
+    if (!focusLine) return;
+    groupRef.current?.querySelector(`[data-permit-line="${CSS.escape(String(focusLine))}"] button[aria-expanded]`)?.focus();
+    setFocusLine("");
+  }, [focusLine]);
+  const toggleLine = id => setOpenLines(previous => {
+    const next = new Set(previous);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const setAllLinesExpanded = open => setOpenLines(new Set(open ? group.lines.map(li => li.id) : []));
   const [stageFixOpen, setStageFixOpen] = useState(false);
   const [stageFixSaving, setStageFixSaving] = useState(false);
   const [showAllReadinessIssues, setShowAllReadinessIssues] = useState(false);
@@ -159,30 +170,32 @@ export default function PermitClientGroup({
   const taskDescOptions = (taskDescriptions || []).filter(Boolean);
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
-      {/* CLIENT INFO HEADER ROW */}
-      <div
-        className="bg-gradient-to-r from-purple-50 to-white border-b px-3 py-2 cursor-pointer hover:from-purple-100 transition-colors"
-        onClick={() => setExpanded(!expanded)}
-      >
-        {/* Row 1: client name gets the full width — no truncation */}
-        <div className="flex items-center gap-2">
-          {expanded ? <ChevronDown className="w-4 h-4 text-purple-600 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-purple-600 flex-shrink-0" />}
-          <div
-            className="font-bold text-sm text-purple-900 hover:underline min-w-0 flex-1 leading-snug"
-            onClick={(e) => { e.stopPropagation(); onOpenWorkOrder(group.work_order_id); }}
-            title={wo?.client_name}
-          >
-            {wo?.client_name || "—"}
+    <section ref={groupRef} className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="grid items-center gap-3 p-3 sm:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] sm:p-4">
+        <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}
+          className="flex min-w-0 items-center gap-3 rounded text-left hover:text-purple-800">
+          {expanded ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
+          <span className="min-w-0">
+            <strong className="block break-words text-sm text-slate-900">{wo?.client_name || "Permit job"}</strong>
+            <span className="block text-xs text-slate-600">{wo?.current_task_assigned_to || "No owner assigned"} · {progress.completedCount}/{progress.totalCount} permits complete</span>
+          </span>
+        </button>
+        {queueState && <div className="min-w-0 border-l-2 border-purple-200 pl-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className={`rounded border px-2 py-0.5 font-semibold ${PERMIT_QUEUE_META[queueState.key]?.className || ""}`}>{PERMIT_QUEUE_META[queueState.key]?.label}</span>
+            {group.lines.some(li => li.urgent) && <strong className="text-red-700">Urgent</strong>}
+            {queueState.followupDate && <span>{queueState.timingLabel}</span>}
           </div>
-          <div className="text-[10px] text-gray-400 flex-shrink-0">
-            {hasLines ? `${group.lines.length} line${group.lines.length === 1 ? '' : 's'}` : (expanded ? 'No lines' : 'Tap to set up')}
-          </div>
-        </div>
-
-        {/* Row 2: job metadata — fields wrap onto their own line instead of clipping */}
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 pl-6">
-
+          <div className="mt-1 text-sm text-slate-800"><strong>Next: </strong>{queueState.nextAction}</div>
+          {queueState.nextLineId && <button type="button" className="mt-1 rounded py-1 text-xs font-semibold text-purple-800 underline" onClick={() => {
+            setExpanded(true); setOpenLines(new Set([queueState.nextLineId])); setFocusLine(queueState.nextLineId);
+          }}>Open permit</button>}
+        </div>}
+      </div>
+      {expanded && <details className="border-t px-4 py-2">
+        <summary className="cursor-pointer text-sm font-semibold text-slate-700">Job information</summary>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <button type="button" className="text-xs text-purple-800 underline" onClick={() => onOpenWorkOrder(group.work_order_id)}>Open work order</button>
         {/* Live auto-apply indicator — visible collapsed AND expanded so
             background work is always on screen, not buried in the body. */}
         {pendingLocalityName && (
@@ -267,48 +280,9 @@ export default function PermitClientGroup({
         />
 
         </div>
-      </div>
+      </details>}
 
-      {queueState && (
-        <div className="px-3 py-2 border-b bg-white flex items-center gap-x-2 gap-y-1 flex-wrap text-xs">
-          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${PERMIT_QUEUE_META[queueState.key]?.className || "border-gray-200 bg-gray-50 text-gray-700"}`}>
-            {PERMIT_QUEUE_META[queueState.key]?.label || "Permit"}
-          </span>
-          {group.lines.some(li => li.urgent) && (
-            <span className="inline-flex items-center rounded-full border border-red-400 bg-red-100 px-2 py-0.5 font-bold text-red-800">⚠ URGENT</span>
-          )}
-          {sharedOfficeCount > 1 && (
-            <button
-              type="button"
-              onClick={() => { const name = String(group.lines[0]?.locality_name || "").trim(); if (name && onSearchLocality) onSearchLocality(name); }}
-              className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-700 hover:bg-indigo-100"
-              title="Show the other jobs that use this same permit office"
-            >
-              Same office as {sharedOfficeCount - 1} other{sharedOfficeCount - 1 === 1 ? "" : "s"}
-            </button>
-          )}
-          {isRegistered && wo && hasLines && (
-            <button
-              type="button"
-              className="inline-flex items-center rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 font-semibold text-violet-800 hover:bg-violet-100"
-              title="Build an AI permit plan for this job from its town's checked rules"
-              onClick={() => { setWizardStep(2); setShowSetupWizard(true); }}
-            >AI plan</button>
-          )}
-          {isRegistered && group.lines.length > 1 && group.lines.some(li => !li.submitted_date && !isPermitLineEffectivelyComplete(li)) && (
-            <button
-              type="button"
-              className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800 hover:bg-emerald-100"
-              title="Mark every pending line in this job as submitted today"
-              onClick={() => setMarkSentAsk(group.lines.filter((li) => !li.submitted_date && !isPermitLineEffectivelyComplete(li)))}
-            >Mark all submitted</button>
-          )}
-          {queueState.timingLabel && (
-            <span className={`inline-flex items-center gap-1 font-semibold ${queueState.key === "overdue" ? "text-red-700" : queueState.key === "due_today" ? "text-amber-700" : "text-gray-500"}`}>
-              <Clock className="w-3 h-3" /> {queueState.timingLabel}
-            </span>
-          )}
-          {wo?._permittingRoutingMismatch && (
+      {expanded && <div className="flex flex-wrap items-center gap-2 px-4 text-xs">{wo?._permittingRoutingMismatch && (
             <>
               <span
                 className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800"
@@ -326,39 +300,7 @@ export default function PermitClientGroup({
                 </button>
               )}
             </>
-          )}
-          {!expanded && readiness.hasBlockers && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
-              className="inline-flex items-center gap-1 rounded-full border border-red-300 bg-red-50 px-2 py-0.5 font-semibold text-red-800 hover:bg-red-100"
-            >
-              <AlertTriangle className="w-3 h-3" /> {readiness.blockers.length} blocker{readiness.blockers.length === 1 ? "" : "s"}
-            </button>
-          )}
-          {!expanded && !readiness.hasBlockers && readiness.reviews.length > 0 && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
-              className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 hover:bg-amber-100"
-            >
-              {readiness.reviews.length} to review
-            </button>
-          )}
-          {!expanded && authorityNeedsCheck && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
-              className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 hover:bg-amber-100"
-            >
-              office check
-            </button>
-          )}
-          <span className="font-semibold text-gray-600">Next:</span>
-          <span className="text-gray-700">{queueState.nextAction}</span>
-        </div>
-      )}
-
+          )}</div>}
       {expanded && (<>
       {progress.totalCount > 1 && (
         <div className="border-b bg-slate-50/70 px-3 py-2 text-xs">
@@ -443,11 +385,145 @@ export default function PermitClientGroup({
         </div>
       )}
 
+      </>)}
+
+      {/* EXPANDED BODY */}
+      {expanded && (
+        <div>
+          {pendingLocalityName && (
+            <div className="px-4 py-2">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                {pendStatus || `${pendingLocalityName} — applying automatically when its offices verify`}
+              </span>
+            </div>
+          )}
+          {hasLines&&<details className="border-t px-4 py-2"><summary className="cursor-pointer text-sm font-semibold text-slate-700">Job actions</summary><div className="mt-2 flex flex-wrap items-center gap-2">
+          {sharedOfficeCount > 1 && (
+            <button
+              type="button"
+              onClick={() => { const name = String(group.lines[0]?.locality_name || "").trim(); if (name && onSearchLocality) onSearchLocality(name); }}
+              className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-700 hover:bg-indigo-100"
+              title="Show the other jobs that use this same permit office"
+            >
+              Same office as {sharedOfficeCount - 1} other{sharedOfficeCount - 1 === 1 ? "" : "s"}
+            </button>
+          )}
+          {isRegistered && wo && hasLines && (
+            <button
+              type="button"
+              className="inline-flex items-center rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 font-semibold text-violet-800 hover:bg-violet-100"
+              title="Build an AI permit plan for this job from its town's checked rules"
+              onClick={() => { setWizardStep(2); setShowSetupWizard(true); }}
+            >AI plan</button>
+          )}
+          {isRegistered && group.lines.length > 1 && group.lines.some(li => !li.submitted_date && !isPermitLineEffectivelyComplete(li)) && (
+            <button
+              type="button"
+              className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800 hover:bg-emerald-100"
+              title="Mark every pending line in this job as submitted today"
+              onClick={() => setMarkSentAsk(group.lines.filter((li) => !li.submitted_date && !isPermitLineEffectivelyComplete(li)))}
+            >Mark all submitted</button>
+          )}
+<Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>{setWizardStep(3);setShowSetupWizard(true);}}>Edit permit setup…</Button>
+            {group.lines.length > 2 && (
+              <>
+                <button type="button" onClick={() => setAllLinesExpanded(false)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">compact all</button>
+                <button type="button" onClick={() => setAllLinesExpanded(true)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">expand all</button>
+              </>
+            )}
+            {onRemoveLocality && removeLocalityTargets.map(target => (
+              <Button key={target.id} type="button" variant="outline" className="min-h-11 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" disabled={!isRegistered} onClick={() => setRemoveTarget(target)}>
+                <Trash2 className="w-3 h-3" /> Remove {target.name}
+              </Button>
+            ))}
+
+            {(() => {
+
+              const latest = [...(appliedLocality?.office_change_log || [])].pop();
+
+              if (!latest?.at) return null;
+
+              const fresh = Date.now() - new Date(latest.at).getTime() < 14 * 864e5;
+
+              return (
+
+                <span
+
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium ${fresh ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-gray-200 bg-gray-50 text-gray-500'}`}
+
+                  title={`Office data last changed ${latest.at}`}
+
+                >
+
+                  <AlertTriangle className={`w-3.5 h-3.5 ${fresh ? '' : 'opacity-40'}`} />
+
+                  Office info changed{latest.summary ? ` — ${latest.summary}` : ''}
+
+                </span>
+
+              );
+
+            })()}
+
+          </div></details>}
+          {!hasLines ? (
+            <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
+              <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> set up this job's permit — office, lines, and an AI plan in one pass.</span>
+              <Button
+                onClick={() => { setWizardStep(0); setShowSetupWizard(true); }}
+                disabled={!isRegistered}
+                size="sm"
+                className="min-h-11 text-xs gap-1 bg-purple-600 text-white hover:bg-purple-700"
+              >
+                <MapPin className="w-3.5 h-3.5" /> New permit setup…
+              </Button>
+              <button type="button" onClick={() => setShowLocalityPicker(true)} disabled={!isRegistered}
+                className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600 disabled:opacity-40">
+                advanced lookup
+              </button>
+            </div>
+          ) : (
+            <>
+              <h4 className="border-y bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900">Permits <span className="font-normal text-slate-500">({group.lines.length})</span></h4>
+              <div className="divide-y">
+                {[...group.lines].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((li, idx, sorted) => (
+                  <div key={li.id} data-permit-line={li.id} className="flex items-stretch gap-0">
+                    <div className="flex flex-col justify-center pl-1 pr-0.5">
+                      <button type="button" disabled={idx === 0 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move up" onClick={() => onUpdateField(li.id, "order", (sorted[idx-1]?.order ?? idx-1) - 0.5)}>▲</button>
+                      <button type="button" disabled={idx === sorted.length - 1 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move down" onClick={() => onUpdateField(li.id, "order", (sorted[idx+1]?.order ?? idx+1) + 0.5)}>▼</button>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                  <PermitSpreadsheetRow
+                    lineItem={li}
+                    expanded={openLines.has(li.id)}
+                    onToggle={() => toggleLine(li.id)}
+                    onUpdateStep={onUpdateStep}
+                    onUpdateField={onUpdateField}
+                    onShowLocalityInfo={onShowLocalityInfo}
+                    onShowJurisdictionInfo={onShowJurisdictionInfo}
+                    localityState={localities?.find((locality) => locality.id === li.locality_id)?.state || ""}
+                    locality={localities?.find((locality) => locality.id === li.locality_id) || null}
+                    officeAuthority={summarizePermitLineOfficeAuthority(li, localities)}
+                    legacyOfficeOptions={legacyOfficeLinkOptions(li, localities)}
+                    onLinkLegacyOffice={onLinkLegacyOffice}
+                    onDeleteLine={onDeleteLine}
+                    isRegistered={isRegistered}
+                    users={users}
+                    currentUser={currentUser}
+                    today={today}
+                    installDate={wo?.project_install_date || ""}
+                  />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
       {/* Authority review is derived from the saved permit-line locality IDs, so it
           persists across Apply/reload and reflects subsequent staff verification. */}
       {authorityCoverage.length > 0 && (
-        <div className="border-b border-amber-200 bg-amber-50/70 px-3 py-2 text-xs" role="status">
-          <div className="mb-1 flex items-center gap-1.5 font-semibold text-amber-950">
+        <details className="border-t px-4 py-3 text-xs"><summary className="cursor-pointer text-sm font-semibold text-slate-800">Offices &amp; contacts{authorityNeedsCheck ? " · Verification needed" : ""}</summary>
+          <div className="mt-3 mb-1 flex items-center gap-1.5 font-semibold text-amber-950">
             <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
             Office check — only the offices we have on file; there may be more
           </div>
@@ -535,121 +611,17 @@ export default function PermitClientGroup({
           >
             Copy office contact info
           </button>
-        </div>
+        </details>
       )}
-      </>)}
-
-      {/* EXPANDED BODY */}
-      {expanded && (
-        <div>
-          {pendingLocalityName && (
-            <div className="px-4 py-2">
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                {pendStatus || `${pendingLocalityName} — applying automatically when its offices verify`}
-              </span>
-            </div>
-          )}
-          {hasLines&&<div className="px-4 py-2 flex flex-wrap items-center gap-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>{setWizardStep(3);setShowSetupWizard(true);}}>Edit permit setup…</Button>
-            {group.lines.length > 2 && (
-              <>
-                <button type="button" onClick={() => setAllLinesExpanded(false)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">compact all</button>
-                <button type="button" onClick={() => setAllLinesExpanded(true)} className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600">expand all</button>
-              </>
-            )}
-            {onRemoveLocality && removeLocalityTargets.map(target => (
-              <Button key={target.id} type="button" variant="outline" className="min-h-11 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" disabled={!isRegistered} onClick={() => setRemoveTarget(target)}>
-                <Trash2 className="w-3 h-3" /> Remove {target.name}
-              </Button>
-            ))}
-
-            {(() => {
-
-              const latest = [...(appliedLocality?.office_change_log || [])].pop();
-
-              if (!latest?.at) return null;
-
-              const fresh = Date.now() - new Date(latest.at).getTime() < 14 * 864e5;
-
-              return (
-
-                <span
-
-                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium ${fresh ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-gray-200 bg-gray-50 text-gray-500'}`}
-
-                  title={`Office data last changed ${latest.at}`}
-
-                >
-
-                  <AlertTriangle className={`w-3.5 h-3.5 ${fresh ? '' : 'opacity-40'}`} />
-
-                  Office info changed{latest.summary ? ` — ${latest.summary}` : ''}
-
-                </span>
-
-              );
-
-            })()}
-
-          </div>}
-          {!hasLines ? (
-            <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
-              <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> set up this job's permit — office, lines, and an AI plan in one pass.</span>
-              <Button
-                onClick={() => { setWizardStep(0); setShowSetupWizard(true); }}
-                disabled={!isRegistered}
-                size="sm"
-                className="min-h-11 text-xs gap-1 bg-purple-600 text-white hover:bg-purple-700"
-              >
-                <MapPin className="w-3.5 h-3.5" /> New permit setup…
-              </Button>
-              <button type="button" onClick={() => setShowLocalityPicker(true)} disabled={!isRegistered}
-                className="text-[11px] text-gray-400 underline underline-offset-2 hover:text-gray-600 disabled:opacity-40">
-                advanced lookup
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="divide-y">
-                {[...group.lines].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((li, idx, sorted) => (
-                  <div key={`${li.id}:${compactNonce}`} className="flex items-stretch gap-0">
-                    <div className="flex flex-col justify-center pl-1 pr-0.5">
-                      <button type="button" disabled={idx === 0 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move up" onClick={() => onUpdateField(li.id, "order", (sorted[idx-1]?.order ?? idx-1) - 0.5)}>▲</button>
-                      <button type="button" disabled={idx === sorted.length - 1 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move down" onClick={() => onUpdateField(li.id, "order", (sorted[idx+1]?.order ?? idx+1) + 0.5)}>▼</button>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                  <PermitSpreadsheetRow
-                    lineItem={li}
-                    onUpdateStep={onUpdateStep}
-                    onUpdateField={onUpdateField}
-                    onShowLocalityInfo={onShowLocalityInfo}
-                    onShowJurisdictionInfo={onShowJurisdictionInfo}
-                    localityState={localities?.find((locality) => locality.id === li.locality_id)?.state || ""}
-                    locality={localities?.find((locality) => locality.id === li.locality_id) || null}
-                    officeAuthority={summarizePermitLineOfficeAuthority(li, localities)}
-                    legacyOfficeOptions={legacyOfficeLinkOptions(li, localities)}
-                    onLinkLegacyOffice={onLinkLegacyOffice}
-                    onDeleteLine={onDeleteLine}
-                    isRegistered={isRegistered}
-                    users={users}
-                    currentUser={currentUser}
-                    today={today}
-                    installDate={wo?.project_install_date || ""}
-                  />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
               {/* Single shared notes section for the whole project — expanded by default */}
-              {wo && (
+              {wo && (<details className="border-t px-4 py-3"><summary className="cursor-pointer text-sm font-semibold">Project notes</summary>
                 <PermitLineNotesSection
                   workOrder={wo}
                   officeLabel=""
                   currentUser={currentUser}
                   disabled={!isRegistered}
                   onUpdated={onWorkNotesChanged}
-                />
+                /></details>
               )}
             </>
           )}
@@ -779,6 +751,6 @@ export default function PermitClientGroup({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </section>
   );
 }
