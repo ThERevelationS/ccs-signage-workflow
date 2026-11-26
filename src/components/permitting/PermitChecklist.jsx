@@ -2,17 +2,19 @@ import { useRef, useState } from "react";
 import { Check, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { firstIncompleteStep, isPermitLineEffectivelyComplete, isStepComplete } from "./permitQueue";
+import { getPermitLineRecommendation, isStepComplete } from "./permitQueue";
 
 const dateTypes = new Set(["submitted_date", "followup_date", "permit_received_date"]);
 const stepName = step => step.name || "Permit step";
 const valueOf = step => step.type === "checkbox" ? !!step.checked : step.value || "";
 
-export function PermitChecklist({ line, canEdit, onOpen }) {
+export function PermitChecklist({ line, today, canEdit, onOpen }) {
   const steps = line.steps || [];
   const open = steps.filter(step => !isStepComplete(step, steps));
   const done = steps.filter(step => isStepComplete(step, steps));
-  const [current, ...upcoming] = open;
+  const recommendation = getPermitLineRecommendation(line, today);
+  const current = recommendation.step;
+  const upcoming = open.filter(step => step !== current);
   const row = (step, complete) => (
     <li key={step.id}>
       <button type="button" disabled={!canEdit} onClick={() => onOpen(line, step)}
@@ -33,13 +35,16 @@ export function PermitChecklist({ line, canEdit, onOpen }) {
         {current.type === "submitted_date" ? "Record submission" : current.type === "checkbox" ? "Check off step" : "Update step"}
       </Button>
     </div>}
-    {!current && <p className="rounded-md bg-slate-50 p-2 text-sm">{!steps.length ? "No checklist yet. Use Job actions to set up the permit." : isPermitLineEffectivelyComplete(line) ? "Permit complete." : "Checklist finished. Review fees, inspections, and closeout before marking the permit complete."}</p>}
-    {!!upcoming.length && <div><h5 className="border-b px-2 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">Up next</h5><ul>{upcoming.map(step => row(step, false))}</ul></div>}
+    {!current && <div className="rounded-md border-l-4 border-slate-300 bg-slate-50 px-3 py-2">
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-600">{recommendation.key === "waiting" ? "Waiting" : recommendation.key === "completed" ? "Complete" : "Next action"}</p>
+      <p className="text-sm text-slate-900">{recommendation.nextAction}</p>
+    </div>}
+    {!!upcoming.length && <div><h5 className="border-b px-2 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">{current ? "Up next" : "Other checklist steps"}</h5><ul>{upcoming.map(step => row(step, false))}</ul></div>}
     {!!done.length && <details className="rounded border bg-white"><summary className="cursor-pointer px-2 py-2 text-xs font-semibold text-emerald-800">Done ({done.length})</summary><ul>{done.map(step => row(step, true))}</ul></details>}
   </section>;
 }
 
-export function PermitHandoff({ initial, onSave, onClose, canEdit }) {
+export function PermitHandoff({ initial, today, onSave, onClose, canEdit }) {
   const [record, setRecord] = useState(initial);
   const [value, setValue] = useState(() => initial.step.type === "checkbox" ? !initial.step.checked : valueOf(initial.step));
   const [result, setResult] = useState(null);
@@ -49,7 +54,8 @@ export function PermitHandoff({ initial, onSave, onClose, canEdit }) {
   const { line, step } = record;
   const checkbox = step.type === "checkbox";
   const filing = step.type === "submitted_date" && !line.submitted_date && !!value;
-  const next = result && !isPermitLineEffectivelyComplete(result) && firstIncompleteStep(result);
+  const recommendation = result && getPermitLineRecommendation(result, today);
+  const next = recommendation?.step;
   async function save(e) {
     e.preventDefault();
     if (!canEdit || inFlight.current || value === valueOf(step)) return;
@@ -72,7 +78,7 @@ export function PermitHandoff({ initial, onSave, onClose, canEdit }) {
       </DialogHeader>
       {result ? <>
         <p role="status" className="rounded border-l-4 border-emerald-600 bg-emerald-50 p-3 text-sm">
-          {next ? `Next step: ${stepName(next)}` : isPermitLineEffectivelyComplete(result) ? "Permit complete." : "No checklist steps remain. Review permit closeout separately."}
+          {recommendation.nextAction}
         </p>
         <DialogFooter><Button variant="outline" onClick={onClose}>Back to permits</Button>
           {next && <Button className="h-auto whitespace-normal" onClick={() => { setRecord({ line: result, step: next }); setValue(next.type === "checkbox" ? !next.checked : valueOf(next)); setResult(null); }}>Continue to {stepName(next)}</Button>}
