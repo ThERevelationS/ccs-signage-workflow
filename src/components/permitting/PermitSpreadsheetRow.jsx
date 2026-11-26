@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Checkbox } from "@/components/ui/checkbox";
+import { PermitChecklist } from "./PermitChecklist";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
@@ -18,7 +16,7 @@ import {
 import { format, differenceInDays } from "date-fns";
 import { ChevronDown, ChevronRight, ExternalLink, Info, Loader2, MapPin, ShieldAlert, Trash2, UserRoundPlus } from "lucide-react";
 import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
-import { firstIncompleteStep, isPermitLineEffectivelyComplete } from "./permitQueue";
+import { firstIncompleteStep, getPermitLineHandoffReadiness, isPermitLineEffectivelyComplete } from "./permitQueue";
 import { loadAllEntityRows } from "@/lib/loadAllEntityRows";
 import { normalizePermitJurisdictionName } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust, isJurisdictionPlaceholder } from "./jurisdictionTrust";
@@ -45,48 +43,9 @@ const getOfficeTypes = (lineItem) => {
   return [];
 };
 
-function CommitStepTextInput({ value, disabled, onCommit, label }) {
-  const normalizedValue = value || "";
-  const [draft, setDraft] = useState(normalizedValue);
-  const cancelCommitRef = useRef(false);
-
-  useEffect(() => {
-    setDraft(normalizedValue);
-  }, [normalizedValue]);
-
-  const commit = () => {
-    if (cancelCommitRef.current) {
-      cancelCommitRef.current = false;
-      return;
-    }
-    if (draft === normalizedValue) return;
-    onCommit(draft);
-  };
-
-  return (
-    <Input
-      value={draft}
-      onChange={(event) => setDraft(event.target.value)}
-      onBlur={commit}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") event.currentTarget.blur();
-        if (event.key === "Escape") {
-          cancelCommitRef.current = true;
-          setDraft(normalizedValue);
-          event.currentTarget.blur();
-        }
-      }}
-      disabled={disabled}
-      aria-label={label}
-      placeholder="Enter details"
-      className="h-10 bg-white text-sm shadow-none"
-    />
-  );
-}
-
 export default function PermitSpreadsheetRow({
   lineItem,
-  onUpdateStep,
+  onOpenStep,
   onUpdateField,
   onShowLocalityInfo,
   onShowJurisdictionInfo,
@@ -104,7 +63,6 @@ export default function PermitSpreadsheetRow({
   onToggle: toggleExpanded,
   installDate = ""
 }) {
-  const [openDatePopover, setOpenDatePopover] = useState(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [linkOfficeOpen, setLinkOfficeOpen] = useState(false);
   const [selectedOfficeId, setSelectedOfficeId] = useState("");
@@ -116,10 +74,9 @@ export default function PermitSpreadsheetRow({
   const [jurisdictionMatches, setJurisdictionMatches] = useState(null);
   const linkOfficeTriggerRef = useRef(null);
   const linkOfficeSelectRef = useRef(null);
-  const nextStep = firstIncompleteStep(lineItem);
 
   const isCompleted = isPermitLineEffectivelyComplete(lineItem);
-  const steps = lineItem.steps || [];
+  const blockers = getPermitLineHandoffReadiness(lineItem, today).blockers;
 
   useEffect(() => {
     if (linkOfficeOpen && !linkSaving) {
@@ -222,6 +179,7 @@ export default function PermitSpreadsheetRow({
             <span className="text-slate-600">{localityLabel}{lineItem.permit_number && ` · #${lineItem.permit_number}`}</span>
           </span></span>
           <span className="pl-6 sm:pl-0"><span className="block text-slate-500">Current step</span>{isCompleted ? "Complete" : next?.name || "Review permit"}
+            {blockers.length > 0 && <strong className="block text-red-800">{blockers[0]}</strong>}
             {(expectedReplyOverdue || permitExpired) && <strong className="block text-amber-800">{permitExpired ? "Renewal needed" : "Reply overdue"}</strong>}
           </span>
           <span className="pl-6 text-slate-700 sm:pl-0">{lineItem.assigned_to || "Unassigned"}<span className="block text-slate-500">Follow-up: {lineItem.next_followup_date || "Not scheduled"}</span></span>
@@ -263,20 +221,13 @@ export default function PermitSpreadsheetRow({
           })}
         </div>
 
-        {isRegistered && onDeleteLine && (
-          <button type="button"
-            onClick={() => setConfirmDeleteOpen(true)}
-            className="ml-auto shrink-0 rounded p-2 text-gray-500 hover:bg-red-50"
-            title="Delete this line"
-          >
-            <Trash2 className="w-3 h-3 text-red-400 hover:text-red-600" />
-          </button>
-        )}
       </div>
 
-      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(13rem,17rem)]">
-          <aside aria-label="Permit office and owner" className="min-w-0 rounded-lg border bg-slate-50 p-3 lg:col-start-2 lg:row-start-1">
-            <h4 className="mb-2 text-sm font-semibold text-slate-800">Office &amp; owner</h4>
+      {blockers.length > 0 && <ul aria-label="Permit blockers" className="mb-2 border-l-4 border-red-500 bg-red-50 px-3 py-2 text-xs text-red-900">{blockers.map(message => <li key={message}>{message}</li>)}</ul>}
+      <p className="mb-2 text-xs text-slate-600">Owner: {lineItem.assigned_to || "Unassigned"} · Follow-up: {lineItem.next_followup_date || "Not scheduled"}</p>
+      <PermitChecklist line={lineItem} canEdit={isRegistered} onOpen={onOpenStep} />
+      <details className="mt-2 rounded border px-3 py-2"><summary className="cursor-pointer text-xs font-semibold text-slate-700">Permit actions &amp; office settings</summary>
+        <div className="space-y-2 pt-2">
             <div className="flex items-center gap-1.5">
               <span
                 className="truncate font-medium text-gray-800 text-[13px]"
@@ -496,111 +447,25 @@ export default function PermitSpreadsheetRow({
                 </button>
               )}
             </div>
-          </aside>
-          <section aria-label="Permit workflow steps" className="order-first min-w-0 lg:col-start-1 lg:row-start-1">
-            <h4 className="mb-2 text-sm font-semibold text-slate-900">Workflow steps</h4>
-            {!steps.length && <p className="text-sm text-slate-600">No steps configured. Use Job actions to edit permit setup.</p>}
-            <ol className="grid min-w-0 gap-2 sm:grid-cols-2">
-          {steps.map((step, index) => {
-            const label = step.name || `Step ${index + 1}`;
-            // If this step is tied to a checkbox and that checkbox is checked, dim it to show "completed via tie"
-            const tiedStep = step.tied_to_step_id ? steps.find(s => s.id === step.tied_to_step_id) : null;
-            const tiedComplete = tiedStep?.checked;
-            const current = !isCompleted && step === nextStep;
-            const renderControl = () => {
-            if (step.type === 'checkbox') {
-              return (
-                <div className="flex min-h-10 items-center gap-2">
-                  <Checkbox
-                    aria-label={label}
-                    checked={step.checked || false}
-                    onCheckedChange={(checked) => onUpdateStep(lineItem.id, step.id, { checked })}
-                    disabled={!isRegistered}
-                    className="h-4 w-4"
-                  />
-                  <span className="text-sm text-slate-600">{step.checked ? "Complete" : "Not complete"}</span>
-                  {step.checked && step.checked_date && (
-                    <span className="text-[9px] text-green-600 mt-0.5">{step.checked_date.slice(5)}</span>
-                  )}
-                </div>
-              );
-            }
-
-            if (step.type === 'submitted_date' || step.type === 'followup_date' || step.type === 'permit_received_date') {
-              const dateVal = step.value;
-              const popoverId = `step-${lineItem.id}-${step.id}`;
-              const isFollowup = step.type === 'followup_date';
-              const bgColor = tiedComplete ? '#f3f4f6' : isFollowup && dateVal ? '#fef9c3' : step.type === 'permit_received_date' && dateVal ? '#dcfce7' : 'transparent';
-
-              return (
-                <div className="min-w-0" style={{ background: bgColor }}>
-                  <Popover
-                    open={openDatePopover === popoverId}
-                    onOpenChange={(open) => setOpenDatePopover(open ? popoverId : null)}
-                  >
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button type="button" aria-label={`${label}: ${dateVal || "Set date"}`} className={`min-h-10 w-full rounded border bg-white px-3 text-left text-sm font-medium hover:bg-gray-100 ${isFollowup && dateVal ? 'text-amber-700' : step.type === 'permit_received_date' && dateVal ? 'text-green-700' : ''}`}>
-                        {dateVal ? (() => { const d = parseLocalDate(dateVal); return d && !isNaN(d) ? format(d, "MMM d, yyyy") : dateVal; })() : "Set date"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={parseLocalDate(dateVal)}
-                        onSelect={(date) => {
-                          const newVal = date ? format(date, "yyyy-MM-dd") : "";
-                          onUpdateStep(lineItem.id, step.id, { value: newVal });
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                      {dateVal && (
-                        <div className="p-2 border-t">
-                          <button type="button"
-                            onClick={() => { onUpdateStep(lineItem.id, step.id, { value: "" }); setOpenDatePopover(null); }}
-                            className="text-xs text-red-500 hover:underline w-full text-center"
-                          >
-                            Clear date
-                          </button>
-                        </div>
-                      )}
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              );
-            }
-
-            // Free-text workflow steps edit locally and commit once, avoiding a backend save per keystroke.
-            return (
-              <div className="min-w-0">
-                <CommitStepTextInput label={label}
-                  value={step.value}
-                  disabled={!isRegistered}
-                  onCommit={(value) => onUpdateStep(lineItem.id, step.id, { value })}
-                />
-              </div>
-            );
-            };
-            return <li key={step.id} className={`min-w-0 rounded-lg border p-3 ${current ? "border-purple-300 bg-purple-50" : "border-slate-200 bg-white"}`}>
-              <div className="mb-1 flex flex-wrap items-baseline justify-between gap-1 text-xs text-slate-600">
-                <span>Step {index + 1}</span>
-                {current && <strong className="text-purple-800">Next step</strong>}
-                {tiedComplete && <span>Covered by {tiedStep.name || "linked step"}</span>}
-              </div>
-              <p className="mb-2 break-words text-sm font-semibold text-slate-900">{label}</p>
-              {renderControl()}
-            </li>;
-          })}
-            </ol>
-          </section>
-      </div>
-
+        {isRegistered && onDeleteLine && (
+          <button type="button"
+            onClick={() => setConfirmDeleteOpen(true)}
+            className="ml-auto shrink-0 rounded p-2 text-gray-500 hover:bg-red-50"
+            title="Delete this line"
+          >
+            Delete permit line
+          </button>
+        )}
+        </div>
+      </details>
+      <details className="mt-1 rounded border px-3 py-2"><summary className="cursor-pointer text-xs font-semibold text-slate-700">Fees, inspections &amp; closeout</summary>
       <PermitLineLifecycleDetails
         lineItem={lineItem}
         locality={locality}
         onUpdateField={onUpdateField}
         isRegistered={isRegistered}
         today={today}
-      />
+      /></details>
       </>
       )}
 
