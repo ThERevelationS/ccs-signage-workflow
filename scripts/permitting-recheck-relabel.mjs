@@ -153,11 +153,16 @@ async function applyPass() {
   emit({ stage: 'recheck_plan', detail: `${plan.offices} offices on ${plan.localities} localities fail strict`, ok: true });
 
   let done = 0, officesChanged = 0, skipped = 0;
+  // Below normal traffic: enqueues are FIFO (no priority lane) behind the
+  // whole existing backlog, paced ~50 loc/min. The yield is relative — a
+  // fixed depth gate would deadlock against the system's standing backlog;
+  // instead refuse to run if the backlog is GROWING well past where the
+  // pass started.
+  let depthBaseline = await outboxDepth();
   for (const t of targets) {
     await waitWhilePaused(WORKER, { item: `relabel ${t.loc.name}` });
     if (readControl().needs_recheck === false) { emit({ stage: 'recheck_paused', detail: 'needs_recheck flag off — stopping', ok: true }); break; }
-    // Below normal traffic: yield while the outbox is deep, pace enqueues.
-    while (await outboxDepth() > 400) { heartbeat(WORKER, 'idle', `outbox deep — waiting`); await sleep(15000); }
+    while (await outboxDepth() > depthBaseline + 500) { heartbeat(WORKER, 'idle', `outbox growing — waiting`); await sleep(15000); }
     const r = await relabelLoc(t);
     done++;
     if (r.changed) {
