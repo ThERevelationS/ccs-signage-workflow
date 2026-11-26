@@ -2,7 +2,7 @@ import { summarizeElectricalRoleCoverage } from '../../../base44/shared/permitti
 
 export default function ElectricalAuthorityCoverage({ authority, selectionContext = 'manual' }) {
   const coverage = summarizeElectricalRoleCoverage(authority?.verified_roles || [], authority?.roles_needing_review || []);
-  const statusLabels = { staff_verified: 'Staff reviewed', needs_review: 'Needs staff review', missing: 'Not established' };
+  const statusLabels = { staff_verified: 'Staff reviewed', needs_recheck: 'Verified — needs re-check', needs_review: 'Needs staff review', missing: 'Not established' };
   const unresolved = ['electrical_permit', 'electrical_inspection'].filter(role => coverage.roles[role] !== 'staff_verified');
   const guidance = {
     electrical_permit: {
