@@ -186,7 +186,7 @@ async function applyPass() {
     else skipped++;
     heartbeat(WORKER, 'busy', `relabel ${done}/${liveTargets.length}`);
     if (done % 25 === 0) writeFileSync(STATS_FILE, JSON.stringify({ at: new Date().toISOString(), done, targets: liveTargets.length, offices_changed: officesChanged, skipped }, null, 1));
-    await sleep(2500); // ~24 localities/min — bounded marginal load on the FIFO
+    await sleep(1500); // paced localities/min — bounded marginal load on the FIFO
   }
   // Breaker baseline reset: the 22.6% trip measured pre-tightening data.
   try { writeFileSync(BREAKER_FILE, JSON.stringify({ at: new Date().toISOString(), flagged: 0, audited: 0, pct: 0, reset: 'baseline reset after strict-relabel pass' })); } catch {}
