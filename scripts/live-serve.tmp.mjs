@@ -188,6 +188,11 @@ const status=()=>{
       totalOffices+=offs.length;
       const vo=offs.filter(o=>o?.authority_verification_status==='staff_verified');
       verifiedOffices+=vo.length; if(vo.length)verifiedLocs++;
+      // Live-sourced verified count — mirror-sync writes this from RAW remote
+      // rows each cycle, so it can't be inflated by unflushed local upserts.
+      // Prefer it when fresh (<35min); the mirror count is the fallback.
+      try{const lv=JSON.parse(readFileSync('.audit-work/live-verified-count.json','utf8'));
+        if(lv.staff_verified!=null&&Date.now()-Date.parse(lv.at)<35*60e3){verifiedOffices=lv.staff_verified;if(lv.offices!=null)totalOffices=lv.offices;}}catch{}
       let s=false,z=false;
       for(const o of (Array.isArray(l.offices)?l.offices:[])){
         if(o?.authority_verification_status!=='staff_verified')continue;
@@ -379,6 +384,15 @@ button.primary{border-color:#1d4ed8;background:#12306e}
 .switch input:checked::after{left:17px}
 .switch input:disabled{cursor:not-allowed;opacity:.4}
 .switch .swv{color:var(--dim);font-weight:400;font-size:11.5px}
+.pipe{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.stage{background:#141c30;border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:120px;cursor:pointer;flex:0 1 auto}
+.stage:hover{border-color:var(--blue)}
+.stage.sel{border-color:var(--blue);background:#16223f}
+.stage .sc.n{font:700 20px var(--mono)}
+.stage .st{font-size:12px;font-weight:600;margin-top:2px}
+.stage .ss{font-size:11px;margin-top:2px;max-width:160px}
+.arrow{align-self:center;color:var(--dim);font-size:16px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;border-left:1px solid var(--line);padding-left:8px}
 .badge{font-size:11.5px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:help}
 #banner{display:none;background:#3b1215;border-bottom:1px solid #7f1d1d;color:#fca5a5;padding:14px 20px;font-size:13.5px}
 #banner.show{display:block}
@@ -453,12 +467,14 @@ canvas.chart{display:block;width:100%;background:#0b1120;border-radius:8px}
  <button id="btnStop" class="danger" disabled>Stop</button>
  <label class="switch" title="When on, the checker verifies office records and researchers collect evidence."><input type="checkbox" id="swVerify" disabled><span>Verify jurisdictions</span><span class="swv" id="swVerifyTxt"></span></label>
  <span class="badge" id="expBadge" title="Adding new jurisdictions unlocks automatically once every current one is verified.">🔒 Expansion locked</span>
+ <span class="badge" id="awakeBadge" title="Windows sleep is prevented while the server runs so the fleet keeps working."></span>
 </header>
 <div id="banner"><b>Server is offline.</b> The permit server isn’t answering — nothing on this page is live right now. To start it, double-click <b>CCS Permit Server</b> on the desktop. This page keeps retrying automatically.</div>
 <nav class="tabs" role="tablist">
  <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
  <button role="tab" data-tab="researchers" aria-selected="false">Researchers</button>
  <button role="tab" data-tab="verification" aria-selected="false">Verification</button>
+ <button role="tab" data-tab="audit" aria-selected="false">AI Audit</button>
  <button role="tab" data-tab="memory" aria-selected="false">Memory</button>
  <button role="tab" data-tab="activity" aria-selected="false">Activity</button>
  <button role="tab" data-tab="advanced" aria-selected="false">Advanced</button>
@@ -467,6 +483,7 @@ canvas.chart{display:block;width:100%;background:#0b1120;border-radius:8px}
  <section id="tab-overview"></section>
  <section id="tab-researchers" hidden></section>
  <section id="tab-verification" hidden></section>
+ <section id="tab-audit" hidden></section>
  <section id="tab-memory" hidden></section>
  <section id="tab-activity" hidden></section>
  <section id="tab-advanced" hidden></section>
@@ -544,7 +561,7 @@ function plainAction(d){
 // — state —
 let srv=null,srvAt=0,ledger=null,ledgerAt=0,promos=null,promosAt=0,legacy=null,legacyAt=0,feedFilter='all';
 let pendingMax=null;
-const TABS=['overview','researchers','verification','memory','activity','advanced'];
+const TABS=['overview','researchers','verification','audit','memory','activity','advanced'];
 let tab=(location.hash||'').replace('#/','')||'overview';if(!TABS.includes(tab))tab='overview';
 function showTab(t){tab=t;location.hash='#/'+t;document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t?'true':'false'));TABS.forEach(x=>$('tab-'+x).hidden=x!==t);render();}
 document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
@@ -623,11 +640,25 @@ function renderHeader(){
  const badge=$('expBadge');
  if(on&&srv.expansion_locked===false){badge.textContent='Expansion unlocked';badge.title='New jurisdictions are being added.';}
  else{badge.innerHTML='🔒 Expansion locked';badge.title='Adding new jurisdictions unlocks automatically once every current one is verified.';}
+ const ab=$('awakeBadge');
+ if(on&&srv.keep_awake){ab.textContent='☕ PC kept awake';ab.style.color='var(--green)';}
+ else if(on){ab.textContent='Sleep allowed (server stopped)';ab.style.color='';}
+ else{ab.textContent='';}
 }
 $('btnStart').addEventListener('click',async()=>{try{await srvCmd(srv&&srv.state==='paused'?'resume':'start');}catch(e){alert(e.message);}});
 $('btnPause').addEventListener('click',async()=>{try{await srvCmd('pause');}catch(e){alert(e.message);}});
 $('btnStop').addEventListener('click',async()=>{if(!confirm('Stop the whole permit server? All workers will shut down (the saver finishes its current batch first).'))return;try{await srvCmd('stop');}catch(e){alert(e.message);}});
 $('swVerify').addEventListener('change',async e=>{const on=e.target.checked;try{await srvCmd('verification',{on});}catch(err){e.target.checked=!on;alert(err.message);}});
+// Dynamically-rendered toggles — delegated so re-renders don't drop them.
+document.addEventListener('change',async e=>{
+ const id=e.target&&e.target.id;
+ try{
+  if(id==='swExtract'){const on=e.target.checked;await srvCmd('ai-extract',{on});}
+  else if(id==='swAudit'){const on=e.target.checked;await srvCmd('ai-audit',{on});}
+  else if(id==='auditTypeF'){auditTypeV=e.target.value;auditPage=0;render();}
+  else if(id==='auditActionF'){auditActionV=e.target.value;auditPage=0;render();}
+ }catch(err){alert(err.message);}
+});
 // — Overview tab —
 function renderOverview(){
  const o=vp()&&vp().offices||{},j=vp()&&vp().jurisdictions||{};
@@ -697,10 +728,142 @@ function renderResearchers(){
  +'<div style="margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
  +(R.hold_reason?'<span class="dim small">Holding at '+resAlive().length+': '+esc(R.hold_reason)+'</span>':'')
  +'<span style="flex:1"></span><button class="danger" data-cmd="killres">Stop all researchers</button></div>'
- +'<div class="dim small" style="margin-top:8px">'+resAlive().length+' running'+(mode==='auto'?' (auto, no limit)':'')+(R.avg_rss_mb?' · about '+R.avg_rss_mb+' MB each':'')+workTxt+cpuTxt+disList+'</div></div>'
+ +'<div class="dim small" style="margin-top:8px">'+resAlive().length+' running'+(mode==='auto'?' (auto, no limit)':'')+(R.avg_rss_mb?' · about '+R.avg_rss_mb+' MB each':'')+workTxt+cpuTxt+disList+'</div>'
+ +((srv&&srv.ai&&srv.ai.boost_waiting)?'<div class="dim small" style="margin-top:6px"><b class="num" style="color:var(--txt)">'+num(srv.ai.boost_waiting)+'</b> audit fix'+(srv.ai.boost_waiting===1?'':'es')+' waiting — these go to the front of research work (see the AI Audit tab)</div>':'')
+ +'</div>'
  +'<div class="rgrid">'+shown+'</div>'
- +(hidden.length?'<details style="margin-top:10px"><summary class="dim small" style="cursor:pointer">'+hidden.length+' more slots — off or recently stopped</summary><div class="rgrid" style="margin-top:10px">'+hidden.map(card).join('')+'</div></details>':''));
+ +(hidden.length?'<details style="margin-top:10px"><summary class="dim small" style="cursor:pointer">'+hidden.length+' more slots — off or recently stopped</summary><div class="rgrid" style="margin-top:10px">'+hidden.map(card).join('')+'</div></details>':'')
+ +renderExtractCard());
 }
+// — AI extractor card (SWE-2.1 evidence hunts) —
+function renderExtractCard(){
+ const e=(srv&&srv.ai&&srv.ai.extract)||{};
+ const w=(srv&&srv.workers||[]).find(x=>x.name==='ai-extractor')||{};
+ const on=e.on!==false;
+ const rej=Object.entries(e.rejected||{}).map(([k,v])=>esc(k)+' '+num(v)).join(' · ')||'—';
+ const line=!on?'Off — researchers use regex extraction only'
+  :w.alive?(e.acp&&e.acp.model?'Reading with '+esc(e.acp.model):'Running'):'Not running';
+ return '<div class="card" style="margin-top:14px"><h2>SWE-2.1 evidence hunts <label class="switch" style="float:right"><input type="checkbox" id="swExtract" '+(on?'checked':'')+'><i></i></label></h2>'
+ +'<div class="dim small" style="margin-bottom:10px">When a crawl still can’t quote an office, SWE-2.1 reads the official pages for a verbatim proof sentence. Every answer is checked in code — quotes must be copied exactly from the page — before it becomes a draft the checker re-judges.</div>'
+ +'<div class="dim small" style="margin-bottom:10px">'+esc(line)+(e.acp&&e.acp.model?' · model '+esc(e.acp.model):'')+(srv&&srv.ai&&srv.ai.devin_rss_mb?' · '+srv.ai.devin_rss_mb+' MB':'' )+'</div>'
+ +'<div class="tiles">'
+ +'<div class="tile"><div class="t">Sent</div><div class="v">'+num(e.sent||0)+'</div><div class="s">'+num(e.queue_depth||0)+' waiting</div></div>'
+ +'<div class="tile"><div class="t">Answered</div><div class="v">'+num(e.answered||0)+'</div><div class="s">'+(w.status||'—')+'</div></div>'
+ +'<div class="tile"><div class="t">Accepted</div><div class="v ok">'+num(e.accepted||0)+'</div><div class="s">became drafts for the checker</div></div>'
+ +'<div class="tile"><div class="t">Rejected</div><div class="v bad">'+num(Object.values(e.rejected||{}).reduce((a,b)=>a+b,0))+'</div><div class="s" title="'+rej+'">'+rej.slice(0,80)+'</div></div>'
+ +'</div></div>';
+}
+// — AI Audit tab —
+let auditFindings=[],auditFindingsAt=0,auditEvents=[],auditStage=null,auditPage=0,auditRate={done:0,t:0,perHr:null},auditTypeV='',auditActionV='';
+const AUDIT_EVENT_LABEL={ai_audit_unit_sent:'unit sent',ai_audit_unit_answered:'answered',ai_audit_finding:'finding',ai_audit_action:'action',ai_audit_breaker:'safety',ai_audit_boot:'boot'};
+const AUDIT_TYPES={wrong_jurisdiction:'Belongs to a different town',non_permit_body:'Not a permit office',junk_name:'Scraped or junk name',role_not_supported_by_quote:"Evidence doesn't prove the role",contact_mismatch:'Contact belongs to another entity',duplicate_office:'Looks like a duplicate',wrong_county_or_type:'Wrong county or type',paper_township:'Paper township',stale_or_placeholder:'Stale or placeholder',other:'Other'};
+const AUDIT_ACTIONS={demoted:'Sent back to re-check',name_cleaned:'Name cleaned',sent_to_researchers:'Sent to researchers',logged:'Logged for review',logged_rule_agrees:'Logged (rule agrees)',review_rule_disagrees:'Needs a person to look',discarded_check_passed:'Discarded — evidence checks out',discarded_cleaner_noop:'Discarded — name already clean',cap_limited:'Waiting (hourly cap)',breaker_tripped:'Safety stop'};
+const AUDIT_STAGE_ACTIONS={checks:['discarded_check_passed','discarded_cleaner_noop'],demoted:['demoted'],cleaned:['name_cleaned'],researchers:['sent_to_researchers'],logged:['logged','logged_rule_agrees','review_rule_disagrees']};
+async function pollAudit(){if(tab!=='audit'||Date.now()-auditFindingsAt<1500)return;try{const [r1,r2]=await Promise.all([fetch('/api/ai-audit-findings',{cache:'no-store'}),fetch('/api/ai-audit-events',{cache:'no-store'})]);if(r1.ok){const j=await r1.json();auditFindings=j.items||[];}if(r2.ok){const j=await r2.json();auditEvents=j.items||[];}auditFindingsAt=Date.now();}catch(e){}}
+function renderAudit(){
+ const a=(srv&&srv.ai&&srv.ai.audit)||{};
+ const w=(srv&&srv.workers||[]).find(x=>x.name==='ai-auditor')||{};
+ const on=a.on!==false,paused=!!a.paused;
+ const cov=a.coverage||{done:0,total:0};
+ const set=a.settings||{demote_cap_hr:50,breaker_pct:5,sessions:3,sessions_mode:'auto'};
+ // plain-English status line
+ let statusLine;
+ if(!on)statusLine='Off';
+ else if(paused)statusLine='Paused by you';
+ else if(w.status==='paused-by-guard')statusLine='Paused by memory guard';
+ else if(w.last_heartbeat&&w.last_heartbeat.state==='idle'&&w.last_heartbeat.detail)statusLine=cap(w.last_heartbeat.detail);
+ else if(a.current)statusLine='Reading '+a.current+'…';
+ else if(w.alive)statusLine='Running';
+ else statusLine='Not running';
+ const model=a.acp&&a.acp.model?a.acp.model:'swe-2.1';
+ // rate/hr from coverage deltas between polls
+ const now=Date.now();
+ if(cov.done!==auditRate.done){if(auditRate.t&&cov.done>auditRate.done){auditRate.perHr=Math.round((cov.done-auditRate.done)/((now-auditRate.t)/3600e3));}auditRate.done=cov.done;auditRate.t=now;}
+ const pct=cov.total?Math.round(100*cov.done/cov.total):0;
+ const eta=cov.total&&auditRate.perHr?Math.ceil((cov.total-cov.done)/auditRate.perHr):null;
+ // stages
+ const stage=(id,label,count,sub)=>'<div class="stage'+(auditStage===id?' sel':'')+'" data-cmd="audit-stage" data-stage="'+id+'"><div class="sc n">'+num(count)+'</div><div class="st">'+label+'</div><div class="ss dim small">'+sub+'</div></div>';
+ const demoteToks=(a.demote_tokens||[]).filter(t=>now-t<3600e3).length;
+ const reverts=(a.reverts||[]);
+ const revertedIds=new Set(reverts.filter(r=>/^revert_/.test(r.action||'')).map(r=>r.entry_id));
+ const actions=reverts.filter(r=>['demote','rename'].includes(r.action));
+ // findings table — newest first, filters
+ const tf=auditTypeV,af=auditActionV;
+ const stageActs=auditStage&&AUDIT_STAGE_ACTIONS[auditStage]?AUDIT_STAGE_ACTIONS[auditStage]:null;
+ let rows=auditFindings.filter(f=>(!tf||f.type===tf)&&(!af||f.action===af)&&(!stageActs||stageActs.includes(f.action)));
+ rows=rows.slice().reverse();
+ const PAGE=25,pages=Math.max(1,Math.ceil(rows.length/PAGE));
+ auditPage=Math.min(auditPage,pages-1);
+ const pageRows=rows.slice(auditPage*PAGE,auditPage*PAGE+PAGE);
+ // group by jurisdiction
+ const groups=new Map();
+ for(const f of pageRows){const k=esc(f.jurisdiction||'?')+(f.state?', '+esc(f.state):'');if(!groups.has(k))groups.set(k,[]);groups.get(k).push(f);}
+ const table=pageRows.length?'<table>'+[...groups.entries()].map(([jur,fs])=>'<tr><td colspan="5" style="background:#141c30;font-weight:700">'+jur+'</td></tr>'+fs.map(f=>'<tr><td class="dim" style="width:170px">'+esc(f.office_name||f.office_id||'—')+'</td><td>'+esc(AUDIT_TYPES[f.type]||f.type)+(f.field?' <span class="dim small">'+esc(f.field)+'</span>':'')+'</td><td class="dim small" style="max-width:260px">'+esc(String(f.current||'').slice(0,80))+(f.suggested?' → '+esc(String(f.suggested).slice(0,60)):'')+'</td><td>'+esc(AUDIT_ACTIONS[f.action]||f.action)+'</td><td class="dim small" style="width:80px">'+agoT(f.at)+'</td></tr>').join('')).join('')+'</table>':'<div class="empty">No findings match this filter yet.</div>';
+ const uniq=a=>[...new Set(auditFindings.map(f=>f[a]).filter(Boolean))].sort();
+ const sel=(id,cur,opts)=>'<select id="'+id+'" style="background:#141c30;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12px"><option value="">all</option>'+opts.map(o=>'<option'+(o===cur?' selected':'')+' value="'+esc(o)+'">'+esc(AUDIT_TYPES[o]||AUDIT_ACTIONS[o]||o)+'</option>').join('')+'</select>';
+ setH('tab-audit',
+ '<div class="card"><h2>AI Audit <label class="switch" style="float:right"><input type="checkbox" id="swAudit" '+(on?'checked':'')+'><span class="swv">'+(on?'On':'Off')+'</span></label></h2>'
+ +'<div class="dim small" style="margin-bottom:10px">SWE-2.1 reads every jurisdiction record looking for wrong, stale or unsupported data. Nothing changes on the model’s word alone — code re-checks every finding, and demotions only move offices to the safe side.</div>'
+ +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b>'+esc(statusLine)+'</b><span class="dim small">model '+esc(model)+(srv&&srv.ai&&srv.ai.devin_rss_mb?' · '+srv.ai.devin_rss_mb+' MB':'')+'</span><span style="flex:1"></span>'
+ +(paused?'<button data-cmd="audit-resume">Resume</button>':'<button data-cmd="audit-pause">Pause</button>')+'</div></div>'
+ // pipeline
+ +'<div class="card"><h2>How a record flows</h2><div class="pipe">'
+ +stage('queue','Queue',cov.total-cov.done,'jurisdictions waiting, verified first')
+ +'<div class="arrow">→</div>'
+ +stage('reading','Reading',a.current?1:0,a.current?esc(a.current.slice(0,26)):'idle')
+ +'<div class="arrow">→</div>'
+ +stage('review','SWE-2.1 review',a.answered||0,'of '+num(a.sent||0)+' sent · '+num(a.failed||0)+' failed')
+ +'<div class="arrow">→</div>'
+ +stage('checks','Code checks',a.findings||0,'findings · '+num(a.discarded||0)+' discarded')
+ +'<div class="arrow">→</div>'
+ +'<div class="acts">'
+ +stage('demoted','Demoted to re-check',a.demoted||0,'reversible')
+ +stage('cleaned','Name cleaned',a.renamed||0,'reversible')
+ +stage('researchers','Sent to researchers',a.boosted||0,(srv&&srv.ai&&srv.ai.boost_waiting?'<b>'+num(srv.ai.boost_waiting)+'</b> audit fix'+(srv.ai.boost_waiting===1?'':'es')+' waiting':'re-fetch official data'))
+ +stage('logged','Logged for review',a.logged||0,'a person decides')
+ +'</div></div></div>'
+ // progress
+ +'<div class="card"><h2>Coverage</h2>'
+ +'<div style="font:700 20px var(--mono);margin-bottom:6px">'+num(cov.done)+' of '+num(cov.total)+' jurisdictions audited <span class="dim" style="font-size:13px">('+pct+'%)</span></div>'
+ +'<div class="bar"><i style="width:'+pct+'%;background:var(--blue)"></i></div>'
+ +'<div class="dim small" style="margin-top:6px">'+(auditRate.perHr?num(auditRate.perHr)+' per hour'+(eta?' · done in about '+eta+'h':''):'measuring speed…')+' · verified offices audited: '+num(a.verified_audited||0)+' ('+num(a.verified_flagged||0)+' flagged)</div></div>'
+ // Live sessions panel
+ +(function(){
+  const sess=(srv&&srv.ai&&srv.ai.audit_sessions)||[];
+  const rows=sess.length?sess.map(s=>{
+   const el=s.since?Math.round((Date.now()-new Date(s.since).getTime())/1000):0;
+   const unit=(s.units&&s.units[0])||'—';
+   const detail=s.busy?(s.partial?esc(String(s.partial).slice(-120)):'thinking… '+el+'s'):'idle';
+   return '<tr><td class="num" style="width:60px">'+(s.session+1)+'</td><td>'+esc(unit)+'</td><td class="dim">'+esc(s.stage||'—')+(s.busy&&s.since?' <span class="dim small">'+el+'s</span>':'')+'</td><td class="dim small" style="max-width:340px">'+detail+'</td><td class="dim small" style="width:150px">'+(s.last_finding?esc(s.last_finding.jurisdiction||'')+' — '+esc(s.last_finding.finding||''):'—')+'</td></tr>';
+  }).join(''):'<tr><td colspan="5" class="dim">No sessions running.</td></tr>';
+  return '<div class="card"><h2>Live</h2><div class="dim small" style="margin-bottom:8px">One row per SWE-2.1 audit session — what it’s reading right now.</div>'
+  +'<table><tr><th>#</th><th>Reading</th><th>Stage</th><th>Latest output</th><th>Last finding</th></tr>'+rows+'</table></div>';
+ })()
+ // Live event ticker
+ +(function(){
+  const evs=(auditEvents||[]).slice(-50).reverse();
+  const items=evs.length?evs.map(e=>'<div class="row" style="padding:4px 0;border-bottom:1px solid var(--line)"><span class="dim small" style="display:inline-block;width:70px">'+agoT(e.t)+'</span><b style="font-weight:600">'+(e.ok===false?'✗ ':'')+esc(AUDIT_EVENT_LABEL[e.stage]||e.stage)+'</b> <span class="dim">'+(e.address?esc(e.address)+' — ':'')+esc(String(e.detail||'').slice(0,140))+'</span></div>').join(''):'<div class="empty">No audit events yet.</div>';
+  return '<div class="card"><h2>Event log</h2>'+items+'</div>';
+ })()
+ // findings
+ +'<div class="card"><h2>Findings'+(auditStage?' — '+esc(auditStage)+' <a href="#/audit" data-cmd="audit-stage" data-stage="">clear</a>':'')+'</h2>'
+ +'<div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;align-items:center"><span class="dim small">Problem:</span>'+sel('auditTypeF',tf,uniq('type'))+'<span class="dim small">Action:</span>'+sel('auditActionF',af,uniq('action'))+'<span class="dim small" style="margin-left:auto">'+num(rows.length)+' finding'+(rows.length===1?'':'s')+' · page '+(auditPage+1)+' of '+pages+'</span>'
+ +(auditPage>0?'<button data-cmd="audit-page" data-dir="-1">←</button>':'')+(auditPage<pages-1?'<button data-cmd="audit-page" data-dir="1">→</button>':'')+'</div>'
+ +table+'</div>'
+ // auto-actions + breakers + settings
+ +'<div class="card"><h2>Automatic actions</h2>'
+ +(a.breaker_tripped?'<div class="warn" style="margin-bottom:10px">Safety stop: the audit flagged more than '+set.breaker_pct+'% of the verified offices it checked, so it stopped sending offices back to re-check. Review the list below, then press <button data-cmd="audit-resume-demote">Allow re-checks again</button>.</div>':'')
+ +'<div class="dim small" style="margin-bottom:8px">Demotions this hour: '+num(demoteToks)+' of '+num(set.demote_cap_hr)+' allowed</div>'
+ +(actions.length?'<table><tr><th>Office</th><th>Action</th><th>Why</th><th style="width:80px">When</th><th style="width:70px"></th></tr>'+actions.slice().reverse().map(r=>'<tr><td>'+esc(r.office_name||r.office_id||r.before_name||'—')+'</td><td>'+esc(r.action==='demote'?'sent back to re-check':'renamed'+(r.after_name?' → '+r.after_name:''))+'</td><td class="dim small">'+esc(String(r.reason||r.finding||'').slice(0,100))+'</td><td class="dim small">'+agoT(r.at)+'</td><td>'+(revertedIds.has(r.entry_id)?'<span class="dim small">undone</span>':'<button data-cmd="audit-revert" data-entry="'+esc(r.entry_id)+'">Undo</button>')+'</td></tr>').join('')+'</table>':'<div class="empty">No automatic actions yet — demotions and name fixes will appear here with an Undo button.</div>')+'</div>'
+ +'<div class="card"><h2>Audit settings</h2>'
+ +'<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">'
+ +'<div><label class="dim small">Demotions per hour<br><input id="auditSetCap" type="number" min="1" max="500" value="'+set.demote_cap_hr+'" style="width:90px"></label><div class="dim small" style="max-width:220px">Most verified offices the audit may send back to re-check in one hour. Stops a bad AI run from un-verifying lots of offices at once.</div></div>'
+ +'<div><label class="dim small">Safety stop %<br><input id="auditSetBreaker" type="number" min="1" max="50" value="'+set.breaker_pct+'" style="width:90px"></label><div class="dim small" style="max-width:220px">If the audit flags more than this share of the verified offices it has checked, it stops sending any back and waits for you.</div></div>'
+ +'<div><label class="dim small">Sessions<br><select id="auditSetSessMode" style="width:90px"><option value="auto"'+(set.sessions_mode!=='manual'?' selected':'')+'>Auto</option><option value="manual"'+(set.sessions_mode==='manual'?' selected':'')+'>Manual</option></select> <input id="auditSetSessions" type="number" min="1" max="8" value="'+set.sessions+'" style="width:70px"></label><div class="dim small" style="max-width:220px">How many SWE-2.1 conversations run at once. Auto adds or removes them based on free memory.</div></div>'
+ +'</div>'
+ +'<div style="margin-top:10px"><button id="btnAuditSet">Save</button> <span id="auditSetMsg" class="dim small"></span></div></div>');
+}
+function cap(s){s=String(s||'');return s.charAt(0).toUpperCase()+s.slice(1);}
 // — Verification tab —
 function renderVerification(){
  const v=vp(),o=v&&v.offices||{},j=v&&v.jurisdictions||{};
@@ -714,6 +877,7 @@ function renderVerification(){
  const np=(ledger&&ledger.not_permitting)||[];
  const wd=((srv&&srv.guard&&srv.guard.researchers)||{}).work_detail||{};
  const tierN=t=>num((wd.tiers||{})[t]||0);
+ const auditLink='<div class="dim small" style="margin-bottom:10px">SWE-2.1 also audits every record for errors — see the <a href="#/audit">AI Audit tab</a>.</div>';
  // Group needs-a-person rows under their jurisdiction — one header per place,
  // office rows beneath, reasons already deduped by needsYou().
  const nyGroups=[];const gmap=new Map();
@@ -726,7 +890,7 @@ function renderVerification(){
  +'<table><tr><td>Pass 1 — standard crawl</td><td class="num" style="width:90px">'+tierN(1)+'</td><td class="dim small" rowspan="4" style="vertical-align:middle">'+num(wd.exhausted||0)+' ran every pass and need a person'+(wd.next_release?'<br>Next cooldown lifts '+esc(new Date(wd.next_release).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})):'')+'</td></tr>'
  +'<tr><td>Pass 2 — deep crawl</td><td class="num">'+tierN(2)+'</td></tr>'
  +'<tr><td>Pass 3 — county &amp; regional sites</td><td class="num">'+tierN(3)+'</td></tr>'
- +'<tr><td>Pass 4 — alternate official sites</td><td class="num">'+tierN(4)+'</td></tr></table></div>'
+ +'<tr><td>Pass 4 — alternate official sites</td><td class="num">'+tierN(4)+'</td></tr></table>'+auditLink+'</div>'
  +(np.length?'<div class="card"><h2>Not a permitting authority ('+np.length+')</h2><div class="dim small" style="margin-bottom:8px">These places don’t issue their own permits — they’re counted under the county or state office that actually does. They’re kept for records but skipped by the checker.</div><table>'+np.map(x=>'<tr><td style="width:260px"><b>'+esc(x.name)+(x.state?', '+esc(x.state):'')+'</b></td><td class="dim">'+esc(x.handled_by||'no permitting authority of its own')+'</td></tr>').join('')+'</table></div>':'')
  +'<div class="card"><h2>Why offices aren’t verified yet</h2>'
  +(gaps.length?'<table><tr><th>Reason</th><th style="width:90px">Offices</th><th>What happens next</th></tr>'+gaps.map(g=>'<tr><td>'+esc(GAP_LABEL[g[0]]||g[0])+'</td><td class="num">'+num(g[1])+'</td><td class="dim">'+esc(GAP_NEXT[g[0]]||'The checker will try again.')+'</td></tr>').join('')+'</table>':'<div class="empty">No gaps recorded yet.</div>')+'</div>'
@@ -873,7 +1037,21 @@ document.addEventListener('click',async e=>{
   else if(c==='killres'){if(!confirm('Stop all researchers now? They stay off until you pick a mode or count again.'))return;await srvCmd('researchers',{killall:true});}
   else if(c==='wstop')await srvCmd('worker',{name:b.dataset.name,action:'stop'});
   else if(c==='wstart')await srvCmd('worker',{name:b.dataset.name,action:'start'});
+  else if(c==='audit-stage'){e.preventDefault();auditStage=b.dataset.stage||null;auditPage=0;render();return;}
+  else if(c==='audit-page'){auditPage=Math.max(0,auditPage+Number(b.dataset.dir||0));render();return;}
+  else if(c==='audit-pause')await srvCmd('ai-audit',{paused:true});
+  else if(c==='audit-resume')await srvCmd('ai-audit',{paused:false});
+  else if(c==='audit-resume-demote')await srvCmd('ai-audit/resume-demotion');
+  else if(c==='audit-revert'){if(!confirm('Undo this automatic change?'))return;await srvCmd('audit/revert',{entry_id:b.dataset.entry});}
  }catch(err){alert(err.message);}
+});
+// Audit settings save — lives outside the button dispatch (id, not data-cmd).
+document.addEventListener('click',async e=>{
+ if(e.target&&e.target.id==='btnAuditSet'){
+  const msg=$('auditSetMsg');
+  try{await srvCmd('audit/settings',{demote_cap_hr:Number($('auditSetCap').value),breaker_pct:Number($('auditSetBreaker').value),sessions:Number($('auditSetSessions').value),sessions_mode:$('auditSetSessMode').value});msg.innerHTML='<span class="ok">Saved ✓</span>';setTimeout(()=>{msg.textContent='';},4000);}
+  catch(err){msg.innerHTML='<span class="bad">'+esc(err.message)+'</span>';}
+ }
 });
 // — render dispatch —
 function render(){
@@ -882,11 +1060,12 @@ function render(){
  if(tab==='overview')renderOverview();
  else if(tab==='researchers')renderResearchers();
  else if(tab==='verification')renderVerification();
+ else if(tab==='audit')renderAudit();
  else if(tab==='memory')renderMemory();
  else if(tab==='activity')renderActivity();
  else if(tab==='advanced')renderAdvanced();
 }
-async function cycle(){await pollSrv();await pollLedger();if(tab==='verification'||tab==='overview')await pollPromos();render();}
+async function cycle(){await pollSrv();await pollLedger();if(tab==='verification'||tab==='overview')await pollPromos();if(tab==='audit')await pollAudit();render();}
 async function legacyCycle(){await pollLegacy();if(tab==='activity'&&!held())renderActivity();}
 document.addEventListener('keydown',e=>{if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&document.activeElement===document.body){const i=TABS.indexOf(tab);showTab((i+(e.key==='ArrowRight'?1:-1)+TABS.length)%TABS.length);}});
 TABS.forEach(x=>$('tab-'+x).hidden=x!==tab);
@@ -920,6 +1099,18 @@ http.createServer((req,res)=>{
     }
     if(req.url==='/api/verification-ledger'){
       res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(rd('.audit-work/verification-ledger.json')||'{"error":"no ledger yet"}');return;
+    }
+    if(req.url==='/api/ai-audit-events'){
+      // Tail of .live-events.jsonl filtered to ai_audit_* — the tab's ticker.
+      const t=tailRead('.live-events.jsonl',256*1024)||'';
+      const items=t.trim().split('\n').filter(Boolean).map(l=>{try{return JSON.parse(l);}catch{return null;}}).filter(e=>e&&/^ai_audit_/.test(String(e.stage||''))).slice(-60);
+      res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify({items}));return;
+    }
+    if(req.url==='/api/ai-audit-findings'){
+      // Tail of the auditor's findings log — the AI Audit tab's table.
+      const t=tailRead('.audit-work/ai-audit-findings.jsonl',512*1024)||'';
+      const items=t.trim().split('\n').filter(Boolean).slice(-400).map(l=>{try{return JSON.parse(l);}catch{return null;}}).filter(Boolean);
+      res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify({items}));return;
     }
     if(req.url==='/api/promotions'){
       // Tail of the verifier's promotions log — the "recently verified" list.

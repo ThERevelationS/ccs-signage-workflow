@@ -31,7 +31,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 {
   const run = { state: 'running', verification: true, expansion: false, expansion_locked: true };
   const active = activeSetFor(run);
-  assert.equal(active.length, 71); // dash + flusher + mirror + 64 local-res slots + seed + verifier + hygiene + profile-relink
+  assert.equal(active.length, 73); // dash + flusher + mirror + 64 local-res slots + seed + verifier + hygiene + profile-relink + ai-extractor + ai-auditor
   assert.ok(active.includes('write-flusher') && active.includes('local-res-15') && active.includes('local-res-63') && active.includes('dashboard'));
   assert.ok(!active.includes('office-sweep-0') && !active.includes('forever-runner'));
   // paused keeps the same process set — workers self-idle, none are killed
@@ -42,11 +42,16 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const locked = activeSetFor({ ...run, expansion: true, expansion_locked: true });
   assert.ok(!locked.includes('office-sweep-0'));
   const open = activeSetFor({ ...run, expansion: true, expansion_locked: false });
-  assert.equal(open.length, 77);
+  assert.equal(open.length, 79);
   assert.ok(open.includes('office-sweep-3') && open.includes('parcel-resolver') && open.includes('forever-runner'));
   // verification OFF drops its whole group, keeps core
   const off = activeSetFor({ ...run, verification: false });
   assert.ok(!off.includes('local-res-0') && !off.includes('authority-verifier') && off.includes('write-flusher'));
+  // ai_extract / ai_audit flags drop only their own worker (default on)
+  const noExtract = activeSetFor({ ...run, ai_extract: false });
+  assert.ok(!noExtract.includes('ai-extractor') && noExtract.includes('ai-auditor'));
+  const noAudit = activeSetFor({ ...run, ai_audit: false });
+  assert.ok(!noAudit.includes('ai-auditor') && noAudit.includes('ai-extractor'));
   // researcherAllowed culls slots outside the wanted set — they leave
   // the active set entirely so reconcile stops (not pauses) them.
   const wanted = ['local-res-3', 'local-res-4', 'local-res-5', 'local-res-6', 'local-res-7'];
@@ -54,7 +59,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const culledRes = culled.filter((n) => /^local-res-/.test(n));
   assert.deepEqual(culledRes.sort(), [...wanted].sort());
   assert.equal(culledRes.length, 5);
-  assert.equal(culled.length, 71 - 64 + 5); // window replaces the full slot set
+  assert.equal(culled.length, 73 - 64 + 5); // window replaces the full slot set
   assert.ok(culled.includes('authority-verifier') && culled.includes('write-flusher'));
   // empty wanted set → no researcher processes at all
   assert.equal(activeSetFor(run, undefined, []).filter((n) => /^local-res-/.test(n)).length, 0);
@@ -73,7 +78,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   // the pause set: non-researcher workers only — flusher + dashboard exempt,
   // researchers are culled from the spawn set, never paused
   const l2 = guardPausedNames(2);
-  assert.equal(l2.length, 5); // mirror-sync + seed-scan + verifier + hygiene + profile-relink
+  assert.equal(l2.length, 7); // mirror-sync + seed-scan + verifier + hygiene + profile-relink + ai-extractor + ai-auditor
   assert.ok(!l2.includes('write-flusher') && !l2.includes('dashboard') && !l2.includes('local-res-3') && !l2.includes('office-sweep-1'));
   assert.ok(l2.includes('mirror-sync') && l2.includes('authority-verifier'));
 }

@@ -13,6 +13,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync, statSync, renameSync, unlinkSync, openSync, readSync, closeSync, readdirSync } from 'node:fs';
 import { AUDIT, CONTROL_FILE, HEARTBEAT_DIR, DEFAULT_CONTROL } from './lib/server-control.mjs';
+import { enqueue } from './lib/outbox.mjs';
+import { mirrorApply } from './lib/entity-mirror.mjs';
+import { permitCreds } from './lib/permit-creds.mjs';
+import { paceCall } from './lib/read-ledger.mjs';
+import { cullPlan, growSession, resolveTarget } from './lib/ai-sessions.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LOCK_FILE = path.join(AUDIT, 'permit-server.lock');
@@ -64,6 +69,12 @@ function catalog() {
     // get re-pointed without a human (§1E). --apply is safe: it re-validates
     // every entry against the current mirror and holds ambiguous ones.
     { name: 'profile-relink', group: 'verification', script: 'scripts/permitting-profile-relink.mjs', args: ['--apply'], events: ['profile-relink'], once: true, every_ms: 6 * 3600e3 },
+    // SWE-2.1 consumers — the extractor owns a 2-session ACP pool and eats
+    // researcher-fed units; the auditor reviews every locality record (1
+    // session, yields when the extract queue is deep). Both idle (not die)
+    // when their flag is off, so the dashboard can show why.
+    { name: 'ai-extractor', group: 'verification', script: 'scripts/permitting-ai-extractor.mjs', env: { DEVIN_LLM_QUEUE: 'extract', DEVIN_LLM_SESSIONS: '2', DEVIN_LLM_BATCH: '5' }, events: ['ai-extractor'], flag: 'ai_extract' },
+    { name: 'ai-auditor', group: 'verification', script: 'scripts/permitting-ai-auditor.mjs', env: { DEVIN_LLM_QUEUE: 'audit', DEVIN_LLM_SESSIONS: '1', DEVIN_LLM_BATCH: '5' }, events: ['ai-auditor'], flag: 'ai_audit' },
   ];
   // 64 interchangeable researcher slots — dynamic claims share work, so the
   // live count is whatever the gates allow (auto) or the user asked (manual).
@@ -83,6 +94,7 @@ export function activeSetFor(control, catalog = CATALOG, researcherAllowed = nul
   const set = new Set(['dashboard']);
   if (!control || control.state === 'stopped') return [...set];
   for (const w of catalog) {
+    if (w.flag && control[w.flag] === false) continue; // ai_extract / ai_audit toggles
     if (w.group === 'core') set.add(w.name);
     else if (w.group === 'verification' && control.verification) set.add(w.name);
     else if (w.group === 'expansion' && control.expansion && !control.expansion_locked) set.add(w.name);
@@ -130,6 +142,77 @@ export function nextBackoff(prevMs, aliveMs) {
 const emit = (e) => { try { appendFileSync(EVENTS, JSON.stringify({ t: Date.now(), worker: 'permit-server', ok: true, ...e }) + '\n'); } catch {} };
 const readJSON = (f, dflt) => { try { return JSON.parse(readFileSync(f, 'utf8')); } catch { return dflt; } };
 const pidAlive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
+
+// Live point reads for the /audit/revert endpoint — same pattern the
+// cleanup tool uses; reverts merge onto CURRENT live offices, never a
+// stale mirror array.
+const FN = `https://base44.app/api/apps/${process.env.PERMIT_APP_ID || '68dfcc5e57bbbc35387da97c'}/functions`;
+let apiToken = null;
+async function apiLogin() {
+  for (let i = 0; i < 6; i++) {
+    const t = await fetch(`${FN}/verifyLogin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: permitCreds().user, password: permitCreds().pass }) }).then((r) => r.json()).catch(() => null);
+    if (t?.token) { apiToken = t.token; return true; }
+    await sleep(3000 + i * 2000);
+  }
+  return false;
+}
+async function apiCall(fn, body, retried = false) {
+  await paceCall(fn);
+  const r = await fetch(`${FN}/${fn}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_token: apiToken, ...body }), signal: AbortSignal.timeout(60000) }).catch(() => null);
+  if (!r) return null;
+  if ((r.status === 401 || r.status === 403) && !retried) { await apiLogin(); return apiCall(fn, body, true); }
+  return r.json().catch(() => null);
+}
+const liveLocality = async (id) => {
+  const j = await apiCall('staffDataRead', { entity: 'PermitLocality', query: { id }, limit: 1 });
+  return (j?.records || j?.items || j?.data || [])[0] || null;
+};
+
+// Undo an ai-audit auto-action: restore the office's pre-action field on the
+// LIVE record (demote → staff_verified back; rename → before name back).
+async function revertAuditEntry(entry_id) {
+  const line = readFileSync(`${AUDIT}/ai-audit-reverts.jsonl`, 'utf8').split('\n').reverse().find((l) => l.includes(`"${entry_id}"`));
+  const e = line ? JSON.parse(line) : null;
+  if (!e) return { error: 'entry not found' };
+  if (e.reverted) return { error: 'already reverted' };
+  const live = await liveLocality(e.locality_id);
+  if (!live?.offices) return { error: 'locality not readable' };
+  let changed = false;
+  const offices = live.offices.map((o) => {
+    if ((o.id || o.name) !== e.office_id) return o;
+    changed = true;
+    return e.action === 'rename' ? { ...o, name: e.before_name } : { ...o, authority_verification_status: 'staff_verified' };
+  });
+  if (!changed) return { error: 'office not on the live record' };
+  enqueue({ entity: 'PermitLocality', op: 'update', id: e.locality_id, data: { offices }, priority: 1, note: `ai-audit revert — ${e.action} ${e.office_id}` });
+  mirrorApply('localities', { id: e.locality_id, offices });
+  appendFileSync(`${AUDIT}/ai-audit-reverts.jsonl`, JSON.stringify({ at: new Date().toISOString(), entry_id, action: `revert_${e.action}`, locality_id: e.locality_id, office_id: e.office_id }) + '\n');
+  return { ok: true };
+}
+
+// keep-awake helper — the PC must not sleep while the fleet runs or pauses.
+// The ps1 (scripts/keep-awake.ps1) watches server-control.json itself; we
+// just keep it alive and report its liveness.
+const KEEPAWAKE_PID = `${AUDIT}/keep-awake.pid`;
+function keepAwakePid() {
+  try { const pid = Number(readFileSync(KEEPAWAKE_PID, 'utf8').trim()); return Number.isFinite(pid) && pid > 0 && pidAlive(pid) ? pid : null; } catch { return null; }
+}
+let keepAwakeSpawnedAt = 0;
+function ensureKeepAwake() {
+  if (keepAwakePid()) return;
+  // The ps1 takes a few seconds to land its pidfile — don't respawn every
+  // tick while a fresh spawn is still starting.
+  if (Date.now() - keepAwakeSpawnedAt < 30000) return;
+  try {
+    const fd = openSync(`${AUDIT}/keep-awake.log`, 'a');
+    // No detached:true — a console-detached powershell.exe exits instantly on
+    // Windows. windowsHide alone keeps it invisible; unref keeps exit clean.
+    const child = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', path.join(ROOT, 'scripts', 'keep-awake.ps1')], { windowsHide: true, stdio: ['ignore', fd, fd] });
+    child.unref();
+    keepAwakeSpawnedAt = Date.now();
+    emit({ stage: 'keep_awake', detail: `keep-awake.ps1 spawned pid ${child.pid}` });
+  } catch (e) { emit({ stage: 'keep_awake', ok: false, detail: `keep-awake spawn failed — ${String(e?.message || e).slice(0, 120)}` }); }
+}
 
 function writeControl(patch, by = 'permit-server') {
   const cur = { ...DEFAULT_CONTROL, ...readJSON(CONTROL_FILE, {}) };
@@ -210,6 +293,15 @@ function rssByPid() {
     for (const line of out.split('\n')) {
       const m = line.match(/^"node\.exe","(\d+)","[^"]*","\d+","([\d,]+) K"/);
       if (m) map.set(Number(m[1]), Number(m[2].replace(/,/g, '')) * 1024);
+    }
+    // devin.exe ACP children belong to the ai-extractor / ai-auditor workers —
+    // they don't show under node.exe, so their RSS is summed separately and
+    // folded into the fleet total (per-child split needs a parent map we
+    // don't have from tasklist).
+    const dout = execFileSync('tasklist', ['/FO', 'CSV', '/NH', '/FI', 'IMAGENAME eq devin.exe'], { encoding: 'utf8', timeout: 8000 });
+    for (const line of dout.split('\n')) {
+      const m = line.match(/^"devin\.exe","(\d+)","[^"]*","\d+","([\d,]+) K"/);
+      if (m) map.set(-Number(m[1]), Number(m[2].replace(/,/g, '')) * 1024); // negative key = devin.exe pid
     }
   } catch {}
   return map;
@@ -554,6 +646,7 @@ function pressureReasons(freeBytes, reserveBytes, commitHeadroomBytes, fleetRssB
 // Guard tick (every 3s): sense → cull on any breached margin → pause
 // non-researchers on emergency → recover after 15s clean → RSS cap → logs.
 async function guardTick() {
+  ensureKeepAwake(); // respawn the sleep-prevention helper if it died
   const free = os.freemem();
   const rss = rssByPid();
   const now = Date.now();
@@ -565,9 +658,11 @@ async function guardTick() {
   const resRsses = liveRes().map((r) => rss.get(r.proc.pid)).filter(Boolean);
   if (resRsses.length) guard.avgRss = resRsses.reduce((a, b) => a + b, 0) / resRsses.length;
   // Fleet RSS + 30-min history for the dashboard memory panel.
-  let fleetRss = 0;
+  let fleetRss = 0, devinRss = 0, devinCount = 0;
   for (const r of procs.values()) if (isAlive(r)) fleetRss += rss.get(r.proc.pid) || 0;
-  guard.fleetRss = fleetRss;
+  for (const [pid, b] of rss) if (pid < 0) { devinRss += b; devinCount++; }
+  fleetRss += devinRss; // ACP children are fleet memory too
+  guard.fleetRss = fleetRss; guard.devinRss = devinRss; guard.devinCount = devinCount;
   memHistory.push({ t: now, free, fleet: fleetRss, headroom });
   while (memHistory.length && now - memHistory[0].t > MEM_HISTORY_MS) memHistory.shift();
   // ── scale down, immediately ────────────────────────────────────────────
@@ -586,6 +681,7 @@ async function guardTick() {
     }
     let n = downScaleCount(Math.max(deficit, 0), guard.avgRss);
     const why = pressureReasons(free, reserve, headroom, fleetRss, budget) || 'low memory';
+    const n0 = n;
     for (const r of cullOrder(liveRes().filter((x) => !memBlocked.has(x.spec.name)))) {
       if (n <= 0) break;
       n--;
@@ -594,6 +690,45 @@ async function guardTick() {
       stopWorker(r.spec.name);
       act(`${emergency ? 'emergency' : 'pressure'} cull ${r.spec.name} — ${why}`);
     }
+    // Researchers first — if pressure remains, cut ai-extractor sessions,
+    // then ai-auditor sessions (their workers only pause at emergency,
+    // alongside other non-flusher workers).
+    const credited = (n0 - n) * avgRssOr(guard.avgRss);
+    const rest = Math.max(deficit, 0) - credited;
+    if (rest > 0) {
+      const aiT = readJSON(`${AUDIT}/ai-session-targets.json`, null) || { extract: 2, audit: 3 };
+      const plan = cullPlan({ deficitBytes: rest, researchers: 0, extractSessions: aiT.extract || 0, auditSessions: aiT.audit || 0, avgDevinRssBytes: devinCount ? devinRss / devinCount : null });
+      if (plan.extCuts || plan.audCuts) {
+        aiT.extract = Math.max(0, (aiT.extract || 0) - plan.extCuts);
+        aiT.audit = Math.max(0, (aiT.audit || 0) - plan.audCuts);
+        aiT.at = Date.now();
+        try { writeFileSync(`${AUDIT}/ai-session-targets.json`, JSON.stringify(aiT)); } catch {}
+        act(`pressure — AI sessions cut: extractor −${plan.extCuts} → ${aiT.extract}, auditor −${plan.audCuts} → ${aiT.audit}`);
+      }
+    }
+  }
+  // ── AI session auto-grow: +1 lane session per ~15s when every margin
+  // passes after reserving the session's measured RSS — same gates as
+  // researcher admission. Manual mode pins from audit/extract settings.
+  {
+    const aiT = readJSON(`${AUDIT}/ai-session-targets.json`, null) || { extract: 2, audit: 3 };
+    const xset = control.ai_extract_settings || {}, aset = control.ai_audit_settings || {};
+    const devAvg = devinCount ? devinRss / devinCount : 400 * 1024 ** 2;
+    let next = { ...aiT };
+    if (xset.sessions_mode === 'manual') next.extract = resolveTarget({ mode: 'manual', manual: xset.sessions ?? 2 });
+    if (aset.sessions_mode === 'manual') next.audit = resolveTarget({ mode: 'manual', manual: aset.sessions ?? 3 });
+    if (deficit <= 0 && !emergency && (!guard.aiGrowAt || now - guard.aiGrowAt >= 15000)) {
+      const gates = { freeBytes: free, reserveBytes: reserve, commitHeadroomBytes: headroom, fleetRssBytes: fleetRss, budgetBytes: budget, avgDevinRssBytes: devAvg, cpuPct: cpuAvg30(), cpuMaxPct: CPU_SPAWN_MAX };
+      if (xset.sessions_mode !== 'manual') next.extract = growSession({ current: aiT.extract ?? 2, max: 8, ...gates });
+      if (aset.sessions_mode !== 'manual') next.audit = growSession({ current: aiT.audit ?? 3, max: 8, ...gates });
+      guard.aiGrowAt = now;
+    }
+    if (next.extract !== aiT.extract || next.audit !== aiT.audit) {
+      next.at = now;
+      try { writeFileSync(`${AUDIT}/ai-session-targets.json`, JSON.stringify(next)); } catch {}
+      if (next.extract > aiT.extract || next.audit > aiT.audit) emit({ stage: 'guard', detail: `AI sessions grow — extractor ${next.extract}, auditor ${next.audit}` });
+    }
+    guard.aiTargets = next;
   }
   // ── CPU cull: sustained >95% → shed one researcher per 10s ───────────
   const cpu = cpuAvg30(now);
@@ -698,6 +833,17 @@ function statusJSON() {
     return { name: spec.name, group: spec.group, status, pid: alive ? r.proc.pid : null, alive, rss_mb: alive && rss.get(r.proc.pid) ? Math.round(rss.get(r.proc.pid) / 1048576) : null, uptime_s: alive && r ? Math.round((now - r.startedAt) / 1000) : null, restarts: (r?.restarts || []).length, recent_restarts: recentRestarts, crash_looping: recentRestarts >= 5, last_heartbeat: hb, last_event: lastEvent };
   });
   const vp = verificationProgress();
+  // Verified counts must reflect the live app, not the mirror (which folds
+  // unflushed local upserts and has overstated progress). mirror-sync writes
+  // live-verified-count.json from RAW remote rows every cycle — prefer it
+  // while it's fresh (<35min); the mirror-derived ledger is the fallback.
+  if (vp?.offices) {
+    const lv = readJSON(`${AUDIT}/live-verified-count.json`, null);
+    if (lv?.staff_verified != null && Date.now() - Date.parse(lv.at || 0) < 35 * 60e3) {
+      vp.offices = { ...vp.offices, staff_verified: lv.staff_verified };
+      vp.verified_source = 'live';
+    } else vp.verified_source = 'mirror';
+  }
   const res = resCfg(control);
   const headroom = commitHeadroomBytes();
   // Why the next researcher isn't starting — the dashboard shows this when
@@ -723,7 +869,22 @@ function statusJSON() {
     else if (resCap >= RES_MAX && liveRes().length >= RES_MAX) holdReason = `at the safety ceiling of ${RES_MAX}`;
     else holdReason = 'ramping up — researchers start one at a time, every 10 seconds';
   }
-  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: resWanted.size, requested: res.mode === 'manual' ? res.max : null, memory_allows: memoryAllowance(os.freemem(), guard.avgRss, reserveBytesOf(control)), mode: res.mode, max: res.max, disabled: res.disabled, mem_blocked: [...memBlocked], total: RES_MAX, ceiling: RES_MAX, killall: Boolean(res.killall), work_available: workAvailable(), work_detail: (() => { const p = workProbe(); return p ? { cooling: Number(p.cooling) || 0, exhausted: Number(p.exhausted) || 0, next_release: p.next_release || null, tiers: p.tiers || {} } : null; })(), cpu_pct: cpuAvg30() != null ? Math.round(cpuAvg30()) : null, next_slice: guard.resNext, hold_reason: holdReason, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, limits: { reserve_gb: Number(control.limits?.reserve_gb) || RESERVE_DEFAULT_GB, fleet_budget_gb: Number(control.limits?.fleet_budget_gb) || FLEET_BUDGET_DEFAULT_GB }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()), fleet_rss_gb: GB(guard.fleetRss || 0), cpu_pct: memProbe.cpu != null ? Math.round(memProbe.cpu) : null, commit_used_gb: Number.isFinite(memProbe.committed) ? GB(memProbe.committed) : null, commit_limit_gb: Number.isFinite(memProbe.limit) ? GB(memProbe.limit) : null, commit_headroom_gb: headroom != null ? GB(headroom) : null, history: memHistory.map((h) => ({ t: h.t, free_gb: GB(h.free), fleet_gb: GB(h.fleet), headroom_gb: h.headroom != null ? GB(h.headroom) : null })) }, updated_at: control.updated_at || null, workers, verification_progress: vp ? { at: vp.at, jurisdictions: vp.jurisdictions, offices: vp.offices, gap_reasons: vp.gap_reasons, missing_roles: vp.missing_roles, promotions: vp.promotions, eta: vp.eta, held_relinks: (vp.held_relinks || []).length, needs_review_total: vp.needs_review_total || 0 } : null };
+  return { state: control.state, verification: Boolean(control.verification), expansion: Boolean(control.expansion), expansion_locked: Boolean(control.expansion_locked), keep_awake: Boolean(control.state !== 'stopped' && keepAwakePid()), guard: { level: guard.level, since: guard.since, paused: control.guard_paused || [], actions: guardActions.slice(-10), researchers: { allowed: resWanted.size, requested: res.mode === 'manual' ? res.max : null, memory_allows: memoryAllowance(os.freemem(), guard.avgRss, reserveBytesOf(control)), mode: res.mode, max: res.max, disabled: res.disabled, mem_blocked: [...memBlocked], total: RES_MAX, ceiling: RES_MAX, killall: Boolean(res.killall), work_available: workAvailable(), work_detail: (() => { const p = workProbe(); return p ? { cooling: Number(p.cooling) || 0, exhausted: Number(p.exhausted) || 0, next_release: p.next_release || null, tiers: p.tiers || {} } : null; })(), cpu_pct: cpuAvg30() != null ? Math.round(cpuAvg30()) : null, next_slice: guard.resNext, hold_reason: holdReason, avg_rss_mb: guard.avgRss ? Math.round(guard.avgRss / 1048576) : null } }, limits: { reserve_gb: Number(control.limits?.reserve_gb) || RESERVE_DEFAULT_GB, fleet_budget_gb: Number(control.limits?.fleet_budget_gb) || FLEET_BUDGET_DEFAULT_GB }, memory: { free_gb: GB(os.freemem()), total_gb: GB(os.totalmem()), fleet_rss_gb: GB(guard.fleetRss || 0), cpu_pct: memProbe.cpu != null ? Math.round(memProbe.cpu) : null, commit_used_gb: Number.isFinite(memProbe.committed) ? GB(memProbe.committed) : null, commit_limit_gb: Number.isFinite(memProbe.limit) ? GB(memProbe.limit) : null, commit_headroom_gb: headroom != null ? GB(headroom) : null, history: memHistory.map((h) => ({ t: h.t, free_gb: GB(h.free), fleet_gb: GB(h.fleet), headroom_gb: h.headroom != null ? GB(h.headroom) : null })) }, updated_at: control.updated_at || null, workers, verification_progress: vp ? { at: vp.at, jurisdictions: vp.jurisdictions, offices: vp.offices, gap_reasons: vp.gap_reasons, missing_roles: vp.missing_roles, promotions: vp.promotions, eta: vp.eta, held_relinks: (vp.held_relinks || []).length, needs_review_total: vp.needs_review_total || 0, verified_source: vp.verified_source || 'mirror' } : null, ai: {
+    extract: { on: control.ai_extract !== false, ...readJSON(`${AUDIT}/ai-extract-stats.json`, {}) },
+    audit: {
+      on: control.ai_audit !== false, paused: Boolean(control.ai_audit_paused), settings: control.ai_audit_settings || { demote_cap_hr: 50, breaker_pct: 5, sessions: 1 },
+      ...readJSON(`${AUDIT}/ai-audit-stats.json`, {}),
+      // coverage: audit-state files over the non-duplicate locality count
+      coverage: (() => { try { const done = readdirSync(`${AUDIT}/audit-state`).length; const total = (readJSON(`${AUDIT}/mirrors/localities.json`, { rows: [] }).rows || []).filter((l) => !l.duplicate_of && !/paper — no permitting authority/.test(l.name)).length; return { done, total }; } catch { return { done: 0, total: 0 }; } })(),
+      reverts: (() => { try { return readFileSync(`${AUDIT}/ai-audit-reverts.jsonl`, 'utf8').split('\n').filter(Boolean).slice(-50).map((l) => JSON.parse(l)); } catch { return []; } })(),
+    },
+    devin_rss_mb: Math.round((guard.devinRss || 0) / 1048576), devin_children: guard.devinCount || 0, targets: guard.aiTargets || null,
+    // Per-session live rows for the audit tab's live panel — the auditor
+    // writes one heartbeat per ACP session.
+    audit_sessions: (() => { try { return readdirSync(HEARTBEAT_DIR).filter((f) => /^ai-auditor-s\d+\.json$/.test(f)).map((f) => readJSON(path.join(HEARTBEAT_DIR, f), null)).filter(Boolean); } catch { return []; } })(),
+    extract_sessions: (() => { try { return readdirSync(HEARTBEAT_DIR).filter((f) => /^ai-extractor-s\d+\.json$/.test(f)).map((f) => readJSON(path.join(HEARTBEAT_DIR, f), null)).filter(Boolean); } catch { return []; } })(),
+    boost_waiting: (() => { try { const done = new Set(readFileSync(`${AUDIT}/research-boost-done.jsonl`, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l).bid)); return readFileSync(`${AUDIT}/research-boost.jsonl`, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).filter((b) => b.bid && !done.has(b.bid)).length; } catch { return 0; } })(),
+  } };
 }
 
 // ── stop: pause → flusher drains → kill trees ────────────────────────────
@@ -756,6 +917,43 @@ const server = http.createServer(async (req, res) => {
       if (url.pathname === '/resume') { writeControl({ state: 'running' }, 'api'); reconcile(); return json(res, 200, { ok: true }); }
       if (url.pathname === '/stop') { stopAll().catch(() => {}); return json(res, 200, { ok: true }); }
       if (url.pathname === '/verification') { writeControl({ verification: Boolean(body.on) }, 'api'); reconcile(); return json(res, 200, { ok: true, verification: Boolean(body.on) }); }
+      // SWE-2.1 feature flags — off removes the worker from the active set
+      // (clean stop); the dashboard reads the flags for its status lines.
+      if (url.pathname === '/ai-extract') { control = writeControl({ ai_extract: Boolean(body.on) }, 'api'); reconcile(); return json(res, 200, { ok: true, ai_extract: Boolean(body.on) }); }
+      if (url.pathname === '/ai-audit') {
+        const patch = {};
+        if (body.on != null) patch.ai_audit = Boolean(body.on);
+        if (body.paused != null) patch.ai_audit_paused = Boolean(body.paused);
+        control = writeControl(patch, 'api'); reconcile(); return json(res, 200, { ok: true, ai_audit: control.ai_audit, paused: control.ai_audit_paused });
+      }
+      if (url.pathname === '/audit/settings') {
+        const cur = { ...DEFAULT_CONTROL, ...readJSON(CONTROL_FILE, {}) };
+        const s = { ...(cur.ai_audit_settings || {}) };
+        if (body.demote_cap_hr != null) { const v = Math.floor(Number(body.demote_cap_hr)); if (!Number.isFinite(v) || v < 1 || v > 500) return json(res, 400, { error: 'demote_cap_hr must be 1..500' }); s.demote_cap_hr = v; }
+        if (body.breaker_pct != null) { const v = Number(body.breaker_pct); if (!Number.isFinite(v) || v < 1 || v > 50) return json(res, 400, { error: 'breaker_pct must be 1..50' }); s.breaker_pct = v; }
+        if (body.sessions != null) { const v = Math.floor(Number(body.sessions)); if (!Number.isFinite(v) || v < 1 || v > 8) return json(res, 400, { error: 'sessions must be 1..8' }); s.sessions = v; }
+        if (body.sessions_mode != null) { if (!['auto', 'manual'].includes(body.sessions_mode)) return json(res, 400, { error: 'sessions_mode must be auto|manual' }); s.sessions_mode = body.sessions_mode; }
+        control = writeControl({ ai_audit_settings: s }, 'api');
+        return json(res, 200, { ok: true, ai_audit_settings: s });
+      }
+      if (url.pathname === '/extract/settings') {
+        const cur = { ...DEFAULT_CONTROL, ...readJSON(CONTROL_FILE, {}) };
+        const s = { ...(cur.ai_extract_settings || {}) };
+        if (body.sessions != null) { const v = Math.floor(Number(body.sessions)); if (!Number.isFinite(v) || v < 1 || v > 8) return json(res, 400, { error: 'sessions must be 1..8' }); s.sessions = v; }
+        if (body.sessions_mode != null) { if (!['auto', 'manual'].includes(body.sessions_mode)) return json(res, 400, { error: 'sessions_mode must be auto|manual' }); s.sessions_mode = body.sessions_mode; }
+        control = writeControl({ ai_extract_settings: s }, 'api');
+        return json(res, 200, { ok: true, ai_extract_settings: s });
+      }
+      // Clear the 5% breaker — the worker polls this marker and re-arms.
+      if (url.pathname === '/ai-audit/resume-demotion') {
+        try { writeFileSync(`${AUDIT}/ai-audit-breaker-clear`, String(Date.now())); } catch {}
+        return json(res, 200, { ok: true });
+      }
+      if (url.pathname === '/audit/revert') {
+        if (!apiToken && !(await apiLogin())) return json(res, 503, { error: 'live read unavailable — login failed' });
+        const r = await revertAuditEntry(String(body.entry_id || ''));
+        return json(res, r.error ? 404 : 200, r);
+      }
       if (url.pathname === '/expansion') {
         const cur = { ...DEFAULT_CONTROL, ...readJSON(CONTROL_FILE, {}) };
         if (cur.expansion_locked && body.on) return json(res, 409, { error: 'expansion locked until verification is done' });
