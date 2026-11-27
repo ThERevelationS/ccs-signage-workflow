@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { mirrorApply, dedupeOfficeRows } from './entity-mirror.mjs';
 import { countJsonlLines } from './bounded-files.mjs';
+import { filterArchivedOffices, mergeLocalityWriteData, isArchiveRestoreWrite } from './office-archive.mjs';
 
 export const OUTBOX = '.audit-work/outbox.jsonl';
 export const OUTBOX_DONE = '.audit-work/outbox-done.jsonl';
@@ -96,12 +97,22 @@ export const sanitizeOffice = (o) => {
   return o;
 };
 
+// Make every PermitLocality write internally archive-consistent before it can
+// reach the queue or the remote gateway. This is a boundary invariant, not a
+// merge rule: if the writer itself carried the archive array, no office matching
+// one of those tombstones may ride in the same full offices[] replacement.
+export function sanitizeLocalityWriteData(data) {
+  if (!data || typeof data !== 'object' || !Array.isArray(data.offices)) return data;
+  const offices = filterArchivedOffices(data.offices, data.archived_offices).offices;
+  return { ...data, offices: dedupeOfficeRows(offices).map(sanitizeOffice) };
+}
+
 export function enqueue(rec) {
   // rec: {entity, op, id, query, data, mirror, note}
-  // Write-boundary office dedupe: a stale writer's full offices[] can't
-  // re-introduce same-id rows — deduped before it reaches the queue or mirror.
+  // Write-boundary office dedupe/archive filtering: a stale writer's full
+  // offices[] can't re-introduce same-id rows or offices its own archive retires.
   if (rec?.entity === 'PermitLocality' && Array.isArray(rec?.data?.offices)) {
-    rec = { ...rec, data: { ...rec.data, offices: dedupeOfficeRows(rec.data.offices).map(sanitizeOffice) } };
+    rec = { ...rec, data: sanitizeLocalityWriteData(rec.data) };
   }
   const line = JSON.stringify({ at: Date.now(), attempts: 0, ...rec });
   withLock(() => fs.appendFileSync(OUTBOX, line + '\n'));
@@ -118,6 +129,32 @@ export function outboxDepth() {
   // large. Never use this as a correctness input; it exists so throttles and
   // dashboards don't materialize an unbounded queue just to count it.
   try { return countJsonlLines(OUTBOX).count; } catch { return 0; }
+}
+
+// Point lookup for pending update writes against one entity row. Full-array
+// locality writes are asynchronous for minutes under backlog; writers that are
+// about to enqueue another replacement for the same row need these patches or
+// they silently clobber a retirement/promotion still waiting for the flusher.
+// The id substring prefilter keeps this cheap even on a multi-MB outbox — only
+// plausible lines pay JSON.parse.
+export function readPendingWritesFor(entity, id, { file = OUTBOX } = {}) {
+  if (!entity || !id) return [];
+  let text = '';
+  try { text = fs.readFileSync(file, 'utf8'); } catch { return []; }
+  const rows = [];
+  const lines = text.split('\n');
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
+    if (!line || !line.includes(id)) continue;
+    let rec = null;
+    try { rec = JSON.parse(line); } catch { continue; }
+    if (rec?.entity !== entity || rec?.op !== 'update') continue;
+    if (rec.id !== id && rec.query?.id !== id) continue;
+    rows.push({ rec, index });
+  }
+  return rows
+    .sort((a, b) => ((a.rec.at || 0) - (b.rec.at || 0)) || (a.index - b.index))
+    .map((x) => x.rec);
 }
 
 // Pop `limit` pending writes FIFO; remaining entries are written back first so
@@ -201,11 +238,15 @@ export function compactOutbox() {
       const prev = slots.get(k);
       if (!prev) { slots.set(k, rec); order.push(k); continue; }
       if (rec.op === 'update') {
-        prev.data = { ...(prev.data || {}), ...(rec.data || {}) };
+        prev.data = rec.entity === 'PermitLocality'
+          ? mergeLocalityWriteData(prev.data || {}, rec.data || {}, { archiveRestore: isArchiveRestoreWrite(rec) })
+          : { ...(prev.data || {}), ...(rec.data || {}) };
         prev.update = mergeSet(prev.update, rec.update);
         prev.at = rec.at ?? prev.at;
         prev.note = rec.note || prev.note;
         prev.priority = prev.priority || rec.priority; // a priority write merging into plain FIFO keeps its lane
+        prev.mirror = rec.mirror || prev.mirror; // compaction must not strip write-through metadata
+        if (rec.archive_restore) prev.archive_restore = true;
       } else slots.set(k, rec); // latest create wins
     }
     const out = order.map((k) => slots.get(k)).filter(Boolean);

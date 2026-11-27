@@ -241,7 +241,7 @@ async function revertAuditEntry(entry_id) {
   const reversal = applyAuditReversal(live, e);
   if (reversal.error) return { error: reversal.error };
   const data = { offices: reversal.offices, archived_offices: reversal.archived_offices };
-  enqueue({ entity: 'PermitLocality', op: 'update', id: e.locality_id, data, priority: 1, note: `ai-audit revert — ${e.action} ${e.office_id}` });
+  enqueue({ entity: 'PermitLocality', op: 'update', id: e.locality_id, data, priority: 1, archive_restore: e.action === 'retire' || e.action === 'adjudicate_resolution', note: `ai-audit revert — ${e.action} ${e.office_id}` });
   mirrorApply('localities', { id: e.locality_id, ...data });
   appendFileSync(`${AUDIT}/ai-audit-reverts.jsonl`, JSON.stringify({ at: new Date().toISOString(), entry_id, action: `revert_${e.action}`, locality_id: e.locality_id, office_id: e.office_id }) + '\n');
   return { ok: true };

@@ -15,7 +15,7 @@
 // --batch 100 · --once for a single drain.
 import { openSync, writeFileSync, readFileSync, existsSync, appendFileSync, mkdirSync, rmSync, statSync } from 'node:fs';
 import { rotateAppendFileCopyTruncate } from './lib/bounded-files.mjs';
-import { enqueue, takeBatch, outboxDepth, journal, requeueTail, compactOutbox, sanitizeOffice, flusherRateForDepth, rotateJournalIfBig, OUTBOX, OUTBOX_DONE, OUTBOX_ERR } from './lib/outbox.mjs';
+import { enqueue, takeBatch, outboxDepth, journal, requeueTail, compactOutbox, sanitizeLocalityWriteData, flusherRateForDepth, rotateJournalIfBig, OUTBOX, OUTBOX_DONE, OUTBOX_ERR } from './lib/outbox.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
@@ -102,13 +102,13 @@ async function flushSingle(rec) {
   return call('staffEntityWrite', body);
 }
 
-// Flush-time sanitize: records enqueued before the enqueue-side fix (or by a
-// worker still running old code) carry field_confidence:"" — remote rejects
-// the whole offices[] update unless it's a dict. Sanitize every PermitLocality
-// offices write one last time at the boundary.
+// Flush-time sanitize: records enqueued before the enqueue-side fixes (or by a
+// worker still running old code) can carry field_confidence:"" or an active
+// office that their own archived_offices tombstone retires. Clean every
+// PermitLocality offices write one last time at the remote boundary.
 const sanitizeRec = (rec) => {
   if (rec?.entity === 'PermitLocality' && Array.isArray(rec?.data?.offices)) {
-    return { ...rec, data: { ...rec.data, offices: rec.data.offices.map(sanitizeOffice) } };
+    return { ...rec, data: sanitizeLocalityWriteData(rec.data) };
   }
   return rec;
 };
