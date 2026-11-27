@@ -537,6 +537,14 @@ async function main() {
     const profById = new Map([...(getMirror('profiles-oh.slim')?.rows || []), ...(getMirror('profiles-ky.slim')?.rows || [])].map((p) => [p.id, p]));
     const score = (l) => (l.offices || []).reduce((a, o) => a + (o.authority_verification_status === 'staff_verified' ? 1 : 0), 0);
     localities.sort((a, b) => score(b) - score(a));
+    // Consume finished adjudication answers before feeding/draining more
+    // work. Otherwise a continuous audit wave can postpone guarded resolution
+    // writes for many minutes even though the answers are already on disk.
+    try {
+      for (const f of readdirSync('.audit-work/audit-out').filter((x) => x.startsWith('adjudicate-') && x.endsWith('.json'))) {
+        await processAdjudicationOutput(f.slice(0, -5));
+      }
+    } catch {}
     // ── promotion-judge lane: strict-pass candidates become judge units ──
     // (one office per unit, all candidate roles) — claimed ahead of audit
     // units by the runBatch judge-first sort. v1 units/outputs are dead:
