@@ -212,7 +212,15 @@ function recoverClaims() {
   try {
     for (const f of readdirSync(QUEUE)) {
       const m = f.match(/^(.*\.json)\.claim-\d+$/);
-      if (m) { try { renameSync(join(QUEUE, f), join(QUEUE, m[1])); } catch {} }
+      if (m) {
+        try {
+          // A crash/restart can happen after the out file is written but
+          // before the claim is deleted. The answer already exists then —
+          // discard the orphaned claim instead of re-running the same unit.
+          if (existsSync(join(OUT, m[1]))) unlinkSync(join(QUEUE, f));
+          else renameSync(join(QUEUE, f), join(QUEUE, m[1]));
+        } catch {}
+      }
     }
   } catch {}
 }
