@@ -528,8 +528,16 @@ async function main() {
     }
     let total = 0, done = 0;
     const limit = PILOT || localities.length;
+    const batchSize = Number(process.env.DEVIN_LLM_BATCH) || 5;
+    // Cap the audit backlog at three batches. Without this the feeder adds
+    // another wave every loop while SWE is still thinking, starving the
+    // lower-priority adjudication lane behind an ever-growing audit queue.
+    let auditFiles = [];
+    try { auditFiles = readdirSync('.audit-work/audit-queue').filter((x) => x.startsWith('audit-')); } catch {}
+    let auditPending = auditFiles.length;
+    const auditFeedCap = batchSize * 3;
     for (const loc of localities) {
-      if (total >= limit) break;
+      if (total >= limit || auditPending >= auditFeedCap) break;
       const h = contentHash(loc);
       const stPath = `${STATE_DIR}/${loc.id}.json`;
       const st = readJSON(stPath, null);
@@ -538,10 +546,10 @@ async function main() {
       if (pending) continue;
       const unit = buildUnit(loc, profById.get(loc.jurisdiction_profile_id));
       enqueueUnit(unit);
+      auditPending++;
       emit({ stage: 'ai_audit_unit_sent', address: `${loc.name}, ${loc.state}`, ok: true, detail: `queued ${(loc.offices || []).length} office(s) for SWE-2.1 review` });
       total++;
       stats.current = `${loc.name}, ${loc.state}`;
-      if (total >= (Number(process.env.DEVIN_LLM_BATCH) || 5) * 3) break; // feed in waves
     }
     // Needs-review adjudication is deliberately fed before draining but sorted
     // behind judge/audit units inside devin-llm — lowest priority, one office

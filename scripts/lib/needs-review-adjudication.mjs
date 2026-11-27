@@ -63,7 +63,7 @@ export function structuralFactsFor(loc, profile, countyProfile = null) {
   }
   if (state === 'KY') {
     const ky = kyElectricalRoster();
-    facts.push({ key: 'ky_dhbc_electrical', applies_to_roles: ['electrical_permit', 'electrical_inspection'], fact: ky.fact, source: ky.source, url: ky.roster_url });
+    facts.push({ key: 'ky_dhbc_electrical', applies_to_roles: ['electrical_permit', 'electrical_inspection'], fact: ky.fact, provider: 'DHBC-certified electrical inspectors', source: ky.source, url: ky.roster_url });
   }
   for (const rp of regionalProvidersFor(county, state)) {
     facts.push({ key: `regional_provider:${rp.name}`, applies_to_roles: ['planning', 'zoning', 'sign_permit', 'historic_review'], fact: `${rp.name} is a regional provider serving ${county} County, ${state}.`, provider: rp.name, url: rp.evidence_url, source: 'regional provider registry' });
@@ -127,7 +127,7 @@ export function buildAdjudicationUnit(row, loc, office, officeState, profile = n
     '3. exists_unproven — the office/role may exist locally, but available evidence is insufficient. Use this whenever evidence is ambiguous or silent. This verdict causes targeted research; it does not write entity data.',
     'Hard rules: absence of evidence is not evidence of absence; do not infer from town size; do not mark right-of-way/street duties not applicable unless evidence says the jurisdiction has no such local permitting authority; do not mark historic review not applicable unless evidence proves there is no local historic district/design-review/landmark ordinance or authority; do not mark building/electrical not applicable in an Ohio BBS-certified jurisdiction; Kentucky electrical may be structurally covered by DHBC-certified inspectors rather than a city office.',
     'Evidence quotes must be copied verbatim from supplied office evidence or structural facts. If you rely on a structural fact, list its key in structural_fact_keys.',
-    'roles_resolved must contain only roles from missing_roles that this verdict actually resolves. If no role is resolved with high confidence, verdict must be exists_unproven.',
+    'roles_resolved must contain only roles from missing_roles that this verdict classifies. For exists_unproven, list the roles researchers should keep pursuing. If no role can be classified with high confidence, verdict must be exists_unproven with every ambiguous missing role listed.',
     'Return JSON matching the schema exactly.',
     `CONTEXT: ${JSON.stringify(context)}`,
   ].join('\n');
@@ -179,6 +179,19 @@ function structuralFactApplies(fact, roles) {
   return !fact.applies_to_roles?.length || roles.some((r) => fact.applies_to_roles.includes(r));
 }
 
+// A lead ("there is a county profile/regional provider") is not itself proof
+// of coverage. Only certification/delegation facts are proof-bearing on their
+// own; leads require a coverage sentence in the quoted evidence.
+function proofBearingStructuralNegative(fact) {
+  if (!fact) return false;
+  if (fact.key === 'ky_dhbc_electrical') return true;
+  if (fact.key === 'ohio_bbs_certification' && fact.certified === false) return true;
+  return false;
+}
+function evidenceImpliesCoverage(text) {
+  return /(\bissues?\b|\badministers?\b|\benforces?\b|\bperforms?\b|\bprovides?\b|\bhandles?\b|is responsible for|\binspects?\b|\breviews?\b|\bpermits?\b|\bzoning\b|building inspection|electrical inspection)/i.test(String(text || ''));
+}
+
 /**
  * Deterministic acceptance guards. Returns {ok, errors[]} — no verdict that
  * fails a guard may write or boost. The guards deliberately reject common
@@ -205,6 +218,9 @@ export function validateAdjudicationVerdict(verdict, meta, loc) {
   if (verdict?.verdict === 'not_applicable') {
     if (!citedFacts.length && quotes.length < 1) errors.push('not_applicable requires a structural fact or verbatim official evidence');
     if (citedFacts.length && !citedFacts.some((f) => structuralFactApplies(f, roles))) errors.push('cited structural facts do not apply to resolved roles');
+    const structuralNegative = citedFacts.some((f) => structuralFactApplies(f, roles) && proofBearingStructuralNegative(f));
+    const quoteNegative = quotes.some((q) => evidenceImpliesCoverage(q) || /no (local )?(historic|landmark|design review|right[- ]of[- ]way|road|street)|not responsible for|does not (issue|administer|enforce|review)/i.test(String(q)));
+    if (!structuralNegative && !quoteNegative) errors.push('not_applicable relies on a lead rather than proof-bearing structural evidence');
     const ohFact = facts.find((f) => f.key === 'ohio_bbs_certification');
     if (ohFact?.certified && roles.some((r) => ['building', 'electrical_permit', 'electrical_inspection'].includes(r))) {
       errors.push('Ohio certified jurisdiction cannot be not_applicable for building/electrical');
@@ -224,7 +240,8 @@ export function validateAdjudicationVerdict(verdict, meta, loc) {
   }
   if (verdict?.verdict === 'covered_elsewhere') {
     const sibling = siblingByIdOrName(loc, verdict?.covering_office_id, verdict?.covering_office_name);
-    const providerNamed = verdict?.covering_office_name && facts.some((f) => f.provider && norm(f.provider) === norm(verdict.covering_office_name));
+    const providerFact = verdict?.covering_office_name ? facts.find((f) => f.provider && norm(f.provider) === norm(verdict.covering_office_name)) : null;
+    const providerNamed = Boolean(providerFact);
     if (!sibling && !providerNamed) errors.push('covering office/provider not found in supplied siblings or structural facts');
     if (sibling) {
       if (sibling.authority_verification_status !== 'staff_verified') errors.push('covering sibling is not staff_verified');
@@ -232,6 +249,12 @@ export function validateAdjudicationVerdict(verdict, meta, loc) {
     }
     if (!providerNamed && !verdict?.covering_source_url && !(sibling?.authority_evidence || []).length) errors.push('coverage lacks source/evidence');
     const ohFact = facts.find((f) => f.key === 'ohio_bbs_certification');
+    if (!sibling && providerFact) {
+      const quoteCoverage = quotes.some((q) => evidenceImpliesCoverage(q));
+      const certifiedCountyCoverage = providerFact.key === 'county_profile' && ohFact?.certified === false && roles.some((r) => ['building', 'electrical_permit', 'electrical_inspection'].includes(r));
+      const structuralProvider = providerFact.key === 'ky_dhbc_electrical';
+      if (!quoteCoverage && !certifiedCountyCoverage && !structuralProvider) errors.push('provider existence is only a lead — coverage requires a permitting/enforcement sentence');
+    }
     if (ohFact?.certified && roles.some((r) => ['building', 'electrical_permit', 'electrical_inspection'].includes(r)) && /county|state/i.test(String(verdict?.covering_office_name || ''))) {
       errors.push('Ohio certified jurisdiction building/electrical cannot be pushed to county/state');
     }

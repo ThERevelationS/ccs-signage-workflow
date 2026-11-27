@@ -78,6 +78,16 @@ const kyMeta = { ...unit.meta, facts: kyFacts, missing_roles: ['electrical_inspe
 const kyNA = { ...ohioNA, roles_resolved: ['electrical_inspection'], reason: 'Kentucky electrical inspections are performed by state-certified electrical inspectors licensed by DHBC rather than a separate city office.', evidence_quotes: [kyFacts.find((f) => f.key === 'ky_dhbc_electrical').fact], structural_fact_keys: ['ky_dhbc_electrical'] };
 ok(validateAdjudicationVerdict(kyNA, kyMeta, kyLoc).ok, 'KY DHBC structural fact can resolve local electrical office coverage/applicability');
 
+// Regional-provider existence is a research lead, not proof it administers
+// the missing permit role. The guard demands a coverage sentence.
+const providerFacts = structuralFactsFor({ ...loc, county_name: 'Ashtabula County' }, null, null);
+const provider = providerFacts.find((f) => f.key.startsWith('regional_provider:'))?.provider;
+if (provider) {
+  const leadOnly = { ...validCover, covering_office_id: null, covering_office_name: provider, covering_source_url: null, evidence_quotes: [`${provider} is a regional provider serving Ashtabula County, OH.`], structural_fact_keys: [providerFacts.find((f) => f.provider === provider).key] };
+  const leadCheck = validateAdjudicationVerdict(leadOnly, { ...unit.meta, facts: providerFacts }, loc);
+  ok(!leadCheck.ok && leadCheck.errors.join(' ').includes('only a lead'), 'regional provider existence alone is rejected as coverage proof');
+} else ok(false, 'test fixture: Ashtabula has a regional provider');
+
 // exists_unproven must name exactly what proof researchers need.
 const unproven = { verdict: 'exists_unproven', confidence: 0.9, roles_resolved: ['electrical_inspection'], reason: 'Evidence is ambiguous: the township has electrical permit references but no sentence naming the inspecting office.', evidence_quotes: [], structural_fact_keys: [], covering_office_id: null, covering_office_name: null, covering_source_url: null, proof_expectation: 'Find an official township or county page/PDF sentence naming the office or certified inspector responsible for electrical inspections in Brimfield township.' };
 ok(validateAdjudicationVerdict(unproven, unit.meta, loc).ok, 'exists_unproven accepted with a specific proof expectation');
