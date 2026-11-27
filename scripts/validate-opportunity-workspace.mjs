@@ -18,6 +18,14 @@ for (const entity of ['CustomerContact', 'CustomerLocation']) {
   assert.match(schema, /"delete":\s*\{[^}]*"role":\s*"(__[a-z_]+__|admin|__[a-z_]+backend_only__)"/, `${entity} delete must stay restricted`);
 }
 
+{
+  const salesFilterSchema = JSON.parse(readFileSync('base44/entities/SalesFilter.jsonc', 'utf8'));
+  for (const op of ['create', 'read', 'update', 'delete']) {
+    assert.equal(salesFilterSchema.rls?.[op]?.user_condition?.role, '__sales_filter_backend_only__',
+      `SalesFilter ${op} must stay backend-only (staff read via staffDataRead)`);
+  }
+}
+
 // Backend contract: session auth, service role, all supported actions present.
 assert.ok(existsSync('base44/functions/opportunityWorkspaceAction/entry.ts'), 'workspace function must exist');
 assert.match(entry, /authenticateSignShopSession/, 'function must authenticate the sign-shop session');
