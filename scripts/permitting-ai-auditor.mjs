@@ -391,8 +391,10 @@ async function writeResolutionWithReadback(meta, verdict) {
   mirrorApply('localities', { id: meta.locality_id, ...patch.data });
   // The outbox is asynchronous. Do not count the office resolved until the
   // live entity read-back shows either role removal + NA metadata or the
-  // archived snapshot. Priority writes normally land inside this window.
-  for (let i = 0; i < 18; i++) {
+  // archived snapshot. Priority writes are fast under an empty queue, but the
+  // fleet can legitimately be draining a thousand-record research backlog;
+  // five minutes is the conservative confirmation window.
+  for (let i = 0; i < 60; i++) {
     await sleep(5000);
     const back = await readById('PermitLocality', meta.locality_id).catch(() => null);
     if (resolutionConfirmed(back, meta.office_id, verdict.roles_resolved || [])) {
