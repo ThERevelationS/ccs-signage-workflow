@@ -370,8 +370,13 @@ function feedAdjudicationUnits(localities, profById, ctrl) {
   let queueFiles = [];
   try { queueFiles = readdirSync('.audit-work/audit-queue'); } catch {}
   const unitPending = (id) => queueFiles.some((f) => f === `${id}.json` || f.startsWith(`${id}.json.claim-`));
+  // `limit` is the total pilot population, not merely the number fed in one
+  // pass. Existing queued/claimed units consume slots even when changing
+  // ledger eligibility rotates the target list underneath them.
+  let slots = Math.max(0, limit - queueFiles.filter((f) => f.startsWith('adjudicate-')).length);
   let queued = 0;
   for (const t of adjudicationTargets({ ledgerRows: rows, localities, officeState, adjudicated: adj.offices || {}, limit })) {
+    if (!slots) break;
     const profile = profById.get(t.loc.jurisdiction_profile_id) || null;
     const countyProfile = countyProfileForAdjudication(t.loc, profiles);
     const unit = buildAdjudicationUnit(t.row, t.loc, t.office, officeState, profile, countyProfile);
@@ -381,6 +386,7 @@ function feedAdjudicationUnits(localities, profById, ctrl) {
     if (unitPending(unit.id) || existsSync(`.audit-work/audit-out/${unit.id}.json`)) continue;
     enqueueUnit(unit);
     queueFiles.push(`${unit.id}.json`); // do not re-feed inside this same pass
+    slots--;
     queued++;
     emit({ stage: 'ai_adjudicate_feed', address: `${t.loc.name}, ${t.loc.state}`, ok: true, detail: `${t.office.name} — ${unit.meta.missing_roles.join('+')} adjudication queued` });
   }
