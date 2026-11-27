@@ -563,8 +563,14 @@ async function main() {
     // lower-priority adjudication lane behind an ever-growing audit queue.
     let auditFiles = [];
     try { auditFiles = readdirSync('.audit-work/audit-queue').filter((x) => x.startsWith('audit-')); } catch {}
+    let adjudFiles = [];
+    try { adjudFiles = readdirSync('.audit-work/audit-queue').filter((x) => x.startsWith('adjudicate-')); } catch {}
     let auditPending = auditFiles.length;
-    const auditFeedCap = batchSize * 3;
+    // The lane sort alone is not enough: audit coverage is effectively
+    // infinite, so refilling it after every batch would starve the finite
+    // adjudication pilot forever. Existing audit units still run first; while
+    // adjudication work is waiting, simply do not replenish the audit lane.
+    const auditFeedCap = adjudFiles.length ? 0 : batchSize * 3;
     for (const loc of localities) {
       if (total >= limit || auditPending >= auditFeedCap) break;
       const h = contentHash(loc);
