@@ -10,7 +10,7 @@ const tmp = mkdtempSync(path.join(tmpdir(), 'permit-server-test-'));
 process.env.PERMIT_AUDIT_DIR = tmp; // must land before the lib imports
 
 const { readControl, waitWhilePaused, heartbeat, heartbeatFile, DEFAULT_CONTROL, HEARTBEAT_DIR, _resetCacheForTests } = await import('./lib/server-control.mjs');
-const { activeSetFor, guardPausedNames, isEmergency, pressureDeficit, downScaleCount, spawnMarginsOk, maySpawnResearcher, spawnHoldReason, workAvailable, idleCullList, cpuAvg30, researcherCap, nextSliceIndex, memoryAllowance, admitResearcher, cullOrder, reserveBytesOf, fleetBudgetBytesOf, nextBackoff, lockStale, rotateIfBig } = await import('./permit-server.mjs');
+const { activeSetFor, guardPausedNames, isEmergency, pressureDeficit, downScaleCount, spawnMarginsOk, maySpawnResearcher, spawnHoldReason, workAvailable, idleCullList, cpuAvg30, researcherCap, nextSliceIndex, memoryAllowance, admitResearcher, cullOrder, reserveBytesOf, fleetBudgetBytesOf, nextBackoff, lockStale, rotateIfBig, isCrashLoop } = await import('./permit-server.mjs');
 
 const ctl = path.join(tmp, 'server-control.json');
 const writeCtl = (o) => { writeFileSync(ctl, JSON.stringify({ ...DEFAULT_CONTROL, ...o, updated_at: new Date().toISOString() })); _resetCacheForTests(); };
@@ -257,6 +257,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   assert.equal(nextBackoff(1000, 0), 2000);
   assert.equal(nextBackoff(32000, 60000), 60000); // cap
   assert.equal(nextBackoff(32000, 5 * 60 * 1000 + 1), 1000); // 5min healthy → reset
+  // Crash-loop detector: exactly 3 unexpected exits inside 5min quarantines.
+  const now = Date.now();
+  assert.equal(isCrashLoop([now - 1000, now - 2000], now), false);
+  assert.equal(isCrashLoop([now - 1000, now - 2000, now - 3000], now), true);
+  assert.equal(isCrashLoop([now - 1000, now - 2000, now - 6 * 60 * 1000], now), false);
 }
 
 // ── waitWhilePaused: pause → resume → stopped → guard ───────────────────

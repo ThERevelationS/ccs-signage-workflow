@@ -18,6 +18,7 @@ import { mirrorApply } from './lib/entity-mirror.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
 import { cullPlan, growSession, resolveTarget } from './lib/ai-sessions.mjs';
+import { rotateAppendFileCopyTruncate } from './lib/bounded-files.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LOCK_FILE = path.join(AUDIT, 'permit-server.lock');
@@ -52,6 +53,8 @@ const MEM_HISTORY_MS = 30 * 60 * 1000; // sparkline window, sampled per tick
 const RSS_CAP = 1.5 * 1024 ** 3;       // restart a worker over 1.5GB
 const DRAIN_MS = 60000;                // stop: grace for the flusher's batch
 const HEALTHY_MS = 5 * 60 * 1000;      // alive this long → restart backoff resets
+const CRASH_LOOP_WINDOW_MS = 5 * 60 * 1000;
+const CRASH_LOOP_THRESHOLD = 3;        // 3 unexpected exits inside 5min quarantines the worker
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const GB = (b) => Math.round(b / 1024 ** 3 * 10) / 10;
 
@@ -60,7 +63,7 @@ const GB = (b) => Math.round(b / 1024 ** 3 * 10) / 10;
 // to .live-events.jsonl (names predate the controller).
 function catalog() {
   const w = [
-    { name: 'write-flusher', group: 'core', script: 'scripts/permitting-write-flusher.mjs', args: ['--rate', '35'], events: ['flusher', 'write-flusher'] },
+    { name: 'write-flusher', group: 'core', script: 'scripts/permitting-write-flusher.mjs', args: ['--rate', '35', '--max-rate', '120'], events: ['flusher', 'write-flusher'] },
     { name: 'mirror-sync', group: 'core', script: 'scripts/permitting-mirror-sync.mjs', events: ['mirror-sync'] },
     { name: 'seed-scan', group: 'verification', script: 'scripts/permitting-office-seed-scan.mjs', events: ['sweep-seed', 'seed-scan'] },
     { name: 'authority-verifier', group: 'verification', script: 'scripts/permitting-authority-verifier.mjs', args: ['--delay-ms', '600'], events: ['authverif0', 'authority-verifier'] },
@@ -145,6 +148,34 @@ export function nextBackoff(prevMs, aliveMs) {
 const emit = (e) => { try { appendFileSync(EVENTS, JSON.stringify({ t: Date.now(), worker: 'permit-server', ok: true, ...e }) + '\n'); } catch {} };
 const readJSON = (f, dflt) => { try { return JSON.parse(readFileSync(f, 'utf8')); } catch { return dflt; } };
 const pidAlive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
+
+// Crash-loop quarantine. The old health endpoint could *report* frequent
+// restarts, but the controller kept respawning forever and the dashboard had
+// no actionable error. Persist quarantines so a controller restart does not
+// erase the evidence; `/worker {action:'start'}` is the deliberate reset.
+export function isCrashLoop(restarts, now = Date.now(), windowMs = CRASH_LOOP_WINDOW_MS, threshold = CRASH_LOOP_THRESHOLD) {
+  return (restarts || []).filter((t) => now - t < windowMs).length >= threshold;
+}
+const CRASH_FILE = path.join(AUDIT, 'crash-loops.json');
+let crashLoops = readJSON(CRASH_FILE, {}) || {};
+function saveCrashLoops() { try { writeFileSync(CRASH_FILE, JSON.stringify(crashLoops, null, 2)); } catch {} }
+function markCrashLoop(name, error) {
+  crashLoops[name] = { at: new Date().toISOString(), error: String(error || 'worker exited repeatedly').slice(0, 500) };
+  saveCrashLoops();
+}
+function clearCrashLoop(name) {
+  if (!crashLoops[name]) return;
+  delete crashLoops[name];
+  saveCrashLoops();
+}
+function tailText(f, bytes = 4096) {
+  try {
+    const st = statSync(f), fd = openSync(f, 'r');
+    const size = Math.min(st.size, bytes), buf = Buffer.alloc(size);
+    readSync(fd, buf, 0, size, st.size - size); closeSync(fd);
+    return buf.toString('utf8').trim();
+  } catch { return ''; }
+}
 
 // Live point reads for the /audit/revert endpoint — same pattern the
 // cleanup tool uses; reverts merge onto CURRENT live offices, never a
@@ -266,11 +297,20 @@ function spawnWorker(spec) {
     // One-shot workers (office sweep) exit 0 when their pass completes —
     // that's "done", not a crash; a nonzero exit still restarts them.
     if (spec.once && code === 0) { r.finished = true; r.finishedAt = Date.now(); r.proc = null; return; }
-    // restart-on-crash — backoff doubles per failure, resets after 5min healthy
+    // restart-on-crash — backoff doubles per failure, resets after 5min healthy.
+    // Three unexpected exits inside five minutes is a crash loop: quarantine
+    // instead of respawning forever, and surface the log tail as the reason.
     r.restarts.push(Date.now()); r.restarts = r.restarts.slice(-20);
     r.proc = null;
+    if (isCrashLoop(r.restarts)) {
+      const tail = tailText(logFile(spec.name)).split('\n').filter(Boolean).slice(-3).join(' | ');
+      const err = `${spec.name} exited ${r.restarts.length} time(s); last code=${code} sig=${sig}${tail ? ` — ${tail}` : ''}`;
+      markCrashLoop(spec.name, err);
+      emit({ stage: 'worker_crash_loop', ok: false, detail: err });
+      return;
+    }
     const delay = r.backoff = nextBackoff(r.backoff, Date.now() - r.startedAt);
-    r.restartTimer = setTimeout(() => { const cur = procs.get(spec.name); if (cur) { cur.restartTimer = null; if (!cur.proc && !cur.stoppedByUs && !shuttingDown) spawnWorker(spec); } }, delay);
+    r.restartTimer = setTimeout(() => { const cur = procs.get(spec.name); if (cur) { cur.restartTimer = null; if (!cur.proc && !cur.stoppedByUs && !shuttingDown && !crashLoops[spec.name]) spawnWorker(spec); } }, delay);
     r.restartTimer.unref();
   });
 }
@@ -430,7 +470,7 @@ function reconcile() {
     if (want.has(spec.name)) {
       // Recurring one-shots (profile-relink every 6h) re-arm after the interval.
       if (spec.once && r?.finished && spec.every_ms && Date.now() - (r.finishedAt || 0) >= spec.every_ms) r.finished = false;
-      if (alive || r?.restartTimer || (spec.once && r?.finished)) continue;
+      if (crashLoops[spec.name] || alive || r?.restartTimer || (spec.once && r?.finished)) continue;
       // Researcher slices: the up-scale gate decides — margins (reserve +
       // 1GB cushion, commit headroom −4GB, fleet under budget), at most one
       // spawn per 10s, previous spawn settled. Pacing blocks are invisible;
@@ -785,7 +825,11 @@ async function guardTick() {
     }
     rotateLogIfBig(name);
   }
-  rotateIfBig(EVENTS, EVENTS_MAX); // the event feed grows unbounded otherwise
+  // Event writers keep persistent append fds; rename rotation strands them in
+  // the archived inode. Copy+truncate keeps the path live (a few telemetry
+  // lines can be lost during the copy; events are not correctness data). The
+  // flusher also rotates at 25MB; this is the fallback when it is down.
+  rotateAppendFileCopyTruncate(EVENTS, path.join(ROOT, '.live-events-prev.jsonl'), EVENTS_MAX);
 }
 
 // Tail .live-events.jsonl (last 256KB) → last event per worker alias.
@@ -820,7 +864,8 @@ function statusJSON() {
     let status;
     const disRes = new Set(resCfg(control).disabled);
     const stoppedW = new Set(control.stopped_workers || []);
-    if (alive) status = hb?.state === 'idle' ? 'idle' : 'running';
+    if (crashLoops[spec.name]) status = 'crash_looping';
+    else if (alive) status = hb?.state === 'idle' ? 'idle' : 'running';
     else if (spec.once && r?.finished) status = 'done';
     else if (disRes.has(spec.name) || stoppedW.has(spec.name)) status = 'stopped-by-user';
     else if (memBlocked.has(spec.name)) status = 'culled-by-memory';
@@ -833,7 +878,7 @@ function statusJSON() {
     else if (/^local-res-\d+$/.test(spec.name) && control.state !== 'stopped') status = 'stopped'; // slot exists but isn't in the wanted set — uncapped slots are just off
     else if ((control.guard_paused || []).includes(spec.name)) status = 'paused-by-guard';
     else status = 'stopped';
-    return { name: spec.name, group: spec.group, status, pid: alive ? r.proc.pid : null, alive, rss_mb: alive && rss.get(r.proc.pid) ? Math.round(rss.get(r.proc.pid) / 1048576) : null, uptime_s: alive && r ? Math.round((now - r.startedAt) / 1000) : null, restarts: (r?.restarts || []).length, recent_restarts: recentRestarts, crash_looping: recentRestarts >= 5, last_heartbeat: hb, last_event: lastEvent };
+    return { name: spec.name, group: spec.group, status, pid: alive ? r.proc.pid : null, alive, rss_mb: alive && rss.get(r.proc.pid) ? Math.round(rss.get(r.proc.pid) / 1048576) : null, uptime_s: alive && r ? Math.round((now - r.startedAt) / 1000) : null, restarts: (r?.restarts || []).length, recent_restarts: recentRestarts, crash_looping: Boolean(crashLoops[spec.name]), crash_error: crashLoops[spec.name]?.error || null, crash_loop_at: crashLoops[spec.name]?.at || null, last_heartbeat: hb, last_event: lastEvent };
   });
   const vp = verificationProgress();
   // Verified counts must reflect the live app, not the mirror (which folds
@@ -1005,6 +1050,9 @@ const server = http.createServer(async (req, res) => {
           stopWorker(spec.name); reconcile(); return json(res, 200, { ok: true });
         }
         if (body.action === 'start') {
+          clearCrashLoop(spec.name);
+          const r0 = procs.get(spec.name);
+          if (r0?.restartTimer) { clearTimeout(r0.restartTimer); r0.restartTimer = null; }
           const cur = { ...DEFAULT_CONTROL, ...readJSON(CONTROL_FILE, {}) };
           if (isRes) {
             const rc = resCfg(cur); rc.disabled = rc.disabled.filter((n) => n !== spec.name); rc.killall = false;

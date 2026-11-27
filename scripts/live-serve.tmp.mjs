@@ -1,9 +1,12 @@
 import http from 'node:http';
-import { readFileSync, existsSync, statSync, openSync, readSync, closeSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, statSync, openSync, readSync, closeSync } from 'node:fs';
+import { countJsonlLines, scanJsonRows } from './lib/bounded-files.mjs';
 const rd=f=>{try{return readFileSync(f,'utf8');}catch{return null;}};
 // Tail-read for unbounded jsonl feeds — at fleet scale .live-events.jsonl
 // grows ~100MB/day; parsing it whole per status call kills the dashboard.
-const tailRead=(f,bytes=4*1024*1024)=>{try{const sz=statSync(f).size;if(sz<=bytes)return rd(f);const fd=openSync(f,'r');const buf=Buffer.alloc(bytes);readSync(fd,buf,0,bytes,sz-bytes);closeSync(fd);const t=buf.toString('utf8');const i=t.indexOf('\n');return i<0?t:t.slice(i+1);}catch{return rd(f);}};
+// On any tail-read error return nothing rather than falling back to a full
+// read: that fallback is what turned one oversized file into a crash loop.
+const tailRead=(f,bytes=4*1024*1024)=>{try{const sz=statSync(f).size;if(sz<=bytes)return rd(f);const fd=openSync(f,'r');const buf=Buffer.alloc(bytes);readSync(fd,buf,0,bytes,sz-bytes);closeSync(fd);const t=buf.toString('utf8');const i=t.indexOf('\n');return i<0?t:t.slice(i+1);}catch{return null;}};
 // Per-office file pipeline (LP-6) — the office-files index is a local JSON the
 // doc-pipeline/uploader/extractor update; TTL-cached here, never remote.
 let _ofCache={at:0,data:null};
@@ -24,6 +27,54 @@ const officeFiles=()=>{
   _ofCache={at:now,data:{offices:offs.slice(0,24),totals}};
   return _ofCache.data;
 };
+// Mirror summaries — scan row objects one at a time and cache by file
+// generation. The dashboard used to parse 30MB+ mirror JSON into memory on
+// every tick (twice for localities). Streaming keeps peak memory bounded if a
+// mirror ever grows pathologically; the hard cap refuses truly abnormal files
+// rather than letting one bad write monopolize the dashboard process.
+const MIRROR_SCAN_MAX=128*1024*1024;
+const mirrorCache=new Map();
+const mirrorAt=(f)=>{try{const fd=openSync(f,'r');const b=Buffer.alloc(256);const n=readSync(fd,b,0,256,0);closeSync(fd);const m=b.toString('utf8',0,n).match(/"at"\s*:\s*(\d+)/);return m?Number(m[1]):null;}catch{return null;}};
+function cachedMirrorScan(file,empty,summarize){
+  let st=null;try{st=statSync(file);}catch{}
+  if(!st)return mirrorCache.get(file)?.data||empty;
+  const sig=`${st.size}:${Math.round(st.mtimeMs)}`;
+  const hit=mirrorCache.get(file);
+  if(hit&&hit.sig===sig)return hit.data;
+  if(st.size>MIRROR_SCAN_MAX)return hit?.data||{...empty,mirror_too_large:true,bytes:st.size};
+  try{
+    const data={...empty};
+    const scanned=scanJsonRows(file,(row)=>summarize(data,row),{maxRowBytes:16*1024*1024});
+    data.rows_scanned=scanned.rows;if(scanned.skippedRows)data.rows_skipped=scanned.skippedRows;
+    data.at=mirrorAt(file);
+    mirrorCache.set(file,{sig,data});
+    return data;
+  }catch(e){return hit?.data||{...empty,mirror_error:String(e?.message||e).slice(0,80)};}
+}
+const localityMirrorSummary=()=>cachedMirrorScan('.audit-work/mirrors/localities.json',{
+  locTotal:0,totalOffices:0,verifiedOffices:0,verifiedLocs:0,applyReady:0,needsVerif:0,at:null,
+},(out,l)=>{
+  out.locTotal++;
+  const offs=Array.isArray(l.offices)?l.offices:[];
+  out.totalOffices+=offs.length;
+  let s=false,z=false,verifiedHere=0;
+  for(const o of offs){
+    if(o?.authority_verification_status==='needs_verification')out.needsVerif++;
+    if(o?.authority_verification_status!=='staff_verified')continue;
+    verifiedHere++;
+    const roles=Array.isArray(o.authority_roles)?o.authority_roles:[];
+    if(roles.includes('sign_permit'))s=true;
+    if(roles.includes('zoning'))z=true;
+  }
+  out.verifiedOffices+=verifiedHere;if(verifiedHere)out.verifiedLocs++;
+  if(s&&z)out.applyReady++;
+});
+const queueMirrorSummary=()=>cachedMirrorScan('.audit-work/mirrors/queue.json',{queueBlocked:0,queueNotStarted:0,at:null},(out,r)=>{
+  if(r.status==='blocked')out.queueBlocked++;else if(r.status==='not_started')out.queueNotStarted++;
+});
+// Cumulative scanned/done sets are declared before status(): the first
+// status build runs before the bottom-of-file persistence wiring.
+const scanSet=new Set(),doneSet=new Set();let scanDirty=false;
 const status=()=>{
   const cnt=f=>{try{return JSON.parse(rd(f)).length;}catch{return 0;}};
   const lines=f=>{const t=rd(f);return t?t.trim().split('\n'):[];};
@@ -180,44 +231,26 @@ const status=()=>{
   // BOTH staff_verified on at least one office — same union gate as
   // findLocalityByAddress's apply_allowed. Read from the localities mirror
   // (daemon-synced ~10min), never remote.
-  let applyReady=0,locTotal=0,locMirrorAt=null,totalOffices=0,verifiedOffices=0,verifiedLocs=0;
-  try{const lm=JSON.parse(readFileSync('.audit-work/mirrors/localities.json','utf8'));
-    locMirrorAt=lm.at;
-    for(const l of lm.rows||[]){locTotal++;
-      const offs=Array.isArray(l.offices)?l.offices:[];
-      totalOffices+=offs.length;
-      const vo=offs.filter(o=>o?.authority_verification_status==='staff_verified');
-      verifiedOffices+=vo.length; if(vo.length)verifiedLocs++;
-      // Live-sourced verified count — mirror-sync writes this from RAW remote
-      // rows each cycle, so it can't be inflated by unflushed local upserts.
-      // Prefer it when fresh (<35min); the mirror count is the fallback.
-      try{const lv=JSON.parse(readFileSync('.audit-work/live-verified-count.json','utf8'));
-        if(lv.staff_verified!=null&&Date.now()-Date.parse(lv.at)<35*60e3){verifiedOffices=lv.staff_verified;if(lv.offices!=null)totalOffices=lv.offices;}}catch{}
-      let s=false,z=false;
-      for(const o of (Array.isArray(l.offices)?l.offices:[])){
-        if(o?.authority_verification_status!=='staff_verified')continue;
-        const roles=Array.isArray(o.authority_roles)?o.authority_roles:[];
-        if(roles.includes('sign_permit'))s=true;
-        if(roles.includes('zoning'))z=true;
-      }
-      if(s&&z)applyReady++;
-    }}catch{}
-  // LP-7 burn-down metrics — verification backlog (localities mirror, same
-  // read as above), queue blocked/not_started (queue mirror), human queue +
-  // auto-import ledger (local files). Zero remote calls.
-  let needsVerif=0,queueBlocked=0,queueNotStarted=0,humanQueue=0,ruleImports=0;
-  try{const lm=JSON.parse(readFileSync('.audit-work/mirrors/localities.json','utf8'));
-    for(const l of lm.rows||[])for(const o of l.offices||[])if(o?.authority_verification_status==='needs_verification')needsVerif++;}catch{}
-  try{const q=JSON.parse(readFileSync('.audit-work/mirrors/queue.json','utf8'));
-    for(const r of q.rows||[]){if(r.status==='blocked')queueBlocked++;else if(r.status==='not_started')queueNotStarted++;}}catch{}
+  const lm=localityMirrorSummary();
+  let applyReady=lm.applyReady||0,locTotal=lm.locTotal||0,locMirrorAt=lm.at||null,totalOffices=lm.totalOffices||0,verifiedOffices=lm.verifiedOffices||0,verifiedLocs=lm.verifiedLocs||0,needsVerif=lm.needsVerif||0;
+  // Live-sourced verified count — mirror-sync writes this from RAW remote rows
+  // each cycle, so it can't be inflated by unflushed local upserts. Prefer it
+  // when fresh (<35min); the streaming mirror count is the fallback.
+  try{const lv=JSON.parse(readFileSync('.audit-work/live-verified-count.json','utf8'));
+    if(lv.staff_verified!=null&&Date.now()-Date.parse(lv.at)<35*60e3){verifiedOffices=lv.staff_verified;if(lv.offices!=null)totalOffices=lv.offices;}}catch{}
+  // LP-7 burn-down metrics — queue mirror plus human/auto-import ledgers.
+  // Zero remote calls, and no whole-file mirror parses.
+  const q=queueMirrorSummary();
+  let queueBlocked=q.queueBlocked||0,queueNotStarted=q.queueNotStarted||0,humanQueue=0,ruleImports=0;
   try{const h=JSON.parse(readFileSync('.audit-work/human-review-queue.json','utf8'));humanQueue=h.count||0;}catch{}
   try{ruleImports=Object.keys(JSON.parse(readFileSync('.audit-work/rule-import-claims.json','utf8'))||{}).length;}catch{}
   // Local write outbox — depth = writes queued for the capped-rate flusher;
-  // flush events = writes actually landing on the app.
-  let outboxDepth=0,outboxErrDepth=0,outboxDone=0;
-  try{outboxDepth=readFileSync('.audit-work/outbox.jsonl','utf8').trim().split('\n').filter(Boolean).length}catch{}
-  try{outboxErrDepth=readFileSync('.audit-work/outbox-errors.jsonl','utf8').trim().split('\n').filter(Boolean).length}catch{}
-  try{outboxDone=readFileSync('.audit-work/outbox-done.jsonl','utf8').trim().split('\n').filter(Boolean).length}catch{}
+  // flush events = writes actually landing on the app. Large-file counts are
+  // bounded head/tail estimates, never whole-file reads.
+  const ob=countJsonlLines('.audit-work/outbox.jsonl');
+  const oe=countJsonlLines('.audit-work/outbox-errors.jsonl');
+  const od=countJsonlLines('.audit-work/outbox-done.jsonl');
+  const outboxDepth=ob.count,outboxErrDepth=oe.count,outboxDone=od.count;
   // Producer liveness — last event per worker class. Cards read this so a
   // frozen number shows "paused" (worker off) instead of looking broken.
   const lastOf=(pred)=>evs.reduce((m,e)=>pred(e)?Math.max(m,tms(e)):m,0);
@@ -523,6 +556,7 @@ const STATUS_PLAIN={running:['Working','g'],idle:['Waiting','n'],done:['Done','n
  'blocked-by-memory':['Waiting for memory','a'],'culled-by-cpu':['Paused — CPU busy','a'],
  'blocked-by-cpu':['Waiting — CPU busy','a'],'culled-idle':['Off — nothing to research','n'],
  'no-work':['Waiting — nothing to research','n'],'ramping':['Starting soon','a'],
+ 'crash_looping':['Crash-looping — needs restart','r'],
  'stopped-by-user':['Stopped by you','r'],stopped:['Off','n']};
 const chip=w=>{const p=STATUS_PLAIN[w.status]||['Off','n'];return '<span class="chip '+p[1]+'">'+p[0]+'</span>';};
 const GAP_LABEL={no_research:'No research yet',no_quote:'No proof sentence found yet',no_role_match:'Research found, but not for this office’s job',
@@ -1001,9 +1035,9 @@ function renderLegacy(){
 function renderAdvanced(){
  const g=srv&&srv.guard||{};const mem=srv&&srv.memory||{};
  const rows=workers().map(w=>{
-  const canCtl=['stopped-by-user','stopped','culled-by-memory','culled-by-cpu','culled-idle','no-work','ramping','blocked-by-memory','blocked-by-cpu'].includes(w.status);
-  const btn=w.group==='core'||w.group==='dashboard'?'':(w.alive?'<button data-cmd="wstop" data-name="'+esc(w.name)+'" style="padding:2px 10px;font-size:11px">stop</button>':canCtl?'<button data-cmd="wstart" data-name="'+esc(w.name)+'" style="padding:2px 10px;font-size:11px">start</button>':'');
-  const ev=w.last_event?(w.last_event.stage||'')+(w.last_event.detail?' · '+String(w.last_event.detail).slice(0,60):''):'—';
+  const canCtl=['stopped-by-user','stopped','culled-by-memory','culled-by-cpu','culled-idle','no-work','ramping','blocked-by-memory','blocked-by-cpu','crash_looping'].includes(w.status);
+  const btn=w.status==='crash_looping'?'<button data-cmd="wstart" data-name="'+esc(w.name)+'" style="padding:2px 10px;font-size:11px">restart</button>':w.group==='core'||w.group==='dashboard'?'':(w.alive?'<button data-cmd="wstop" data-name="'+esc(w.name)+'" style="padding:2px 10px;font-size:11px">stop</button>':canCtl?'<button data-cmd="wstart" data-name="'+esc(w.name)+'" style="padding:2px 10px;font-size:11px">start</button>':'');
+  const ev=w.status==='crash_looping'&&w.crash_error?String(w.crash_error).slice(0,140):(w.last_event?(w.last_event.stage||'')+(w.last_event.detail?' · '+String(w.last_event.detail).slice(0,60):''):'—');
   return '<tr><td><b>'+esc(friendlyName(w.name))+'</b> <span class="dim small">'+esc(w.name)+'</span><div class="dim small">'+esc(friendlyDesc(w.name))+'</div></td>'
    +'<td class="dim small">'+esc(w.group)+'</td><td>'+chip(w)+'</td>'
    +'<td class="num small">'+(w.pid||'—')+'</td><td class="num small">'+(w.rss_mb!=null?w.rss_mb+' MB':'—')+'</td>'
@@ -1085,9 +1119,8 @@ try{lastGoodStatus=JSON.stringify(status());lastStatusAt=Date.now();}catch{}
 // Cumulative scanned counter — a persistent set of every address ever seen
 // so "scanned" grows across event-log rotation instead of resetting to the
 // current pool. Seeded from .audit-work/scan-total.json; flushed on change.
-const scanSet=new Set(),doneSet=new Set();let scanDirty=false;
-try{const st=JSON.parse(require('fs').readFileSync('.audit-work/scan-total.json','utf8'));for(const a of st.addresses||[])scanSet.add(a);for(const a of st.done||[])doneSet.add(a);}catch{}
-setInterval(()=>{if(scanDirty){scanDirty=false;try{require('fs').writeFileSync('.audit-work/scan-total.json',JSON.stringify({addresses:[...scanSet],done:[...doneSet],at:Date.now()}));}catch{}}},30000);
+try{const st=JSON.parse(readFileSync('.audit-work/scan-total.json','utf8'));for(const a of st.addresses||[])scanSet.add(a);for(const a of st.done||[])doneSet.add(a);}catch{}
+setInterval(()=>{if(scanDirty){scanDirty=false;try{writeFileSync('.audit-work/scan-total.json',JSON.stringify({addresses:[...scanSet],done:[...doneSet],at:Date.now()}));}catch{}}},30000);
 process.on('uncaughtException',(e)=>{try{console.error('uncaught:',e?.message||e)}catch{}});
 process.on('unhandledRejection',(e)=>{try{console.error('unhandled:',e?.message||e)}catch{}});
 http.createServer((req,res)=>{

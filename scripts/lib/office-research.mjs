@@ -29,6 +29,10 @@ export const stripHtml = (html) => String(html || '')
   .replace(/<\/(li|tr|p|div|h[1-6]|td|th|section|article)>/gi, '\n')   // block boundaries → lines
   .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#\d+;/g, ' ')
   .replace(/[ \t]+/g, ' ').split('\n').map((s) => s.trim()).filter(Boolean).join('\n');
+// Small title helpers used by the tier-2 crawler. They lived implicitly in an
+// older fork; their absence made every deep crawl throw `clean is not defined`.
+export const sBetween = (s, re) => String(s || '').match(re)?.[1] || '';
+export const clean = (s) => String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
 export const pageLinks = (html, base) => pageLinkPairs(html, base).map((l) => l.url);
 // Anchor TEXT is evidence too — "Zoning Department" linking to /page?id=12

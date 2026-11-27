@@ -11,18 +11,21 @@
 // Per-record failures retry up to 8 attempts then journal to outbox-errors —
 // nothing is ever silently lost.
 //
-// Tuning: --rate 300 (records/min) · --batch 100 · --once for a single drain.
-import { openSync, writeFileSync, readFileSync, existsSync, appendFileSync, mkdirSync, rmSync, statSync, copyFileSync } from 'node:fs';
-import { enqueue, takeBatch, outboxDepth, journal, requeueTail, compactOutbox, sanitizeOffice, OUTBOX, OUTBOX_DONE, OUTBOX_ERR } from './lib/outbox.mjs';
+// Tuning: --rate 35 low-water records/min · --max-rate 120 backlog cap ·
+// --batch 100 · --once for a single drain.
+import { openSync, writeFileSync, readFileSync, existsSync, appendFileSync, mkdirSync, rmSync, statSync } from 'node:fs';
+import { rotateAppendFileCopyTruncate } from './lib/bounded-files.mjs';
+import { enqueue, takeBatch, outboxDepth, journal, requeueTail, compactOutbox, sanitizeOffice, flusherRateForDepth, rotateJournalIfBig, OUTBOX, OUTBOX_DONE, OUTBOX_ERR } from './lib/outbox.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 
 const args = process.argv.slice(2);
 const flag = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
-const RATE = Math.max(1, Number(flag('--rate', 300)));        // records per minute
+const RATE = Math.max(1, Number(flag('--rate', 300)));        // low-water records/minute
+const MAX_RATE = Math.max(RATE, Number(flag('--max-rate', 120))); // backlog cap; effective rate is lower after invoke latency
 const BATCH = Math.min(200, Math.max(1, Number(flag('--batch', 100))));
-const SPACING = Math.max(1000, Math.ceil(BATCH * 60000 / RATE)); // ms between invokes
+const spacingFor = (rate) => Math.max(1000, Math.ceil(BATCH * 60000 / rate)); // ms between invokes
 const ONCE = args.includes('--once');
 const EVENTS = '.live-events.jsonl';
 const INFLIGHT = '.audit-work/outbox-inflight.jsonl';
@@ -179,6 +182,11 @@ while (!(await login())) {
   await sleep(60000);
 }
 requeueInflight();
+// The error/done journals are already oversized on the live box — waiting for
+// their next append would leave the dashboard exposed indefinitely.
+for (const f of [OUTBOX_DONE, OUTBOX_ERR]) {
+  if (rotateJournalIfBig(f)) emit({ stage: 'outbox_pass', ok: true, detail: `${f} rotated at startup` });
+}
 
 // Event-log rotation — .live-events.jsonl is append-only across the whole
 // fleet (~100MB/day at bulk rates). Copy+truncate, NEVER rename: every worker
@@ -191,8 +199,9 @@ function rotateEvents() {
   lastRotate = Date.now();
   try {
     if (statSync(EVENTS).size > 25 * 1024 * 1024) {
-      try { copyFileSync(EVENTS, EVENTS_PREV); writeFileSync(EVENTS, ''); } catch {}
-      emit({ stage: 'outbox_pass', ok: true, detail: 'event log rotated (25MB cap)' });
+      if (rotateAppendFileCopyTruncate(EVENTS, EVENTS_PREV, 25 * 1024 * 1024)) {
+        emit({ stage: 'outbox_pass', ok: true, detail: 'event log rotated (25MB cap)' });
+      }
     }
   } catch {}
 }
@@ -200,13 +209,19 @@ function rotateEvents() {
 while (true) {
   await waitWhilePaused('write-flusher', { item: 'outbox drain' });
   try { writeFileSync(HB, String(Date.now())); } catch {}
-  // FIFO compaction: when the backlog grows huge, most lines are superseded
-  // writes to the same rows — merge them before taking a batch.
-  const depthNow = outboxDepth();
-  if (depthNow > 10000) {
+  // FIFO compaction: once the backlog is more than a few batches deep, a large
+  // share of lines are superseded writes to the same rows (~22% measured on
+  // 2026-11-27). Merge them before taking a batch; local CPU/IO is cheap next
+  // to the capped remote write lane.
+  let depthNow = outboxDepth();
+  if (depthNow > 500) {
     const c = compactOutbox();
-    if (c?.dropped > 0) emit({ stage: 'outbox_pass', ok: true, detail: `compacted ${c.before} → ${c.after} (−${c.dropped} superseded)` });
+    if (c?.dropped > 0) {
+      emit({ stage: 'outbox_pass', ok: true, detail: `compacted ${c.before} → ${c.after} (−${c.dropped} superseded)` });
+      depthNow = c.after;
+    }
   }
+  const rate = flusherRateForDepth(depthNow, RATE, MAX_RATE);
   const batch = takeBatch(BATCH);
   if (!batch.length) {
     if (ONCE) break;
@@ -215,6 +230,8 @@ while (true) {
     continue;
   }
   markInflight(batch);
+  const batchStarted = Date.now();
+  emit({ stage: 'outbox_batch', detail: `flushing ${batch.length} write(s) · depth ${depthNow} · rate cap ${rate}/min`, ok: true });
   let ok = false;
   for (let attempt = 0; attempt < 4 && !ok; attempt++) {
     ok = await flushBatch(batch);
@@ -231,7 +248,8 @@ while (true) {
   }
   clearInflight();
   rotateEvents();
-  emit({ stage: 'outbox_pass', detail: `flushed batch of ${batch.length} · depth ${outboxDepth()} · mode ${bulkAvailable ? 'bulk' : 'per-record'}`, ok: true });
+  const invokeMs = Date.now() - batchStarted;
+  emit({ stage: 'outbox_pass', detail: `flushed batch of ${batch.length} · depth ${outboxDepth()} · mode ${bulkAvailable ? 'bulk' : 'per-record'} · invoke ${Math.round(invokeMs / 100) / 10}s · rate cap ${rate}/min`, ok: true });
   if (ONCE) break;
-  await sleep(SPACING);
+  await sleep(spacingFor(rate));
 }

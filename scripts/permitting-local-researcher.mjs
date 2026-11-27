@@ -14,7 +14,7 @@ import { openSync, writeFileSync, readFileSync, appendFileSync, existsSync, mkdi
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { getMirror, mirrorApply } from './lib/entity-mirror.mjs';
-import { enqueue } from './lib/outbox.mjs';
+import { enqueue, deepEqual, outboxDepth } from './lib/outbox.mjs';
 import { normalizeOfficeResearch } from '../base44/shared/permittingOfficeResearch.mjs';
 import { fetchText, extract, crawlSite, discoverSite, PHONE_RE, EMAIL_RE, PAGE_KEY, DIR_KEY, wikidataSite, domainGuesses } from './lib/office-research.mjs';
 import { pdfPages } from './lib/pdf-extract.mjs';
@@ -35,6 +35,13 @@ const ID = Number(arg('--id', arg('--slice', 0)));
 const WORKER = `local-res-${ID}`;
 const EVENTS = '.live-events.jsonl';
 const SLEEP = Number(arg('--sleep', 1200));
+// Backpressure while the write outbox is deep: research continues, but at a
+// slower cadence until the capped flusher catches up. This prevents the local
+// queue from becoming an unbounded second database during verification sweeps.
+const backlogSleep = (ms) => {
+  const d = outboxDepth();
+  return d >= 2500 ? ms * 3 : d >= 1000 ? ms * 2 : ms;
+};
 const PAGE_SLEEP = Number(arg('--page-sleep', 300));
 const MAX_PAGES = Number(arg('--max-pages', 9));
 const ONCE = args.includes('--once');
@@ -52,6 +59,19 @@ const claimKey = (r) => r.id || `${r.jurisdiction_name}|${r.state}`;
 // opts.merge === true unions new roles into the profile's existing
 // office_research (gap research never drops evidence already there).
 const roleKey = (r) => `${r?.role}|${String(r?.official_source_url || '').trim().toLowerCase()}|${String(r?.responsibility_quote || '').replace(/\s+/g, ' ').trim().toLowerCase().slice(0, 120)}`;
+// office_research.researched_at changes on every crawl even when evidence is
+// byte-for-byte identical. Compare with that clock stripped so retry tiers do
+// not enqueue meaningless full-profile rewrites while the outbox is deep.
+const researchComparable = (r) => (r && typeof r === 'object' ? { ...r, researched_at: null } : r);
+function enqueueProfileResearch(targetProfile, row, research, note) {
+  if (!targetProfile?.id) return false;
+  if (deepEqual(researchComparable(research), researchComparable(targetProfile.office_research || {}))) return false;
+  const mirror = `profiles-${String(targetProfile.state || row.state).toLowerCase()}`;
+  enqueue({ entity: 'JurisdictionProfile', op: 'update', id: targetProfile.id, data: { office_research: research }, mirror, note });
+  mirrorApply(mirror, { id: targetProfile.id, office_research: research });
+  targetProfile.office_research = research; // later tiers in this worker compare against what they just wrote
+  return true;
+}
 async function research(row, profile, profiles, opts = {}) {
   const label = `${row.jurisdiction_name}, ${row.state}`;
   emit({ stage: 'office_res_step', address: label, start: true, detail: `local research — discovering official site${opts.wanted ? ` (aiming at ${[...opts.wanted].join(', ')})` : ''}` });
@@ -152,10 +172,7 @@ async function research(row, profile, profiles, opts = {}) {
     added = fresh.length;
     out = { ...(targetProfile.office_research || {}), ...normalized, roles: [...prev, ...fresh] };
   }
-  if (targetProfile?.id) {
-    enqueue({ entity: 'JurisdictionProfile', op: 'update', id: targetProfile.id, data: { office_research: out }, mirror: `profiles-${String(targetProfile.state || row.state).toLowerCase()}`, note: `local research — ${label}` });
-    mirrorApply(`profiles-${String(targetProfile.state || row.state).toLowerCase()}`, { id: targetProfile.id, office_research: out });
-  }
+  enqueueProfileResearch(targetProfile, row, out, `local research — ${label}`);
   const covered = roles.length;
   if (opts.queueClose !== false) {
     enqueue({ entity: 'SourceCollectionQueue', op: 'update', id: row.id, data: { status: covered >= 3 ? 'sources_found' : 'partial_gaps', missing_next: covered >= 3 ? null : `local research — ${covered}/7 roles found; thin evidence${countyFallback ? ' (county-level)' : ''}` }, note: `research close — ${label}` });
@@ -278,7 +295,7 @@ async function fulfillPass(profiles, cooldowns, claimed) {
       writeCooldown(`ff-${office.id}`, { result });
     } catch (e) { emit({ stage: 'office_fill_error', address: label, ok: false, detail: String(e?.message || e).slice(0, 140) }); }
     finally { releaseClaim(`ff-${office.id}`); }
-    await sleep(SLEEP);
+    await sleep(backlogSleep(SLEEP));
   }
   return worked > 0;
 }
@@ -366,8 +383,7 @@ function finishRoles(row, profile, roles, label, tag, pages = []) {
   const seen = new Set(prev.map(roleKey));
   const fresh = normalized.roles.filter((r) => !seen.has(roleKey(r)));
   const out = { ...(profile.office_research || {}), ...normalized, roles: [...prev, ...fresh] };
-  enqueue({ entity: 'JurisdictionProfile', op: 'update', id: profile.id, data: { office_research: out }, mirror: `profiles-${String(profile.state || row.state).toLowerCase()}`, note: `local research — ${label}` });
-  mirrorApply(`profiles-${String(profile.state || row.state).toLowerCase()}`, { id: profile.id, office_research: out });
+  enqueueProfileResearch(profile, row, out, `local research — ${label}`);
   emit({ stage: 'office_res_done', address: label, ok: true, detail: `${tag} — +${fresh.length} new role evidence (${normalized.roles.length} extracted)` });
   return { result: 'researched', added: fresh.length, pages };
 }
@@ -572,7 +588,7 @@ async function gapPass(profiles, profById, cooldowns, claimed, budget = 8) {
       worked++;
     } catch (e) { emit({ stage: 'gap_target_error', address: label, ok: false, detail: String(e?.message || e).slice(0, 140) }); }
     finally { releaseClaim(key); }
-    await sleep(SLEEP);
+    await sleep(backlogSleep(SLEEP));
   }
   return worked;
 }
@@ -648,7 +664,7 @@ async function main() {
         worked++;
       } catch (e) { emit({ stage: 'office_res_error', address: `${row.jurisdiction_name}, ${row.state}`, ok: false, detail: String(e?.message || e).slice(0, 140) }); }
       finally { releaseClaim(key); }
-      await sleep(SLEEP);
+      await sleep(backlogSleep(SLEEP));
     }
     // Everything pending is claimed by fleet-mates — wait out their work
     // instead of spinning on the claims directory.

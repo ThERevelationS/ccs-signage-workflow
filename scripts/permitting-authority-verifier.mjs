@@ -27,7 +27,7 @@ import { resolve } from 'node:path';
 import { normalizePermitJurisdictionName } from '../src/components/permitting/jurisdictionPermitBridge.js';
 import { mirrorRead, mirrorApply } from './lib/entity-mirror.mjs';
 import { idleWait } from './lib/event-tail.mjs';
-import { enqueue } from './lib/outbox.mjs';
+import { enqueue, deepEqual, outboxDepth } from './lib/outbox.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { ohioCertifiedDept, kyElectricalRoster } from './lib/rosters/certified-depts.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
@@ -51,6 +51,14 @@ const ONCE = args.includes('--once');
 const SLICE = args.includes('--slice') ? Number(args[args.indexOf('--slice') + 1]) : 0;
 const SLICES = args.includes('--slices') ? Number(args[args.indexOf('--slices') + 1]) : 1;
 const DELAY = args.includes('--delay-ms') ? Number(args[args.indexOf('--delay-ms') + 1]) : 900;
+// Feedback throttle: the verifier is the largest priority-write producer.
+// When the write outbox is deep, slow production rather than letting an
+// unbounded local queue pretend progress happened; as the flusher catches up
+// the verifier automatically returns to full speed.
+const writeBacklogDelay = (ms) => {
+  const d = outboxDepth();
+  return d >= 2500 ? ms * 3 : d >= 1000 ? ms * 2 : ms;
+};
 const PASS_SLEEP = 10 * 60 * 1000;
 const DRY = args.includes('--dry-run');
 const EVENTS = '.live-events.jsonl';
@@ -633,9 +641,15 @@ async function pass(onlyNames = null) {
         // immediately so later passes/verifier sees the promotion now.
         const delta = new Map(next.filter((o) => o?.id).map((o) => [o.id, o]));
         const merged = offices.map((o) => (o?.id && delta.has(o.id) ? { ...o, ...delta.get(o.id) } : o));
-        enqueue({ entity: 'PermitLocality', op: 'update', id: loc.id, data: { offices: merged }, mirror: 'localities', note: `${loc.name}, ${loc.state} — authority promote`, priority: 1 });
-        wrote += 1;
-        mirrorApply('localities', { ...loc, offices: merged });
+        // `changed` is heuristic (several gap branches rebuild arrays even when
+        // their contents are identical). The write boundary must be exact: a
+        // full verifier pass otherwise re-enqueues the same offices[] once per
+        // pass while the flusher backlog hides the first write.
+        if (!deepEqual(merged, offices)) {
+          enqueue({ entity: 'PermitLocality', op: 'update', id: loc.id, data: { offices: merged }, mirror: 'localities', note: `${loc.name}, ${loc.state} — authority promote`, priority: 1 });
+          wrote += 1;
+          mirrorApply('localities', { ...loc, offices: merged });
+        }
         for (const k of okList) {
           try { appendFileSync(PROMOTIONS_LOG, JSON.stringify({ at: Date.now(), locality_id: loc.id, jurisdiction: `${loc.name}, ${loc.state}`, office: k.office, roles: k.roles }) + '\n'); } catch {}
           emit({ stage: 'auth_verify_ok', jurisdiction: `${loc.name}, ${loc.state}`, address: `${loc.name}, ${loc.state}`, detail: `${k.office} → ${k.roles.join('+')}${k.trimmed ? ` (trimmed ${k.trimmed})` : ''}` });
@@ -643,7 +657,7 @@ async function pass(onlyNames = null) {
       } catch (e) {
         emit({ stage: 'auth_verify_error', jurisdiction: `${loc.name}, ${loc.state}`, detail: String(e?.message || e).slice(0, 140) });
       }
-      await sleep(DELAY);
+      await sleep(writeBacklogDelay(DELAY));
     }
   }
   // Pending "apply when verified" requests — the picker's background path.
