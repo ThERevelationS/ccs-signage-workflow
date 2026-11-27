@@ -342,9 +342,19 @@ export async function drainQueue({ maxBatches = 8, sleepMs = 3000 } = {}) {
   let batches = 0, produced = 0;
   const running = new Set();
   const launch = async () => {
-    const w = workers.find((x) => !x.busy && !(x.spawnPacedUntil > Date.now()));
+    const now = Date.now();
+    // Never claim a batch for a worker whose process is not even allowed to
+    // spawn yet. The old selector only looked at the worker's own paced stamp;
+    // on a cold pool every worker was selected at once, seven workers claimed
+    // batches, six immediately failed "no session", and the transient empty
+    // queue then stalled the drain behind the first long batch.
+    const ready = (x) => !x.busy && ((x.child && !x.child.killed) || (!(x.spawnPacedUntil > now) && now - lastSpawnAt >= SPAWN_GAP_MS));
+    const w = workers.find(ready);
     if (!w) { // all free workers are spawn-paced — wait out the gap
-      const wait = Math.min(...workers.filter((x) => !x.busy).map((x) => (x.spawnPacedUntil || 0) - Date.now()).filter((ms) => ms > 0));
+      const waits = workers.filter((x) => !x.busy && !x.child)
+        .map((x) => Math.max(x.spawnPacedUntil || 0, lastSpawnAt + SPAWN_GAP_MS) - now)
+        .filter((ms) => ms > 0);
+      const wait = waits.length ? Math.min(...waits) : NaN;
       if (Number.isFinite(wait)) { await sleep(Math.min(wait + 200, SPAWN_GAP_MS + 200)); return launch(); }
       return false;
     }
