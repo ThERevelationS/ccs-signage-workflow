@@ -282,6 +282,11 @@ assert.match(portalEntity, /"creation_request_key"/, 'portal link entity must ca
 const portalMsgEntity = readFileSync('base44/entities/PortalMessage.jsonc', 'utf8');
 assert.match(portalMsgEntity, /"__portal_message_backend_only__"/, 'portal message entity must be backend-only');
 assert.match(portalMsgEntity, /"estimate_revision_requested"/, 'portal messages must cover revision requests');
+
+// Pending imports carry customer/order data and are written and read only by backend functions.
+const pendingImportRls = JSON.parse(readFileSync('base44/entities/PendingImport.jsonc', 'utf8')).rls;
+assert.equal(pendingImportRls?.read?.user_condition?.role, '__pending_import_backend_only__', 'PendingImport read must stay backend-only');
+assert.doesNotMatch(JSON.stringify(pendingImportRls), /"role":"user"/, 'PendingImport RLS must not grant the platform user role');
 const portalFn = readFileSync('base44/functions/customerPortalAction/entry.ts', 'utf8');
 assert.match(portalFn, /action === "bootstrap"/, 'portal function must expose token bootstrap');
 assert.match(portalFn, /token\.length < 16/, 'bootstrap must reject short tokens');
