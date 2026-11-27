@@ -130,4 +130,22 @@ ok(targets.length === 1 && targets[0].office.id === 'target', 'ledger row resolv
 const verifiedLoc = JSON.parse(JSON.stringify(loc)); verifiedLoc.offices[0].authority_verification_status = 'staff_verified';
 ok(adjudicationTargets({ ledgerRows: [row], localities: [verifiedLoc], officeState, adjudicated: {}, limit: 20 }).length === 0, 'verified offices are not adjudicated as needs_review');
 
+// Retry semantics: a confirmed resolution skips re-adjudication, but a REJECTED
+// verdict must be retried (up to 3 attempts) — rejection is prompt-compliance
+// failure, not an answer. Without this the needs-you list never drains.
+const targetHash = targets[0].hash;
+const confirmedPrior = { [`${loc.id}:target`]: { hash: targetHash, verdict: 'not_applicable', confirmed: true, attempts: 1 } };
+ok(adjudicationTargets({ ledgerRows: [row], localities: [loc], officeState, adjudicated: confirmedPrior, limit: 20 }).length === 0, 'confirmed resolution is not re-adjudicated');
+const rejectedPrior = { [`${loc.id}:target`]: { hash: targetHash, verdict: 'not_applicable', action: 'rejected', confirmed: false, attempts: 1 } };
+ok(adjudicationTargets({ ledgerRows: [row], localities: [loc], officeState, adjudicated: rejectedPrior, limit: 20 }).length === 1, 'rejected verdict is retried');
+const exhaustedPrior = { [`${loc.id}:target`]: { hash: targetHash, verdict: 'not_applicable', action: 'rejected', confirmed: false, attempts: 3 } };
+ok(adjudicationTargets({ ledgerRows: [row], localities: [loc], officeState, adjudicated: exhaustedPrior, limit: 20 }).length === 0, 'three failed attempts stay in needs_review without further retry');
+
+// exists_unproven is inherently uncertain — the strict 0.8 confidence floor is
+// for positive resolutions only; a low-confidence unproven verdict still yields
+// a well-targeted research boost.
+const lowConfUnproven = { verdict: 'exists_unproven', confidence: 0.55, roles_resolved: ['electrical_inspection'], reason: 'No official evidence found either way after exhaustive tier research across all sources.', proof_expectation: 'Find the township zoning resolution or county record naming the electrical inspection authority for this exact jurisdiction.' };
+ok(validateAdjudicationVerdict(lowConfUnproven, unit.meta, loc).ok, 'exists_unproven passes at 0.55 confidence');
+ok(!validateAdjudicationVerdict({ ...validCover, confidence: 0.55 }, unit.meta, loc).ok, 'positive resolutions still require 0.8 confidence');
+
 console.log(`PASS needs-review-adjudication — ${checks} checks, 0 failures`);

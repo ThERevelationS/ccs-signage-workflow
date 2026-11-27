@@ -206,7 +206,8 @@ export function validateAdjudicationVerdict(verdict, meta, loc) {
   if (!verdict || typeof verdict !== 'object') errors.push('missing verdict object');
   if (!VERDICTS.includes(verdict?.verdict)) errors.push('invalid verdict');
   const confidence = Number(verdict?.confidence);
-  if (!Number.isFinite(confidence) || confidence < MIN_CONFIDENCE) errors.push(`confidence below ${MIN_CONFIDENCE}`);
+  const floor = verdict?.verdict === 'exists_unproven' ? 0.5 : MIN_CONFIDENCE;
+  if (!Number.isFinite(confidence) || confidence < floor) errors.push(`confidence below ${floor}`);
   if (!roles.length) errors.push('roles_resolved empty');
   if (!subset(roles, missing)) errors.push('roles_resolved outside missing_roles');
   if (String(verdict?.reason || '').trim().length < 35) errors.push('reason too short or missing');
@@ -386,7 +387,10 @@ export function adjudicationTargets({ ledgerRows = [], localities = [], officeSt
     const facts = structuralFactsFor(loc, null, null);
     const hash = adjudicationHash(row, loc, office, facts);
     const prior = adjudicated[key];
-    if (prior?.hash === hash && ['not_applicable', 'covered_elsewhere', 'exists_unproven'].includes(prior.verdict)) continue;
+    // Skip only offices whose adjudication actually landed (confirmed) or that
+    // exhausted retries. A rejected verdict is a prompt-compliance failure, not
+    // an answer — those offices must be re-tried or they never leave the list.
+    if (prior?.hash === hash && (prior.confirmed || (prior.attempts || 1) >= 3)) continue;
     out.push({ row, loc, office, key, hash, prior });
   }
   return out;

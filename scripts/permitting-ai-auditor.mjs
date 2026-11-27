@@ -403,7 +403,7 @@ function feedAdjudicationUnits(localities, profById, ctrl) {
     const unit = buildAdjudicationUnit(t.row, t.loc, t.office, officeState, profile, countyProfile);
     const key = `${t.loc.id}:${unit.meta.office_id}`;
     const prior = adj.offices?.[key];
-    if (prior?.hash === unit.meta.hash && ['not_applicable', 'covered_elsewhere', 'exists_unproven'].includes(prior.verdict)) continue;
+    if (prior?.hash === unit.meta.hash && (prior.confirmed || (prior.attempts || 1) >= 3)) continue;
     if (unitPending(unit.id) || existsSync(`.audit-work/audit-out/${unit.id}.json`)) continue;
     enqueueUnit(unit);
     queueFiles.push(`${unit.id}.json`); // do not re-feed inside this same pass
@@ -487,14 +487,35 @@ async function processAdjudicationOutput(id) {
     } else result.errors = check.errors;
   } else if (verdict.verdict === 'not_applicable' || verdict.verdict === 'covered_elsewhere') {
     const wr = await writeResolutionWithReadback(meta, verdict);
-    if (wr.ok) result = { verdict: verdict.verdict, action: 'write_confirmed', errors: [], archived: wr.patch.archived === true };
-    else result = { verdict: verdict.verdict, action: 'rejected', errors: [`${wr.stage || 'write'}: ${(wr.errors || []).join('; ')}`] };
+    if (wr.ok) {
+      result = { verdict: verdict.verdict, action: 'write_confirmed', errors: [], archived: wr.patch.archived === true };
+      const citedKeys = new Set(verdict.structural_fact_keys || []);
+      const coverageShift = (meta.facts || []).some((f) => citedKeys.has(f.key) && (f.key === 'ky_dhbc_electrical' || (f.key === 'ohio_bbs_certification' && f.certified === false)));
+      if (verdict.verdict === 'not_applicable' && coverageShift) {
+        // The role is still required here — only the LOCAL office is absent.
+        // Aim researchers at the county provider so coverage is recorded.
+        const allLocs = getMirror('localities')?.rows || [];
+        const thisLoc = allLocs.find((l) => l.id === meta.locality_id);
+        const countyName = String(thisLoc?.county_name || thisLoc?.parent_county_name || '').replace(/\s+county$/i, '');
+        const countyLoc = countyName ? allLocs.find((l) => l.state === meta.state && new RegExp(`^${countyName} county`, 'i').test(l.name || '')) : null;
+        if (countyLoc) {
+          const roles = [...new Set(verdict.roles_resolved || meta.missing_roles || [])];
+          addBoostOnce({
+            type: 'provider_resolution', locality_id: countyLoc.id, jurisdiction: countyLoc.name, state: countyLoc.state,
+            finding: { type: 'provider_resolution', roles, offices: [], reason: `${meta.jurisdiction} has no local office for ${roles.join('+')} (archived as not locally applicable) — find the county/state/contracted provider that actually issues these permits for ${meta.jurisdiction}, with a verbatim quote.` },
+          });
+          result.provider_boost = true;
+        }
+      }
+    } else result = { verdict: verdict.verdict, action: 'rejected', errors: [`${wr.stage || 'write'}: ${(wr.errors || []).join('; ')}`] };
   } else {
     result.errors = ['invalid or missing verdict'];
   }
   const at = new Date().toISOString();
+  const priorEntry = state.offices[key];
   state.offices[key] = {
     at, hash: meta.hash, verdict: result.verdict, action: result.action,
+    attempts: (priorEntry?.attempts || 0) + 1,
     roles_resolved: verdict.roles_resolved || [], office_name: meta.office_name,
     errors: result.errors || [], confirmed: result.action === 'write_confirmed' || result.action === 'boosted' || result.action === 'boost_already_pending',
   };
