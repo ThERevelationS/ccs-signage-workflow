@@ -357,7 +357,15 @@ export async function drainQueue({ maxBatches = 8, sleepMs = 3000 } = {}) {
     return true;
   };
   while (batches < maxBatches) {
-    if (queueDepth() === 0) break;
+    if (queueDepth() === 0) {
+      // A parallel wave can transiently claim every visible unit. Failed
+      // spawn-paced workers unclaim theirs almost immediately, so treating
+      // that moment as an empty queue ends the drain after the first long
+      // batch and serialises the whole pool. Wait for any in-flight claim to
+      // resolve, then re-check; only a truly empty idle queue ends the loop.
+      if (running.size) { await Promise.race(running); continue; }
+      break;
+    }
     const auth = await probeAuth();
     if (auth !== 'ok') return { lane: 'auth', batches, produced };
     if (await launch()) continue;
