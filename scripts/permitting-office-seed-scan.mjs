@@ -264,13 +264,22 @@ async function sweep(onlyNames = null) {
       const roles = researchProfile?.office_research?.roles || [];
       if (researchProfile && roles.length) {
         const rebuilt = jurisdictionToPermitLocality(researchProfile);
-        const { offices, filled, added } = mergeOffices(loc.offices || [], rebuilt.offices || []);
-        if (filled + added > 0) {
+        // Archive is authoritative. A backfill built from a pre-archive mirror
+        // must neither keep an archived office active nor re-add its research
+        // placeholder; include the archive in the write so the full-array
+        // update cannot separate the two halves again.
+        const archivedKeys = new Set((loc.archived_offices || []).flatMap((o) => [o?.id, normName(o?.name || '')]).filter(Boolean));
+        const notArchived = (o) => !(archivedKeys.has(o?.id) || archivedKeys.has(normName(o?.name || '')));
+        const activeBefore = (loc.offices || []).filter(notArchived);
+        const removedArchived = (loc.offices || []).length - activeBefore.length;
+        const { offices, filled, added } = mergeOffices(activeBefore, (rebuilt.offices || []).filter(notArchived));
+        if (filled + added + removedArchived > 0) {
           // Local-first: enqueue the update, mirrorApply now so later passes
           // see the offices immediately — the flusher streams it remotely.
-          enqueue({ entity: 'PermitLocality', op: 'update', id: loc.id, data: { offices }, mirror: 'localities', note: `office backfill — ${label}` });
-          mirrorApply('localities', { id: loc.id, offices });
-          emit({ stage: 'seed_office_backfilled', address: label, ok: true, detail: `${added} office(s) added, ${filled} filled from ${profile.name} research — needs staff verification` });
+          const data = { offices, archived_offices: loc.archived_offices || [] };
+          enqueue({ entity: 'PermitLocality', op: 'update', id: loc.id, data, mirror: 'localities', note: `office backfill — ${label}` });
+          mirrorApply('localities', { id: loc.id, ...data });
+          emit({ stage: 'seed_office_backfilled', address: label, ok: true, detail: `${added} office(s) added, ${filled} filled from ${profile.name} research${removedArchived ? `, ${removedArchived} archived office(s) kept out of active` : ''} — needs staff verification` });
         } else {
           emit({ stage: 'seed_office_ok', address: label, ok: true, detail: 'research present but no new fields to fill' });
         }
