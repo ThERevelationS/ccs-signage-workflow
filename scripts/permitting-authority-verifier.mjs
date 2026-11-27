@@ -593,6 +593,11 @@ async function pass(onlyNames = null) {
         delete o.recheck_reason; delete o.recheck_at; // re-proven — the needs_recheck label clears
         o.verified_by = 'evidence-pipeline';
         o.verified_at = new Date().toISOString();
+        // Canonical strict-era stamp used by the ai-auditor breaker. Legacy
+        // rows only have verified_at (or neither); new promotions must carry
+        // the explicit authority_* field so the breaker can distinguish them.
+        o.authority_verified_at = o.verified_at;
+        o.authority_verified_by = 'evidence-pipeline';
         // MP-5.2 — office-level tier: 'verified' only when EVERY proven role
         // has ≥2 distinct evidence hosts.
         const tierList = proven.map((r) => tiers[r] || 'single_source');
@@ -697,9 +702,21 @@ function writeVerificationLedger(localities, officeState, passStart) {
   try {
     const st = officeState.offices || {};
     const jur = { all_verified: 0, some_verified: 0, none_verified: 0, no_offices: 0 };
-    const offices = { total: 0, staff_verified: 0, needs_verification: 0, needs_review: 0, needs_recheck: 0 };
+    const offices = { total: 0, staff_verified: 0, needs_verification: 0, needs_review: 0, needs_recheck: 0, exists_unproven: 0, adjudicated_resolved: 0 };
     const gapReasons = {}, missingRoles = {};
     const tomb = new Set(localities.filter((l) => l?.duplicate_of).map((l) => l.id));
+    // Needs-review adjudications move an office out of the person queue even
+    // while the write is still propagating. Only confirmed verdicts count —
+    // rejected SWE outputs stay ordinary needs_review work.
+    const adjudication = readJSON('.audit-work/adjudication-state.json', { offices: {} })?.offices || {};
+    const adjudicationCounts = { not_applicable: 0, covered_elsewhere: 0, exists_unproven: 0, rejected: 0 };
+    for (const a of Object.values(adjudication)) {
+      if (!a?.confirmed) { if ((a?.errors || []).length) adjudicationCounts.rejected++; continue; }
+      if (a.verdict === 'not_applicable') adjudicationCounts.not_applicable++;
+      else if (a.verdict === 'covered_elsewhere') adjudicationCounts.covered_elsewhere++;
+      else if (a.verdict === 'exists_unproven') adjudicationCounts.exists_unproven++;
+    }
+    const adjudicatedKey = (l, o) => adjudication[`${l.id}:${o.id || o.name}`]?.confirmed ? adjudication[`${l.id}:${o.id || o.name}`] : null;
     // Needs-a-person requires both strikes AND research exhaustion — offices
     // with untried tiers stay workable needs_verification. Cooldown entries
     // record which tiers ran; any attempts count as T1 done.
@@ -723,6 +740,9 @@ function writeVerificationLedger(localities, officeState, passStart) {
         if (o.authority_verification_status === 'needs_recheck') { offices.needs_recheck++; continue; }
         const ok = o.authority_verification_status === 'staff_verified';
         if (ok) { offices.staff_verified++; continue; }
+        const adj = adjudicatedKey(l, o);
+        if (adj?.verdict === 'exists_unproven') { offices.exists_unproven++; continue; }
+        if (adj?.verdict === 'not_applicable' || adj?.verdict === 'covered_elsewhere') { offices.adjudicated_resolved++; continue; }
         const rec = st[`${l.id}:${o.id || o.name}`];
         if ((rec?.attempts || 0) >= REVIEW_ATTEMPTS && exh(l.id, rec.attempts)) { offices.needs_review++; continue; }
         offices.needs_verification++;
@@ -741,6 +761,7 @@ function writeVerificationLedger(localities, officeState, passStart) {
     for (const [k, rec] of Object.entries(st)) {
       if (!rec || rec.status !== 'needs_verification') continue;
       if (tomb.has(rec.locality_id) || !live.has(k)) continue;
+      if (adjudication[k]?.confirmed) continue; // adjudicated offices leave the person queue
       const primary = (rec.reasons || [])[0] || 'other';
       gapReasons[primary] = (gapReasons[primary] || 0) + 1;
       for (const r of rec.missing_roles || []) missingRoles[r] = (missingRoles[r] || 0) + 1;
@@ -768,6 +789,7 @@ function writeVerificationLedger(localities, officeState, passStart) {
       not_permitting: notPermitting,
       needs_review: held.slice(0, 200),
       needs_review_total: held.length,
+      adjudication: adjudicationCounts,
     };
     writeFileSync(LEDGER_FILE, JSON.stringify(ledger, null, 1));
     writeFileSync(OFFICE_STATE_FILE, JSON.stringify(officeState));

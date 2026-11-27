@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve as pathResolve } from 'node:path';
 import { drainQueue, outputFor, clearUnit, enqueueUnit, queueDepth, probeAuth, acpInfo, setSessionTarget, sessionFor } from './lib/devin-llm.mjs';
 import { cleanOfficeName, isNonPermitOfficeName } from './lib/office-name-clean.mjs';
-import { addBoost } from './lib/research-boost.mjs';
+import { addBoost, addBoostOnce } from './lib/research-boost.mjs';
 import { resolveTarget } from './lib/ai-sessions.mjs';
 import { strictRoleEvidence, isOfficialSource } from './permitting-authority-verifier.mjs';
 import { pendingCandidates, verdictMap, appendVerdict, judgeUnit, judgeUnitId, JUDGE_PROMPT_VERSION } from './lib/promote-judge.mjs';
@@ -24,6 +24,7 @@ import { getMirror, mirrorApply } from './lib/entity-mirror.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
+import { buildAdjudicationUnit, validateAdjudicationVerdict, buildResolutionPatch, validateResolutionPatch, adjudicationTargets, structuralFactsFor } from './lib/needs-review-adjudication.mjs';
 
 const HEARTBEAT_DIR = '.audit-work/heartbeats';
 
@@ -63,6 +64,10 @@ const STATE_DIR = '.audit-work/audit-state';
 const BREAKER_FILE = '.audit-work/ai-audit-breaker.json';
 const BREAKER_CLEAR = '.audit-work/ai-audit-breaker-clear';
 const VERIFY_FIRST = '.audit-work/verify-first.jsonl';
+const NEEDS_LEDGER = '.audit-work/verification-ledger.json';
+const OFFICE_STATE = '.audit-work/verify-office-state.json';
+const ADJUDICATION_STATE = '.audit-work/adjudication-state.json';
+const ADJUDICATION_RESULTS = '.audit-work/adjudication-results.jsonl';
 const evFd = openSync('.live-events.jsonl', 'a');
 const emit = (e) => { try { writeFileSync(evFd, JSON.stringify({ t: Date.now(), worker: WORKER, ...e }) + '\n', { flag: 'a' }); } catch {} };
 const appendLine = (f, o) => { try { writeFileSync(openSync(f, 'a'), JSON.stringify({ at: new Date().toISOString(), ...o }) + '\n', { flag: 'a' }); } catch {} };
@@ -74,12 +79,49 @@ const auditSettings = () => {
   return { demote_cap_hr: c.demote_cap_hr ?? 50, breaker_pct: c.breaker_pct ?? 5, sessions: c.sessions ?? 3, sessions_mode: c.sessions_mode || 'auto' };
 };
 
-const stats = { sent: 0, answered: 0, failed: 0, audited: 0, findings: 0, demoted: 0, renamed: 0, boosted: 0, logged: 0, discarded: 0, current: null, breaker_tripped: false, demote_tokens: [], verified_flagged: 0, verified_audited: 0 };
+const stats = { sent: 0, answered: 0, failed: 0, audited: 0, findings: 0, demoted: 0, renamed: 0, retired: 0, boosted: 0, logged: 0, discarded: 0, already_applied: 0, current: null, breaker_tripped: false, demote_tokens: [], verified_flagged: 0, verified_audited: 0 };
+
+// Breaker population: only offices verified under the strict judge era count.
+// Legacy offices (no authority_verified_at, or verified before judge v2 went
+// live) still demote when the evidence fails — they just can't re-trip the
+// safety breaker during the expected cleanup wave.
+export const STRICT_VERIFY_ERA_AT = '2026-11-26T22:00:00.000Z';
+const STRICT_VERIFY_ERA_MS = Date.parse(STRICT_VERIFY_ERA_AT);
+const BREAKER_POPULATION = 'strict-era-v1';
+export function isStrictEraVerified(office) {
+  // New strict promotions are stamped authority_verified_at by the verifier.
+  // The strict verifier versions already running wrote the timestamp as
+  // verified_at — treat either as proof of strict-era evaluation, but never
+  // offices with no strict timestamp at all.
+  const t = Date.parse(office?.authority_verified_at || office?.verified_at || '');
+  return Number.isFinite(t) && t >= STRICT_VERIFY_ERA_MS;
+}
+
 // The breaker survives restarts — a tripped state persisted here is re-armed
-// on boot; only the controller's clear marker releases it.
+// on boot; only the controller's clear marker releases it. Pre-fix breaker
+// files have no population marker and are intentionally reset: they measured
+// the legacy cleanup wave this version excludes.
 {
   const prior = readJSON(BREAKER_FILE, null);
-  if (prior) { stats.breaker_tripped = true; stats.verified_flagged = prior.flagged || 0; stats.verified_audited = prior.audited || 0; }
+  if (prior?.population === BREAKER_POPULATION) { stats.breaker_tripped = true; stats.verified_flagged = prior.flagged || 0; stats.verified_audited = prior.audited || 0; }
+  else if (prior) { try { unlinkSync(BREAKER_FILE); } catch {} }
+}
+
+// Exact repeat suppression for automatic writes. The audit-state hash can
+// legitimately change while the write is still flowing through the outbox;
+// without this the same rename/demote is applied again minutes later.
+export function readActionLog(file = REVERT_LOG) {
+  try { return readFileSync(file, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)); } catch { return []; }
+}
+export function actionAlreadyApplied(entries, want, now = Date.now(), windowMs = 7 * 24 * 3600e3) {
+  return (entries || []).some((e) => {
+    if (!e || e.action !== want.action || String(e.office_id || '') !== String(want.office_id || '')) return false;
+    const at = Date.parse(e.at || '');
+    if (!Number.isFinite(at) || now - at > windowMs || at > now + 60000) return false;
+    if (want.action === 'rename') return e.before_name === want.before_name && e.after_name === want.after_name;
+    if (want.action === 'demote') return Boolean(e.before_status && e.after_status && e.before_status === want.before_status && e.after_status === want.after_status);
+    return false;
+  });
 }
 const sessionLast = {}; // session idx → last finding it produced (live panel)
 // Per-session heartbeats for the dashboard's live panel.
@@ -106,6 +148,8 @@ function buildUnit(loc, profile) {
     office_id: o.id || o.name, name: o.name, roles: o.authority_roles || [],
     contact_phone: o.contact_phone || null, contact_email: o.contact_email || null, contact_address: o.contact_address || null,
     status: o.authority_verification_status || null,
+    authority_verified_at: o.authority_verified_at || null,
+    verified_at: o.verified_at || null,
     evidence: (o.authority_evidence || []).slice(0, 4).map((e) => ({ quote: e.quote || e.responsibility_quote, url: e.source_url || e.official_source_url })),
     service_area: o.service_area || null,
   }));
@@ -119,7 +163,7 @@ function buildUnit(loc, profile) {
   };
 }
 
-const contentHash = (loc) => createHash('sha1').update(JSON.stringify({ n: loc.name, t: loc.jurisdiction_type, c: loc.county_name, d: loc.duplicate_of, o: (loc.offices || []).map((o) => [o.id || o.name, o.name, o.authority_roles, o.authority_verification_status, (o.authority_evidence || []).length, o.contact_phone, o.contact_email]) })).digest('hex');
+const contentHash = (loc) => createHash('sha1').update(JSON.stringify({ n: loc.name, t: loc.jurisdiction_type, c: loc.county_name, d: loc.duplicate_of, o: (loc.offices || []).map((o) => [o.id || o.name, o.name, o.authority_roles, o.authority_verification_status, o.authority_verified_at, o.not_applicable_roles, (o.authority_evidence || []).length, o.contact_phone, o.contact_email]) })).digest('hex');
 
 // Deterministic re-check the auditor runs before demoting a verified office.
 // Only demotes to the safe side (needs_verification) — never the other way.
@@ -160,6 +204,31 @@ async function demote(locality_id, office_id, reason) {
   return true;
 }
 
+// Soft-retire a non-permitting body: the office is never deleted. It moves to
+// archived_offices with a full snapshot and a reversal reason, while the
+// declared office_change_log records the active-count transition.
+async function retireOffice(locality_id, office_id, reason, retiredBy = 'ai-auditor') {
+  const live = await readById('PermitLocality', locality_id).catch(() => null);
+  if (!live?.offices) return null;
+  const key = (o) => o?.id || o?.name;
+  let target = null;
+  let targetIndex = -1;
+  const offices = [];
+  for (const [i, o] of live.offices.entries()) {
+    if (key(o) === office_id || o.name === office_id) { target = o; targetIndex = i; }
+    else offices.push(o);
+  }
+  if (!target) return null;
+  const at = new Date().toISOString();
+  const archived = [...(live.archived_offices || []), { ...target, retired_reason: reason, retired_at: at, retired_by: retiredBy }];
+  const verified = offices.filter((o) => o.authority_verification_status === 'staff_verified').length;
+  const office_change_log = [...(live.office_change_log || []), { at, summary: `ai-audit: archived non-permit office ${target.name}`, office_count: offices.length, verified_count: verified }].slice(-20);
+  const data = { offices, archived_offices: archived, office_change_log };
+  enqueue({ entity: 'PermitLocality', op: 'update', id: locality_id, data, priority: 1, note: `ai-audit retire non-permit — ${target.name}` });
+  mirrorApply('localities', { id: locality_id, ...data });
+  return { target, targetIndex, data, at };
+}
+
 // Pure routing decision — the model proposes, code decides. Testable without
 // files or remote calls: callers pass the deterministic-check result and the
 // cap/breaker context in ctx.
@@ -172,7 +241,7 @@ export function decideAction(meta, f, ctx) {
     return 'demote';
   }
   if (f.type === 'junk_name' && office) return ctx.cleanerOutput && ctx.cleanerOutput !== office.name ? 'name_cleaned' : 'discarded_cleaner_noop';
-  if (f.type === 'non_permit_body' && office) return isNonPermitOfficeName(office.name) ? 'logged_rule_agrees' : 'review_rule_disagrees';
+  if (f.type === 'non_permit_body' && office) return isNonPermitOfficeName(office.name) ? 'retire_non_permit' : 'review_rule_disagrees';
   if (BOOST_TYPES.has(f.type)) return 'sent_to_researchers';
   return 'logged';
 }
@@ -191,7 +260,7 @@ async function processOutput(id) {
     const now = Date.now();
     let action;
     if ((f.type === 'role_not_supported_by_quote' || f.type === 'wrong_jurisdiction') && office?.status === 'staff_verified') {
-      stats.verified_flagged++;
+      if (isStrictEraVerified(office)) stats.verified_flagged++;
       stats.demote_tokens = stats.demote_tokens.filter((t) => now - t < 3600000);
     }
     const decided = decideAction(meta, f, {
@@ -200,41 +269,182 @@ async function processOutput(id) {
       demoteTokens: stats.demote_tokens.length, cleanerOutput: office ? cleanOfficeName(office.name).clean : null,
     });
     if (decided === 'discarded_check_passed' || decided === 'discarded_cleaner_noop' || decided === 'review_rule_disagrees') { stats.discarded++; action = decided; }
-    else if (decided === 'breaker_tripped') { stats.breaker_tripped = true; action = decided; try { writeFileSync(BREAKER_FILE, JSON.stringify({ at: new Date().toISOString(), flagged: stats.verified_flagged, audited: stats.verified_audited, pct: set.breaker_pct })); } catch {} emit({ stage: 'ai_audit_breaker', ok: false, detail: `${set.breaker_pct}% breaker tripped — ${stats.verified_flagged}/${stats.verified_audited} verified flagged; auto-demotion paused` }); }
+    else if (decided === 'breaker_tripped') { stats.breaker_tripped = true; action = decided; try { writeFileSync(BREAKER_FILE, JSON.stringify({ at: new Date().toISOString(), population: BREAKER_POPULATION, flagged: stats.verified_flagged, audited: stats.verified_audited, pct: set.breaker_pct })); } catch {} emit({ stage: 'ai_audit_breaker', ok: false, detail: `${set.breaker_pct}% breaker tripped — ${stats.verified_flagged}/${stats.verified_audited} strict-era verified flagged; auto-demotion paused` }); }
     else if (decided === 'cap_limited') action = decided;
     else if (decided === 'demote') {
-      if (await demote(meta.locality_id, f.office_id, `${f.type}: ${String(f.reason || '').slice(0, 120)}`)) {
+      const label = readControl().needs_recheck ? 'needs_recheck' : 'needs_verification';
+      if (actionAlreadyApplied(readActionLog(), { action: 'demote', office_id: f.office_id, before_status: 'staff_verified', after_status: label })) {
+        stats.already_applied++; action = 'already_applied';
+      } else if (await demote(meta.locality_id, f.office_id, `${f.type}: ${String(f.reason || '').slice(0, 120)}`)) {
         stats.demoted++; stats.demote_tokens.push(now); action = 'demoted';
         const entry_id = `audit-${Date.now()}-${stats.demoted}`;
-        appendLine(REVERT_LOG, { entry_id, action: 'demote', locality_id: meta.locality_id, office_id: f.office_id, office_name: office.name, finding: f.type, reason: f.reason });
+        appendLine(REVERT_LOG, { entry_id, action: 'demote', locality_id: meta.locality_id, office_id: f.office_id, office_name: office.name, finding: f.type, reason: f.reason, before_status: 'staff_verified', after_status: label });
         appendLine(VERIFY_FIRST, { name: meta.jurisdiction, state: meta.state, at: Date.now(), tier: 'audit', result: 'demoted' });
         // Demoted verified offices lead the audit lane — researchers re-fetch
         // official evidence before anything else.
         addBoost({ type: 'demote', locality_id: meta.locality_id, jurisdiction: meta.jurisdiction, state: meta.state, finding: { type: 'demote', field: f.field, reason: f.reason } });
         emit({ stage: 'ai_audit_action', address: `${meta.jurisdiction}, ${meta.state}`, ok: true, detail: `demoted ${office?.name || f.office_id} — ${f.type} re-checks` });
       } else action = 'logged';
+    } else if (decided === 'retire_non_permit') {
+      const retired = await retireOffice(meta.locality_id, f.office_id, `non-permitting body — ${String(f.reason || '').slice(0, 160)}`);
+      if (retired) {
+        stats.retired++; action = 'retired_non_permit';
+        appendLine(REVERT_LOG, { entry_id: `audit-${Date.now()}-${stats.retired}`, action: 'retire', locality_id: meta.locality_id, office_id: f.office_id, office_name: retired.target.name, office_index: retired.targetIndex, before_office: retired.target, reason: f.reason });
+        emit({ stage: 'ai_audit_action', address: `${meta.jurisdiction}, ${meta.state}`, ok: true, detail: `archived non-permit office — ${retired.target.name}` });
+      } else action = 'logged';
     } else if (decided === 'name_cleaned') {
       const clean = cleanOfficeName(office.name).clean;
-      const live = await readById('PermitLocality', meta.locality_id).catch(() => null);
-      if (live?.offices) {
-        const offices = live.offices.map((o) => (o.id || o.name) === f.office_id ? { ...o, name: clean } : o);
-        enqueue({ entity: 'PermitLocality', op: 'update', id: meta.locality_id, data: { offices }, priority: 1, note: `ai-audit clean — ${office.name} → ${clean}` });
-        mirrorApply('localities', { id: meta.locality_id, offices });
-        stats.renamed++; action = 'name_cleaned';
-        appendLine(REVERT_LOG, { entry_id: `audit-${Date.now()}-${stats.renamed}`, action: 'rename', locality_id: meta.locality_id, office_id: f.office_id, before_name: office.name, after_name: clean });
-        emit({ stage: 'ai_audit_action', address: `${meta.jurisdiction}, ${meta.state}`, ok: true, detail: `name cleaned — "${office.name}" → "${clean}"` });
-      } else action = 'logged';
+      if (actionAlreadyApplied(readActionLog(), { action: 'rename', office_id: f.office_id, before_name: office.name, after_name: clean })) {
+        stats.already_applied++; action = 'already_applied';
+      } else {
+        const live = await readById('PermitLocality', meta.locality_id).catch(() => null);
+        if (live?.offices) {
+          const offices = live.offices.map((o) => (o.id || o.name) === f.office_id ? { ...o, name: clean } : o);
+          enqueue({ entity: 'PermitLocality', op: 'update', id: meta.locality_id, data: { offices }, priority: 1, note: `ai-audit clean — ${office.name} → ${clean}` });
+          mirrorApply('localities', { id: meta.locality_id, offices });
+          stats.renamed++; action = 'name_cleaned';
+          appendLine(REVERT_LOG, { entry_id: `audit-${Date.now()}-${stats.renamed}`, action: 'rename', locality_id: meta.locality_id, office_id: f.office_id, before_name: office.name, after_name: clean });
+          emit({ stage: 'ai_audit_action', address: `${meta.jurisdiction}, ${meta.state}`, ok: true, detail: `name cleaned — "${office.name}" → "${clean}"` });
+        } else action = 'logged';
+      }
     } else if (decided === 'sent_to_researchers') {
       addBoost({ type: f.type, locality_id: meta.locality_id, jurisdiction: meta.jurisdiction, state: meta.state, finding: { type: f.type, field: f.field, current: f.current, suggested: f.suggested, reason: f.reason } });
       stats.boosted++; action = 'sent_to_researchers';
       emit({ stage: 'ai_audit_action', address: `${meta.jurisdiction}, ${meta.state}`, ok: true, detail: `sent to researchers — ${f.type} on ${office?.name || f.office_id || 'record'}` });
-    } else action = decided; // logged / logged_rule_agrees
+    } else action = decided; // logged
     if (/^discarded_/.test(action)) emit({ stage: 'ai_audit_finding', address: `${meta.jurisdiction}, ${meta.state}`, ok: false, detail: `discarded ${f.type} on ${office?.name || f.office_id || 'record'} — ${action}` });
     else if (action !== 'logged') emit({ stage: 'ai_audit_finding', address: `${meta.jurisdiction}, ${meta.state}`, ok: true, detail: `confirmed ${f.type} on ${office?.name || f.office_id || 'record'} → ${action}` });
     appendLine(FINDINGS, { ...rec, action });
     if (action === 'logged' || action === 'review_rule_disagrees') stats.logged++;
   }
   return findings.length;
+}
+
+// ── needs-review adjudication lane ─────────────────────────────────────
+// Lowest-priority SWE lane: one unit per held office. Positive resolutions are
+// guarded twice (verdict shape/evidence, then the exact write patch) and are
+// counted only after a live read-back proves the write landed.
+const ADJ_LIMIT_ARG = Number(process.argv.find((a) => a.startsWith('--adjudicate-limit'))?.split('=')[1] || process.argv[process.argv.indexOf('--adjudicate-limit') + 1] || NaN);
+function adjudicationLimit(ctrl) {
+  if (Number.isFinite(ADJ_LIMIT_ARG)) return Math.max(0, ADJ_LIMIT_ARG);
+  const c = ctrl.ai_adjudication || {};
+  if (c.enabled === false) return 0;
+  return Number.isFinite(Number(c.limit)) ? Math.max(0, Number(c.limit)) : 20; // pilot-sized default
+}
+function adjudicationState() { return readJSON(ADJUDICATION_STATE, { offices: {} }); }
+function saveAdjudicationState(state) { try { writeFileSync(ADJUDICATION_STATE, JSON.stringify(state, null, 1)); } catch {} }
+function countyProfileForAdjudication(loc, profiles) {
+  const county = String(loc.county_name || loc.parent_county_name || '').replace(/\s+county$/i, '').toLowerCase();
+  if (!county) return null;
+  return (profiles || []).find((p) => /county/i.test(String(p.type || p.jurisdiction_type || '')) && String(p.state || '').toUpperCase() === String(loc.state || '').toUpperCase() && String(p.name || '').toLowerCase().includes(county)) || null;
+}
+function feedAdjudicationUnits(localities, profById, ctrl) {
+  const limit = adjudicationLimit(ctrl);
+  if (!limit) return 0;
+  const ledger = readJSON(NEEDS_LEDGER, null);
+  const rows = ledger?.needs_review || [];
+  if (!rows.length) return 0;
+  const officeState = readJSON(OFFICE_STATE, { offices: {} });
+  const adj = adjudicationState();
+  const profiles = [...profById.values()];
+  let queued = 0;
+  for (const t of adjudicationTargets({ ledgerRows: rows, localities, officeState, adjudicated: adj.offices || {}, limit })) {
+    const profile = profById.get(t.loc.jurisdiction_profile_id) || null;
+    const countyProfile = countyProfileForAdjudication(t.loc, profiles);
+    const unit = buildAdjudicationUnit(t.row, t.loc, t.office, officeState, profile, countyProfile);
+    const key = `${t.loc.id}:${unit.meta.office_id}`;
+    const prior = adj.offices?.[key];
+    if (prior?.hash === unit.meta.hash && ['not_applicable', 'covered_elsewhere', 'exists_unproven'].includes(prior.verdict)) continue;
+    if (existsSync(`.audit-work/audit-queue/${unit.id}.json`) || existsSync(`.audit-work/audit-out/${unit.id}.json`)) continue;
+    enqueueUnit(unit);
+    queued++;
+    emit({ stage: 'ai_adjudicate_feed', address: `${t.loc.name}, ${t.loc.state}`, ok: true, detail: `${t.office.name} — ${unit.meta.missing_roles.join('+')} adjudication queued` });
+  }
+  return queued;
+}
+
+function resolutionConfirmed(live, officeId, roles) {
+  const active = (live?.offices || []).find((o) => (o.id || o.name) === officeId);
+  if (active) {
+    if ((active.authority_roles || []).some((r) => roles.includes(r))) return false;
+    const na = active.not_applicable_roles || {};
+    return roles.every((r) => na[r]?.verdict);
+  }
+  const archived = (live?.archived_offices || []).find((o) => (o.id || o.name) === officeId);
+  return Boolean(archived && roles.every((r) => archived.not_applicable_roles?.[r]?.verdict));
+}
+
+async function writeResolutionWithReadback(meta, verdict) {
+  const live = await readById('PermitLocality', meta.locality_id).catch(() => null);
+  if (!live?.offices) return { ok: false, errors: ['live point read failed'] };
+  const check = validateAdjudicationVerdict(verdict, meta, live);
+  if (!check.ok) return { ok: false, errors: check.errors, stage: 'verdict_guard' };
+  const patch = buildResolutionPatch(live, meta.office_id, verdict);
+  if (patch.error) return { ok: false, errors: [patch.error], stage: 'patch_build' };
+  const patchCheck = validateResolutionPatch(live, meta.office_id, verdict, patch);
+  if (!patchCheck.ok) return { ok: false, errors: patchCheck.errors, stage: 'patch_guard' };
+  enqueue({ entity: 'PermitLocality', op: 'update', id: meta.locality_id, data: patch.data, priority: 1, note: `needs-review adjudication — ${meta.office_name}` });
+  mirrorApply('localities', { id: meta.locality_id, ...patch.data });
+  // The outbox is asynchronous. Do not count the office resolved until the
+  // live entity read-back shows either role removal + NA metadata or the
+  // archived snapshot. Priority writes normally land inside this window.
+  for (let i = 0; i < 18; i++) {
+    await sleep(5000);
+    const back = await readById('PermitLocality', meta.locality_id).catch(() => null);
+    if (resolutionConfirmed(back, meta.office_id, verdict.roles_resolved || [])) {
+      const n = (stats.adjudication_writes || 0) + 1;
+      appendLine(REVERT_LOG, {
+        entry_id: `adjudicate-${Date.now()}-${n}`, action: 'adjudicate_resolution', locality_id: meta.locality_id,
+        office_id: meta.office_id, office_name: meta.office_name, before_office: patch.target,
+        verdict: verdict.verdict, roles_resolved: verdict.roles_resolved || [], reason: verdict.reason,
+      });
+      return { ok: true, patch, confirmed: true };
+    }
+  }
+  return { ok: false, errors: ['write read-back timeout — not counted resolved'], stage: 'readback', patch };
+}
+
+async function processAdjudicationOutput(id) {
+  const out = outputFor(id);
+  const meta = out?.meta;
+  if (!meta?.locality_id || !meta?.office_id) { clearUnit(id); return { skipped: 'no meta' }; }
+  const verdict = out?.output || {};
+  const key = `${meta.locality_id}:${meta.office_id}`;
+  const state = adjudicationState();
+  state.offices = state.offices || {};
+  let result = { verdict: verdict.verdict || 'invalid', action: 'rejected', errors: [] };
+  if (out?.output?.error) {
+    result.errors = [String(out.output.error).slice(0, 300)];
+  } else if (verdict.verdict === 'exists_unproven') {
+    const check = validateAdjudicationVerdict(verdict, meta, (getMirror('localities')?.rows || []).find((l) => l.id === meta.locality_id));
+    if (check.ok) {
+      const proof = String(verdict.proof_expectation || '').trim();
+      const boost = addBoostOnce({
+        type: 'exists_unproven', locality_id: meta.locality_id, jurisdiction: meta.jurisdiction, state: meta.state,
+        finding: { type: 'exists_unproven', offices: [meta.office_id], roles: verdict.roles_resolved || meta.missing_roles || [], missing_proof: proof, reason: `Find exactly: ${proof}` },
+      });
+      result = { verdict: 'exists_unproven', action: boost.already ? 'boost_already_pending' : 'boosted', errors: [], proof_expectation: proof };
+    } else result.errors = check.errors;
+  } else if (verdict.verdict === 'not_applicable' || verdict.verdict === 'covered_elsewhere') {
+    const wr = await writeResolutionWithReadback(meta, verdict);
+    if (wr.ok) result = { verdict: verdict.verdict, action: 'write_confirmed', errors: [], archived: wr.patch.archived === true };
+    else result = { verdict: verdict.verdict, action: 'rejected', errors: [`${wr.stage || 'write'}: ${(wr.errors || []).join('; ')}`] };
+  } else {
+    result.errors = ['invalid or missing verdict'];
+  }
+  const at = new Date().toISOString();
+  state.offices[key] = {
+    at, hash: meta.hash, verdict: result.verdict, action: result.action,
+    roles_resolved: verdict.roles_resolved || [], office_name: meta.office_name,
+    errors: result.errors || [], confirmed: result.action === 'write_confirmed' || result.action === 'boosted' || result.action === 'boost_already_pending',
+  };
+  saveAdjudicationState(state);
+  appendLine(ADJUDICATION_RESULTS, { locality_id: meta.locality_id, jurisdiction: meta.jurisdiction, state: meta.state, office_id: meta.office_id, office_name: meta.office_name, missing_roles: meta.missing_roles, verdict, result });
+  stats.adjudicated = (stats.adjudicated || 0) + 1;
+  if (result.action === 'write_confirmed') stats.adjudication_writes = (stats.adjudication_writes || 0) + 1;
+  emit({ stage: 'ai_adjudicate_done', address: `${meta.jurisdiction}, ${meta.state}`, ok: !result.errors.length, detail: `${meta.office_name} → ${result.verdict}/${result.action}${result.errors?.length ? ` — ${result.errors[0]}` : ''}` });
+  clearUnit(id);
+  return result;
 }
 
 async function main() {
@@ -329,6 +539,11 @@ async function main() {
       stats.current = `${loc.name}, ${loc.state}`;
       if (total >= (Number(process.env.DEVIN_LLM_BATCH) || 5) * 3) break; // feed in waves
     }
+    // Needs-review adjudication is deliberately fed before draining but sorted
+    // behind judge/audit units inside devin-llm — lowest priority, one office
+    // per unit, capped at the pilot/operator limit.
+    const adjudicateFed = feedAdjudicationUnits(localities, profById, ctrl);
+    if (adjudicateFed) emit({ stage: 'ai_adjudicate_fed', ok: true, detail: `${adjudicateFed} needs-review office adjudication unit(s) queued` });
     if (!total && queueDepth() === 0) {
       const r = await drainQueue({ maxBatches: 4, sleepMs: 4000 }).catch(() => null);
       heartbeat(WORKER, 'idle', 'coverage complete — waiting for record changes');
@@ -370,12 +585,21 @@ async function main() {
         if (!meta) { clearUnit(id); continue; }
         const loc = localities.find((l) => l.id === meta.locality_id);
         if (loc) {
-          writeFileSync(`${STATE_DIR}/${loc.id}.json`, JSON.stringify({ at: Date.now(), hash: contentHash(loc) }));
+          // Actions processed above write-through to the mirror immediately,
+          // but `loc` is the pre-batch snapshot. Hash the CURRENT mirror row —
+          // hashing the stale snapshot is what made every rename look new again
+          // on the next pass and re-fired the same action.
+          const freshLoc = (getMirror('localities')?.rows || []).find((l) => l.id === loc.id) || loc;
+          Object.assign(loc, freshLoc);
+          writeFileSync(`${STATE_DIR}/${loc.id}.json`, JSON.stringify({ at: Date.now(), hash: contentHash(freshLoc) }));
           stats.audited++;
-          stats.verified_audited += (meta.offices || []).filter((o) => o.status === 'staff_verified').length;
+          stats.verified_audited += (meta.offices || []).filter((o) => o.status === 'staff_verified' && isStrictEraVerified(o)).length;
         }
         clearUnit(id);
         stats.current = null;
+      }
+      for (const f of readdirSync('.audit-work/audit-out').filter((x) => x.startsWith('adjudicate-') && x.endsWith('.json'))) {
+        await processAdjudicationOutput(f.slice(0, -5));
       }
     } catch {}
     heartbeat(WORKER, 'working', `audited ${stats.audited} · queue ${queueDepth()} · findings ${stats.findings}`);

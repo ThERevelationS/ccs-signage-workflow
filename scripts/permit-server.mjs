@@ -202,8 +202,35 @@ const liveLocality = async (id) => {
   return (j?.records || j?.items || j?.data || [])[0] || null;
 };
 
-// Undo an ai-audit auto-action: restore the office's pre-action field on the
-// LIVE record (demote → staff_verified back; rename → before name back).
+// Pure reversal calculation, exported for tests. Rename/demote restore one
+// field; retire/adjudication restore the full pre-action office snapshot and
+// remove its archived_offices copy. No network or filesystem access here.
+export function applyAuditReversal(live, e) {
+  if (!live?.offices || !e) return { error: 'locality not readable' };
+  let offices;
+  let archived_offices = live.archived_offices || [];
+  if ((e.action === 'retire' || e.action === 'adjudicate_resolution') && e.before_office) {
+    const before = e.before_office;
+    const key = (o) => o?.id || o?.name;
+    const targetKey = before.id || before.name || e.office_id;
+    archived_offices = archived_offices.filter((o) => key(o) !== targetKey);
+    offices = [...live.offices];
+    const activeIdx = offices.findIndex((o) => key(o) === targetKey || key(o) === e.office_id);
+    if (activeIdx >= 0) offices[activeIdx] = before;
+    else offices.splice(Math.min(Number.isFinite(e.office_index) ? e.office_index : offices.length, offices.length), 0, before);
+    return { offices, archived_offices };
+  }
+  let changed = false;
+  offices = live.offices.map((o) => {
+    if ((o.id || o.name) !== e.office_id) return o;
+    changed = true;
+    return e.action === 'rename' ? { ...o, name: e.before_name } : { ...o, authority_verification_status: 'staff_verified' };
+  });
+  if (!changed) return { error: 'office not on the live record' };
+  return { offices, archived_offices };
+}
+
+// Undo an ai-audit/adjudication auto-action against the LIVE record.
 async function revertAuditEntry(entry_id) {
   const line = readFileSync(`${AUDIT}/ai-audit-reverts.jsonl`, 'utf8').split('\n').reverse().find((l) => l.includes(`"${entry_id}"`));
   const e = line ? JSON.parse(line) : null;
@@ -211,15 +238,11 @@ async function revertAuditEntry(entry_id) {
   if (e.reverted) return { error: 'already reverted' };
   const live = await liveLocality(e.locality_id);
   if (!live?.offices) return { error: 'locality not readable' };
-  let changed = false;
-  const offices = live.offices.map((o) => {
-    if ((o.id || o.name) !== e.office_id) return o;
-    changed = true;
-    return e.action === 'rename' ? { ...o, name: e.before_name } : { ...o, authority_verification_status: 'staff_verified' };
-  });
-  if (!changed) return { error: 'office not on the live record' };
-  enqueue({ entity: 'PermitLocality', op: 'update', id: e.locality_id, data: { offices }, priority: 1, note: `ai-audit revert — ${e.action} ${e.office_id}` });
-  mirrorApply('localities', { id: e.locality_id, offices });
+  const reversal = applyAuditReversal(live, e);
+  if (reversal.error) return { error: reversal.error };
+  const data = { offices: reversal.offices, archived_offices: reversal.archived_offices };
+  enqueue({ entity: 'PermitLocality', op: 'update', id: e.locality_id, data, priority: 1, note: `ai-audit revert — ${e.action} ${e.office_id}` });
+  mirrorApply('localities', { id: e.locality_id, ...data });
   appendFileSync(`${AUDIT}/ai-audit-reverts.jsonl`, JSON.stringify({ at: new Date().toISOString(), entry_id, action: `revert_${e.action}`, locality_id: e.locality_id, office_id: e.office_id }) + '\n');
   return { ok: true };
 }

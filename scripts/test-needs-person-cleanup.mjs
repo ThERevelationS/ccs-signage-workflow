@@ -51,6 +51,11 @@ assert.equal(isPlaceholderOffice('Zoning Inspector', 'Eden Township'), false);
 for (const n of ["Grant County Sheriff's Department", 'County Police Department', 'Services ADAMH Board', 'City Auditor', 'Clerk of Courts', 'Board of Health', 'Municipal Airport Authority', 'Cemetery Sexton']) {
   assert.equal(isNonPermitOfficeName(n), true, `non-permit: ${n}`);
 }
+// Brett's explicit non-permit classes — these should retire into
+// archived_offices, never be renamed into active permit offices.
+for (const n of ['Ohio Civil Rights Commission', 'County Civil Rights Commission', 'City Human Relations Commission', 'Board of Elections', 'County Elections Office', 'Division of Liquor Control', 'State Lottery Commission', 'County Lottery Office', 'City Ethics Commission']) {
+  assert.equal(isNonPermitOfficeName(n), true, `non-permit class: ${n}`);
+}
 // 'service' is a permitting token — even a non-permit-list match is protected
 assert.equal(isNonPermitOfficeName('Civil Service Commission'), false);
 // Kept — placeholders/role-template names NEVER retire as non-permit.

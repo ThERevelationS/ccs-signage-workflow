@@ -27,6 +27,7 @@ import { permitCreds } from './lib/permit-creds.mjs';
 import { paceCall } from './lib/read-ledger.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
 import { buildIdentityIndex, withUnionResearch } from './lib/profile-identity.mjs';
+import { activeAuthorityRoles } from './lib/needs-review-adjudication.mjs';
 
 const FN = 'https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/functions';
 const EVENTS = '.live-events.jsonl';
@@ -69,11 +70,15 @@ const countyOf = (v) => String(v || '').toLowerCase().replace(/\s*county$/u, '')
 const normName = normalizePermitJurisdictionName;
 const PROFILE_TO_QUEUE_TYPE = { city: 'city', village: 'city', municipality: 'city', township: 'township', county: 'county' };
 
+// Roles adjudicated not_applicable/covered_elsewhere are tombstoned in
+// not_applicable_roles and removed from authority_roles. Treat the map as
+// authoritative even for legacy rows where the role itself was not removed:
+// seed/rebuild must never resurrect it as applicable work.
 // An office "has data" when it carries at least one reachable contact channel
-// AND an authority role — an office with neither is a placeholder.
+// AND an active authority role — an office with neither is a placeholder.
 const officeHasData = (o) =>
   Boolean(String(o?.contact_phone || o?.contact_email || o?.contact_website || o?.contact_address || '').trim())
-  && (o?.authority_roles || []).length > 0;
+  && activeAuthorityRoles(o).length > 0;
 const localityNeedsWork = (l) => !(l?.offices || []).length || l.offices.some((o) => !officeHasData(o));
 
 const CONTACT_KEYS = ['contact_phone', 'contact_email', 'contact_website', 'contact_address', 'hours',
@@ -101,7 +106,7 @@ function mergeOffices(existing, built) {
     if (!k.trim() || k === '|') { out.push(o); continue; }
     if (seen.has(k)) {
       const prev = out[seen.get(k)];
-      const roles = new Set([...(prev.authority_roles || []), ...(o?.authority_roles || [])]);
+      const roles = new Set([...activeAuthorityRoles(prev), ...activeAuthorityRoles(o)]);
       prev.authority_roles = [...roles];
       if (o?.authority_verification_status === 'staff_verified' && prev?.authority_verification_status !== 'staff_verified') {
         prev.authority_verification_status = 'staff_verified';
@@ -125,7 +130,7 @@ function mergeOffices(existing, built) {
     if (!hit && bRoles.size) {
       hit = out.find((o) => {
         if (!isStubName(o?.name)) return false;
-        const oRoles = new Set(o?.authority_roles || []);
+        const oRoles = new Set(activeAuthorityRoles(o));
         return [...bRoles].some((r) => oRoles.has(r));
       });
       if (hit) hit.name = b.name; // stub realized to the real provider
@@ -140,8 +145,8 @@ function mergeOffices(existing, built) {
         const add = (Array.isArray(b[k]) ? b[k] : []).filter((v) => v && !cur.includes(v));
         if (add.length) { hit[k] = [...cur, ...add].slice(0, 8); touched = true; }
       }
-      const have = new Set(hit.authority_roles || []);
-      for (const r of b.authority_roles || []) if (!have.has(r)) { have.add(r); touched = true; }
+      const have = new Set(activeAuthorityRoles(hit));
+      for (const r of b.authority_roles || []) if (!hit.not_applicable_roles?.[r] && !have.has(r)) { have.add(r); touched = true; }
       hit.authority_roles = [...have];
       if (!hit.authority_verification_status) { hit.authority_verification_status = 'needs_verification'; touched = true; }
       if (!String(hit.contact_notes || '').trim() && b.contact_notes) { hit.contact_notes = b.contact_notes; touched = true; }
@@ -241,7 +246,10 @@ async function sweep(onlyNames = null) {
           .filter((r) => r?.role && APPL.test(String(r?.applicability)))
           .map((r) => r.role)
       );
-      const officeRoles = new Set((loc.offices || []).flatMap((o) => o?.authority_roles || []));
+      // NA/covered tombstones count as resolved coverage too — otherwise a
+      // role correctly removed from authority_roles looks "uncovered" forever
+      // and the scanner rebuilds the placeholder it just helped retire.
+      const officeRoles = new Set((loc.offices || []).flatMap((o) => [...activeAuthorityRoles(o), ...Object.keys(o?.not_applicable_roles || {})]));
       const uncoveredRoles = [...researchRoles].filter((r) => !officeRoles.has(r)).length;
       if (!localityNeedsWork(loc) && !uncoveredRoles) {
         done++; continue; // complete records don't spam the event feed every pass

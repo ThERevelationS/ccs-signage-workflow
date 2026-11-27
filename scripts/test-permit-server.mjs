@@ -10,7 +10,7 @@ const tmp = mkdtempSync(path.join(tmpdir(), 'permit-server-test-'));
 process.env.PERMIT_AUDIT_DIR = tmp; // must land before the lib imports
 
 const { readControl, waitWhilePaused, heartbeat, heartbeatFile, DEFAULT_CONTROL, HEARTBEAT_DIR, _resetCacheForTests } = await import('./lib/server-control.mjs');
-const { activeSetFor, guardPausedNames, isEmergency, pressureDeficit, downScaleCount, spawnMarginsOk, maySpawnResearcher, spawnHoldReason, workAvailable, idleCullList, cpuAvg30, researcherCap, nextSliceIndex, memoryAllowance, admitResearcher, cullOrder, reserveBytesOf, fleetBudgetBytesOf, nextBackoff, lockStale, rotateIfBig, isCrashLoop } = await import('./permit-server.mjs');
+const { activeSetFor, guardPausedNames, isEmergency, pressureDeficit, downScaleCount, spawnMarginsOk, maySpawnResearcher, spawnHoldReason, workAvailable, idleCullList, cpuAvg30, researcherCap, nextSliceIndex, memoryAllowance, admitResearcher, cullOrder, reserveBytesOf, fleetBudgetBytesOf, nextBackoff, lockStale, rotateIfBig, isCrashLoop, applyAuditReversal } = await import('./permit-server.mjs');
 
 const ctl = path.join(tmp, 'server-control.json');
 const writeCtl = (o) => { writeFileSync(ctl, JSON.stringify({ ...DEFAULT_CONTROL, ...o, updated_at: new Date().toISOString() })); _resetCacheForTests(); };
@@ -25,6 +25,22 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await sleep(20);
   const c2 = readControl(ctl); // restore: same fields a controller restart reads
   assert.equal(c2.state, 'paused'); assert.equal(c2.verification, false); assert.equal(c2.expansion_locked, true);
+}
+
+// ── audit/adjudication reversal shape ────────────────────────────────────
+{
+  const before = { id: 'o1', name: 'Electrical inspection office', authority_roles: ['electrical_inspection'], authority_verification_status: 'needs_verification' };
+  const other = { id: 'o2', name: 'County Building Department', authority_roles: ['building'] };
+  const live = { offices: [other], archived_offices: [{ ...before, authority_roles: [], retired_reason: 'covered elsewhere' }] };
+  const r = applyAuditReversal(live, { action: 'adjudicate_resolution', office_id: 'o1', before_office: before, office_index: 0 });
+  assert.equal(r.error, undefined);
+  assert.deepEqual(r.offices.map((o) => o.id), ['o1', 'o2']);
+  assert.equal(r.offices[0].authority_roles[0], 'electrical_inspection');
+  assert.equal(r.archived_offices.length, 0); // archived copy is consumed by restoration
+  const renamed = applyAuditReversal({ offices: [{ id: 'o1', name: 'Planning Commission' }] }, { action: 'rename', office_id: 'o1', before_name: 'Planning Planning Commission' });
+  assert.equal(renamed.offices[0].name, 'Planning Planning Commission');
+  const missing = applyAuditReversal({ offices: [{ id: 'x' }] }, { action: 'demote', office_id: 'o1' });
+  assert.equal(missing.error, 'office not on the live record');
 }
 
 // ── active set / state machine ───────────────────────────────────────────

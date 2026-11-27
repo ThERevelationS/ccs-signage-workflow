@@ -4,9 +4,10 @@
 // over the real claim→prompt→out-file→consume cycle (fake session object,
 // no devin.exe spawned).
 import { spawnSync } from 'node:child_process';
-import { decideAction } from './permitting-ai-auditor.mjs';
+import { decideAction, isStrictEraVerified, actionAlreadyApplied, STRICT_VERIFY_ERA_AT } from './permitting-ai-auditor.mjs';
 import { boostTargets, boostClassFor, spliceBoosts, BOOST_CLASS } from './lib/research-boost.mjs';
 import { cullPlan } from './lib/ai-sessions.mjs';
+import { queueLaneRank } from './lib/devin-llm.mjs';
 
 let pass = 0, fail = 0;
 const ok = (cond, name) => { if (cond) { pass++; console.log(`  ok  ${name}`); } else { fail++; console.log(`  FAIL ${name}`); } };
@@ -42,7 +43,7 @@ ok(decideAction(meta, { office_id: 'o3', type: 'junk_name' }, { set, cleanerOutp
 ok(decideAction(meta, { office_id: 'o2', type: 'junk_name' }, { set, cleanerOutput: null }) === 'discarded_cleaner_noop', 'no cleaner output → discard (model text never applied)');
 
 console.log('routing — non-permit + boosts + fallthrough:');
-ok(decideAction(meta, { office_id: 'o3', type: 'non_permit_body' }, { set }) === 'logged_rule_agrees', 'non_permit_body applied only when the tightened rule agrees (police)');
+ok(decideAction(meta, { office_id: 'o3', type: 'non_permit_body' }, { set }) === 'retire_non_permit', 'non_permit_body retires when the tightened rule agrees (police)');
 ok(decideAction(meta, { office_id: 'o1', type: 'non_permit_body' }, { set }) === 'review_rule_disagrees', 'non_permit_body the rule rejects → human review, never applied');
 for (const t of ['contact_mismatch', 'wrong_county_or_type', 'duplicate_office', 'wrong_jurisdiction']) {
   ok(decideAction(meta, { office_id: 'o2', type: t }, { set }) === 'sent_to_researchers', `${t} → researcher boost lane (never auto-written)`);
@@ -50,7 +51,22 @@ for (const t of ['contact_mismatch', 'wrong_county_or_type', 'duplicate_office',
 ok(decideAction(meta, { office_id: 'o2', type: 'stale_or_placeholder' }, { set }) === 'logged', 'stale_or_placeholder → findings list');
 ok(decideAction(meta, { office_id: 'o2', type: 'other' }, { set }) === 'logged', 'other → findings list');
 
+console.log('strict-era breaker population + repeat suppression:');
+ok(isStrictEraVerified({ authority_verified_at: '2026-11-27T00:00:00.000Z' }) === true, 'authority_verified_at after judge go-live is strict-era');
+ok(isStrictEraVerified({ authority_verified_at: STRICT_VERIFY_ERA_AT }) === true, 'the strict-era boundary itself counts');
+ok(isStrictEraVerified({ authority_verified_at: '2026-11-26T21:59:59.000Z' }) === false, 'pre-go-live verification is legacy');
+ok(isStrictEraVerified({ authority_verified_at: null, verified_at: '2026-11-27T00:00:00.000Z' }) === true, 'strict verifier rows stamped with the deployed verified_at field count');
+ok(isStrictEraVerified({ authority_verified_at: null, verified_at: '2026-11-26T21:00:00.000Z' }) === false, 'pre-go-live verified_at remains legacy');
+const now = Date.now();
+const iso = (ms) => new Date(ms).toISOString();
+ok(actionAlreadyApplied([{ at: iso(now - 3600e3), action: 'rename', office_id: 'o2', before_name: 'Planning Planning Commission', after_name: 'Planning Commission' }], { action: 'rename', office_id: 'o2', before_name: 'Planning Planning Commission', after_name: 'Planning Commission' }, now) === true, 'identical rename inside 7 days is already_applied');
+ok(actionAlreadyApplied([{ at: iso(now - 3600e3), action: 'rename', office_id: 'o2', before_name: 'Planning Planning Commission', after_name: 'Planning Commission' }], { action: 'rename', office_id: 'o2', before_name: 'Planning Commission', after_name: 'Commission' }, now) === false, 'different before→after rename is not suppressed');
+ok(actionAlreadyApplied([{ at: iso(now - 8 * 24 * 3600e3), action: 'rename', office_id: 'o2', before_name: 'A', after_name: 'B' }], { action: 'rename', office_id: 'o2', before_name: 'A', after_name: 'B' }, now) === false, 'rename suppression expires after 7 days');
+ok(actionAlreadyApplied([{ at: iso(now - 3600e3), action: 'demote', office_id: 'o1', before_status: 'staff_verified', after_status: 'needs_recheck' }], { action: 'demote', office_id: 'o1', before_status: 'staff_verified', after_status: 'needs_recheck' }, now) === true, 'identical demote transition inside 7 days is already_applied');
+ok(actionAlreadyApplied([{ at: iso(now - 3600e3), action: 'demote', office_id: 'o1' }], { action: 'demote', office_id: 'o1', before_status: 'staff_verified', after_status: 'needs_recheck' }, now) === false, 'legacy demote rows without a before→after transition do not suppress');
+
 console.log('queue order — audit lane:');
+ok(queueLaneRank('judge-x.json') < queueLaneRank('audit-x.json') && queueLaneRank('audit-x.json') < queueLaneRank('adjudicate-x.json'), 'judge units run before audit units, adjudication last');
 ok(boostClassFor('demote') === 'demote' && boostClassFor('wrong_jurisdiction') === 'jurisdiction' && boostClassFor('wrong_county_or_type') === 'jurisdiction' && boostClassFor('contact_mismatch') === 'contact' && boostClassFor('duplicate_office') === 'contact', 'finding types map to demote → jurisdiction → contact classes');
 ok(BOOST_CLASS.demote < BOOST_CLASS.jurisdiction && BOOST_CLASS.jurisdiction < BOOST_CLASS.contact, 'class order is strictly demote < jurisdiction < contact');
 const locMap = new Map([

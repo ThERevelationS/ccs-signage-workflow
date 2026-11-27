@@ -890,7 +890,7 @@ function renderAudit(){
  +'<div class="card"><h2>Automatic actions</h2>'
  +(a.breaker_tripped?'<div class="warn" style="margin-bottom:10px">Safety stop: the audit flagged more than '+set.breaker_pct+'% of the verified offices it checked, so it stopped sending offices back to re-check. Review the list below, then press <button data-cmd="audit-resume-demote">Allow re-checks again</button>.</div>':'')
  +'<div class="dim small" style="margin-bottom:8px">Demotions this hour: '+num(demoteToks)+' of '+num(set.demote_cap_hr)+' allowed</div>'
- +(actions.length?'<table><tr><th>Office</th><th>Action</th><th>Why</th><th style="width:80px">When</th><th style="width:70px"></th></tr>'+actions.slice().reverse().map(r=>'<tr><td>'+esc(r.office_name||r.before_name||r.office_id||'—')+'</td><td>'+esc(r.action==='demote'?'sent back to re-check':'renamed'+(r.after_name?' → '+r.after_name:''))+'</td><td class="dim small">'+esc(String(r.reason||r.finding||'').slice(0,100))+'</td><td class="dim small">'+agoT(r.at)+'</td><td>'+(revertedIds.has(r.entry_id)?'<span class="dim small">undone</span>':'<button data-cmd="audit-revert" data-entry="'+esc(r.entry_id)+'">Undo</button>')+'</td></tr>').join('')+'</table>':'<div class="empty">No automatic actions yet — demotions and name fixes will appear here with an Undo button.</div>')+'</div>'
+ +(actions.length?'<table><tr><th>Office</th><th>Action</th><th>Why</th><th style="width:80px">When</th><th style="width:70px"></th></tr>'+actions.slice().reverse().map(r=>'<tr><td>'+esc(r.office_name||r.before_name||r.office_id||'—')+'</td><td>'+esc(r.action==='demote'?'sent back to re-check':r.action==='rename'?'renamed'+(r.after_name?' → '+r.after_name:''):r.action==='retire'?'archived non-permit office':r.action==='adjudicate_resolution'?'adjudicated '+(r.verdict||'needs-review'):r.action)+'</td><td class="dim small">'+esc(String(r.reason||r.finding||'').slice(0,100))+'</td><td class="dim small">'+agoT(r.at)+'</td><td>'+(revertedIds.has(r.entry_id)?'<span class="dim small">undone</span>':'<button data-cmd="audit-revert" data-entry="'+esc(r.entry_id)+'">Undo</button>')+'</td></tr>').join('')+'</table>':'<div class="empty">No automatic actions yet — demotions and name fixes will appear here with an Undo button.</div>')+'</div>'
  +'<div class="card"><h2>Audit settings</h2>'
  +'<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">'
  +'<div><label class="dim small">Demotions per hour<br><input id="auditSetCap" type="number" min="1" max="500" value="'+set.demote_cap_hr+'" style="width:90px"></label><div class="dim small" style="max-width:220px">Most verified offices the audit may send back to re-check in one hour. Stops a bad AI run from un-verifying lots of offices at once.</div></div>'
@@ -910,6 +910,8 @@ function renderVerification(){
  const roles=Object.entries((v&&v.missing_roles)||{}).sort((a,b)=>b[1]-a[1]).slice(0,12);
  const plist=(promos&&promos.items)||[];
  const ny=needsYou();
+ const adj=(ledger&&ledger.adjudication)||{};
+ const adjTotal=(adj.not_applicable||0)+(adj.covered_elsewhere||0)+(adj.exists_unproven||0)+(adj.rejected||0);
  const np=(ledger&&ledger.not_permitting)||[];
  const wd=((srv&&srv.guard&&srv.guard.researchers)||{}).work_detail||{};
  const tierN=t=>num((wd.tiers||{})[t]||0);
@@ -927,6 +929,12 @@ function renderVerification(){
  +'<tr><td>Pass 2 — deep crawl</td><td class="num">'+tierN(2)+'</td></tr>'
  +'<tr><td>Pass 3 — county &amp; regional sites</td><td class="num">'+tierN(3)+'</td></tr>'
  +'<tr><td>Pass 4 — alternate official sites</td><td class="num">'+tierN(4)+'</td></tr></table>'+auditLink+'</div>'
+ +(adjTotal?'<div class="card"><h2>Needs-review adjudication</h2><div class="dim small" style="margin-bottom:8px">SWE-2.1 rechecks offices that exhausted research. Positive resolutions are written only after strict evidence guards and a live read-back.</div>'
+  +'<table><tr><td>Not applicable locally</td><td class="num" style="width:90px">'+num(adj.not_applicable||0)+'</td><td class="dim small">The role structurally does not exist as a local office.</td></tr>'
+  +'<tr><td>Covered elsewhere</td><td class="num">'+num(adj.covered_elsewhere||0)+'</td><td class="dim small">A verified sibling, county, regional, or state provider covers it.</td></tr>'
+  +'<tr><td>Exists but unproven</td><td class="num">'+num(adj.exists_unproven||0)+'</td><td class="dim small">Researchers were sent for the exact missing proof; no data was written.</td></tr>'
+  +(adj.rejected?'<tr><td>Rejected adjudications</td><td class="num">'+num(adj.rejected)+'</td><td class="dim small">AI answers failed the evidence/write guards and were not applied.</td></tr>':'')
+  +'</table></div>':'')
  +(np.length?'<div class="card"><h2>Not a permitting authority ('+np.length+')</h2><div class="dim small" style="margin-bottom:8px">These places don’t issue their own permits — they’re counted under the county or state office that actually does. They’re kept for records but skipped by the checker.</div><table>'+np.map(x=>'<tr><td style="width:260px"><b>'+esc(x.name)+(x.state?', '+esc(x.state):'')+'</b></td><td class="dim">'+esc(x.handled_by||'no permitting authority of its own')+'</td></tr>').join('')+'</table></div>':'')
  +'<div class="card"><h2>Why offices aren’t verified yet</h2>'
  +(gaps.length?'<table><tr><th>Reason</th><th style="width:90px">Offices</th><th>What happens next</th></tr>'+gaps.map(g=>'<tr><td>'+esc(GAP_LABEL[g[0]]||g[0])+'</td><td class="num">'+num(g[1])+'</td><td class="dim">'+esc(GAP_NEXT[g[0]]||'The checker will try again.')+'</td></tr>').join('')+'</table>':'<div class="empty">No gaps recorded yet.</div>')+'</div>'

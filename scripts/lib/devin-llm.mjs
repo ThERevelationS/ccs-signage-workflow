@@ -252,6 +252,9 @@ function extractJson(text) {
   return null;
 }
 
+// Lane priority ordering, exported for ordering tests.
+export const queueLaneRank = (f) => f.startsWith('judge-') ? 0 : f.startsWith('audit-') ? 1 : f.startsWith('adjudicate-') ? 2 : 3;
+
 // ── the batch call — one prompt on a persistent session ───────────────────
 // Units are claimed by renaming queue files first, so two parallel sessions
 // can never read the same unit (per-session claim files).
@@ -263,9 +266,10 @@ export async function runBatch(w) {
   const claimed = [];
   let qfiles = [];
   try { qfiles = readdirSync(QUEUE).filter((f) => f.endsWith('.json')); } catch { return { lane: 'empty', spawned: false }; }
-  // Promotion-judge units jump the lane: claimed ahead of same-queue work
-  // (alphabetical readdir would rank 'audit-' before 'judge-').
-  qfiles.sort((a, z) => (z.startsWith('judge-') ? 1 : 0) - (a.startsWith('judge-') ? 1 : 0) || a.localeCompare(z));
+  // Lane priority: promotion judges first (they unblock authority writes),
+  // record audits second, needs-review adjudication last. Within a lane the
+  // lexical order is stable FIFO enough for these hash-keyed unit names.
+  qfiles.sort((a, z) => queueLaneRank(a) - queueLaneRank(z) || a.localeCompare(z));
   for (const f of qfiles) {
     if (claimed.length >= BATCH) break;
     try { renameSync(join(QUEUE, f), join(QUEUE, `${f}.claim-${widx}`)); claimed.push(f); } catch {}

@@ -104,7 +104,7 @@ export function isPlaceholderOffice(name, locName) {
 // so — evidence reasons alone never retire anything. Clerk offices are
 // protected: in small KY/OH cities the city clerk issues permits; only
 // "clerk of courts" is a non-permit body.
-const NON_PERMIT_RE = /police|sheriff|marshal\b|clerk of courts|\bcourts?\b|auditor|treasurer|property tax|adamh|health board|board of health|civil service|airport|library|school|fire\b|fire dept|ems\b|emergency medical|parks\b|park (district|department|dept|and recreation|recreation)|recreation|cemetery|coroner|prosecutor|probate|common pleas/i;
+const NON_PERMIT_RE = /police|sheriff|marshal\b|clerk of courts|\bcourts?\b|auditor|treasurer|property tax|adamh|health board|board of health|civil service|civil rights|human relations|elections?|board of elections|liquor control|liquor|lottery|ethics commission|airport|library|school|fire\b|fire dept|ems\b|emergency medical|parks\b|park (district|department|dept|and recreation|recreation)|recreation|cemetery|coroner|prosecutor|probate|common pleas/i;
 // Any permitting token in the name disqualifies a non-permit verdict — a
 // "Police Department Public Works Department" contains a real office.
 const PERMIT_TOKEN_RE = /building|zoning|planning|permits?|inspection|engineer|public works|service|street|road|historic|design review|code/i;
