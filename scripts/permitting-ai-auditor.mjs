@@ -53,6 +53,23 @@ const readById = async (entity, id) => {
   return (j?.records || j?.items || j?.data || [])[0] || null;
 };
 
+// Full-office-array writes are asynchronous. A second action on the same
+// locality must build on the first pending write, not on the pre-write live
+// point read, or the later update clobbers the first when both flush.
+const pendingLocalityWrites = new Map(); // id → {at, data}
+const PENDING_WRITE_OVERLAY_MS = 10 * 60 * 1000;
+export function overlayPendingLocality(live, pending) {
+  if (!live || !pending?.data || Date.now() - pending.at > PENDING_WRITE_OVERLAY_MS) return live;
+  return { ...live, ...pending.data };
+}
+function noteLocalityWrite(id, data) {
+  pendingLocalityWrites.set(id, { at: Date.now(), data });
+}
+async function readLocalityForWrite(id) {
+  const live = await readById('PermitLocality', id).catch(() => null);
+  return overlayPendingLocality(live, pendingLocalityWrites.get(id));
+}
+
 const WORKER = 'ai-auditor';
 const ONCE = process.argv.includes('--once');
 const PILOT = Number(process.argv.find((a) => a.startsWith('--pilot'))?.split('=')[1] || process.argv[process.argv.indexOf('--pilot') + 1] || 0) || null;
@@ -187,7 +204,7 @@ function deterministicAgrees(meta, finding) {
 }
 
 async function demote(locality_id, office_id, reason) {
-  const live = await readById('PermitLocality', locality_id).catch(() => null);
+  const live = await readLocalityForWrite(locality_id);
   if (!live?.offices) return false;
   // needs_recheck keeps contacts and visibility but stops counting as
   // verified; needs_verification is the fallback while the flag is off.
@@ -200,6 +217,7 @@ async function demote(locality_id, office_id, reason) {
   });
   if (!changed) return false;
   enqueue({ entity: 'PermitLocality', op: 'update', id: locality_id, data: { offices }, priority: 1, note: `ai-audit demote — ${reason}` });
+  noteLocalityWrite(locality_id, { offices });
   mirrorApply('localities', { id: locality_id, offices });
   return true;
 }
@@ -208,7 +226,7 @@ async function demote(locality_id, office_id, reason) {
 // archived_offices with a full snapshot and a reversal reason, while the
 // declared office_change_log records the active-count transition.
 async function retireOffice(locality_id, office_id, reason, retiredBy = 'ai-auditor') {
-  const live = await readById('PermitLocality', locality_id).catch(() => null);
+  const live = await readLocalityForWrite(locality_id);
   if (!live?.offices) return null;
   const key = (o) => o?.id || o?.name;
   let target = null;
@@ -225,6 +243,7 @@ async function retireOffice(locality_id, office_id, reason, retiredBy = 'ai-audi
   const office_change_log = [...(live.office_change_log || []), { at, summary: `ai-audit: archived non-permit office ${target.name}`, office_count: offices.length, verified_count: verified }].slice(-20);
   const data = { offices, archived_offices: archived, office_change_log };
   enqueue({ entity: 'PermitLocality', op: 'update', id: locality_id, data, priority: 1, note: `ai-audit retire non-permit — ${target.name}` });
+  noteLocalityWrite(locality_id, data);
   mirrorApply('localities', { id: locality_id, ...data });
   return { target, targetIndex, data, at };
 }
@@ -297,10 +316,11 @@ async function processOutput(id) {
       if (actionAlreadyApplied(readActionLog(), { action: 'rename', office_id: f.office_id, before_name: office.name, after_name: clean })) {
         stats.already_applied++; action = 'already_applied';
       } else {
-        const live = await readById('PermitLocality', meta.locality_id).catch(() => null);
+        const live = await readLocalityForWrite(meta.locality_id);
         if (live?.offices) {
           const offices = live.offices.map((o) => (o.id || o.name) === f.office_id ? { ...o, name: clean } : o);
           enqueue({ entity: 'PermitLocality', op: 'update', id: meta.locality_id, data: { offices }, priority: 1, note: `ai-audit clean — ${office.name} → ${clean}` });
+          noteLocalityWrite(meta.locality_id, { offices });
           mirrorApply('localities', { id: meta.locality_id, offices });
           stats.renamed++; action = 'name_cleaned';
           appendLine(REVERT_LOG, { entry_id: `audit-${Date.now()}-${stats.renamed}`, action: 'rename', locality_id: meta.locality_id, office_id: f.office_id, before_name: office.name, after_name: clean });
@@ -379,7 +399,7 @@ function resolutionConfirmed(live, officeId, roles) {
 }
 
 async function writeResolutionWithReadback(meta, verdict) {
-  const live = await readById('PermitLocality', meta.locality_id).catch(() => null);
+  const live = await readLocalityForWrite(meta.locality_id);
   if (!live?.offices) return { ok: false, errors: ['live point read failed'] };
   const check = validateAdjudicationVerdict(verdict, meta, live);
   if (!check.ok) return { ok: false, errors: check.errors, stage: 'verdict_guard' };
@@ -388,6 +408,7 @@ async function writeResolutionWithReadback(meta, verdict) {
   const patchCheck = validateResolutionPatch(live, meta.office_id, verdict, patch);
   if (!patchCheck.ok) return { ok: false, errors: patchCheck.errors, stage: 'patch_guard' };
   enqueue({ entity: 'PermitLocality', op: 'update', id: meta.locality_id, data: patch.data, priority: 1, note: `needs-review adjudication — ${meta.office_name}` });
+  noteLocalityWrite(meta.locality_id, patch.data);
   mirrorApply('localities', { id: meta.locality_id, ...patch.data });
   // The outbox is asynchronous. Do not count the office resolved until the
   // live entity read-back shows either role removal + NA metadata or the

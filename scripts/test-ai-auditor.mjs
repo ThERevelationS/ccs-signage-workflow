@@ -4,7 +4,7 @@
 // over the real claim→prompt→out-file→consume cycle (fake session object,
 // no devin.exe spawned).
 import { spawnSync } from 'node:child_process';
-import { decideAction, isStrictEraVerified, actionAlreadyApplied, STRICT_VERIFY_ERA_AT } from './permitting-ai-auditor.mjs';
+import { decideAction, isStrictEraVerified, actionAlreadyApplied, overlayPendingLocality, STRICT_VERIFY_ERA_AT } from './permitting-ai-auditor.mjs';
 import { boostTargets, boostClassFor, spliceBoosts, BOOST_CLASS } from './lib/research-boost.mjs';
 import { cullPlan } from './lib/ai-sessions.mjs';
 import { queueLaneRank } from './lib/devin-llm.mjs';
@@ -13,6 +13,16 @@ let pass = 0, fail = 0;
 const ok = (cond, name) => { if (cond) { pass++; console.log(`  ok  ${name}`); } else { fail++; console.log(`  FAIL ${name}`); } };
 
 const set = { demote_cap_hr: 50, breaker_pct: 5 };
+// Pending full-array writes must overlay the pre-write point read, otherwise
+// two quick actions on one locality each derive from the stale baseline and
+// the later outbox update clobbers the first.
+{
+  const live = { id: 'l1', offices: [{ id: 'a' }, { id: 'b' }], untouched: 'live' };
+  const pending = { at: Date.now(), data: { offices: [{ id: 'a', renamed: true }, { id: 'b' }] } };
+  const merged = overlayPendingLocality(live, pending);
+  ok(merged.offices[0].renamed === true && merged.untouched === 'live', 'pending write overlays offices while preserving unrelated live fields');
+  ok(overlayPendingLocality(live, { at: Date.now() - 11 * 60e3, data: pending.data }) === live, 'expired pending write overlay falls back to the live read');
+}
 const meta = { offices: [
   { office_id: 'o1', name: 'Zoning Inspector', status: 'staff_verified', evidence: [{ quote: 'The Zoning Inspector issues all sign permits.', url: 'https://cityofexample.gov/zoning' }] },
   { office_id: 'o2', name: 'HALL RENTALS Zoning Office', status: 'needs_verification', evidence: [] },
