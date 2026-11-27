@@ -353,6 +353,26 @@ function adjudicationLimit(ctrl) {
 }
 function adjudicationState() { return readJSON(ADJUDICATION_STATE, { offices: {} }); }
 function saveAdjudicationState(state) { try { writeFileSync(ADJUDICATION_STATE, JSON.stringify(state, null, 1)); } catch {} }
+const ADJUDICATION_COHORT = '.audit-work/adjudication-pilot-cohort.json';
+function adjudicationCohort(ctrl, targets, limit) {
+  // The default 20 is a pilot cohort, not a rolling replacement window. An
+  // operator can scale later by setting ai_adjudication.limit explicitly.
+  const explicit = Number.isFinite(Number(ctrl?.ai_adjudication?.limit));
+  if (explicit || limit !== 20) return targets;
+  let cohort = readJSON(ADJUDICATION_COHORT, null);
+  if (!cohort?.keys?.length) {
+    cohort = { created_at: new Date().toISOString(), limit, keys: targets.slice(0, limit).map((t) => `${t.loc.id}:${t.office.id || t.office.name}`) };
+    try { writeFileSync(ADJUDICATION_COHORT, JSON.stringify(cohort, null, 1)); } catch {}
+    return targets.slice(0, limit);
+  }
+  const keys = new Set(cohort.keys);
+  return targets.filter((t) => keys.has(`${t.loc.id}:${t.office.id || t.office.name}`));
+}
+function inAdjudicationCohort(ctrl, key) {
+  if (Number.isFinite(Number(ctrl?.ai_adjudication?.limit))) return true;
+  const cohort = readJSON(ADJUDICATION_COHORT, null);
+  return !cohort?.keys?.length || cohort.keys.includes(key);
+}
 function countyProfileForAdjudication(loc, profiles) {
   const county = String(loc.county_name || loc.parent_county_name || '').replace(/\s+county$/i, '').toLowerCase();
   if (!county) return null;
@@ -375,7 +395,8 @@ function feedAdjudicationUnits(localities, profById, ctrl) {
   // ledger eligibility rotates the target list underneath them.
   let slots = Math.max(0, limit - queueFiles.filter((f) => f.startsWith('adjudicate-')).length);
   let queued = 0;
-  for (const t of adjudicationTargets({ ledgerRows: rows, localities, officeState, adjudicated: adj.offices || {}, limit })) {
+  const targets = adjudicationCohort(ctrl, adjudicationTargets({ ledgerRows: rows, localities, officeState, adjudicated: adj.offices || {}, limit }), limit);
+  for (const t of targets) {
     if (!slots) break;
     const profile = profById.get(t.loc.jurisdiction_profile_id) || null;
     const countyProfile = countyProfileForAdjudication(t.loc, profiles);
@@ -441,6 +462,12 @@ async function processAdjudicationOutput(id) {
   const out = outputFor(id);
   const meta = out?.meta;
   if (!meta?.locality_id || !meta?.office_id) { clearUnit(id); return { skipped: 'no meta' }; }
+  const cohortKey = `${meta.locality_id}:${meta.office_id}`;
+  if (!inAdjudicationCohort(readControl(), cohortKey)) {
+    emit({ stage: 'ai_adjudicate_done', address: `${meta.jurisdiction}, ${meta.state}`, ok: true, detail: `${meta.office_name} ignored — outside the fixed 20-office pilot cohort` });
+    clearUnit(id);
+    return { skipped: 'outside pilot cohort' };
+  }
   const verdict = out?.output || {};
   const key = `${meta.locality_id}:${meta.office_id}`;
   const state = adjudicationState();
