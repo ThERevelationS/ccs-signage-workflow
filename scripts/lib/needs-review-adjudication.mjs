@@ -250,10 +250,19 @@ export function validateAdjudicationVerdict(verdict, meta, loc) {
     if (!providerNamed && !verdict?.covering_source_url && !(sibling?.authority_evidence || []).length) errors.push('coverage lacks source/evidence');
     const ohFact = facts.find((f) => f.key === 'ohio_bbs_certification');
     if (!sibling && providerFact) {
-      const quoteCoverage = quotes.some((q) => evidenceImpliesCoverage(q));
-      const certifiedCountyCoverage = providerFact.key === 'county_profile' && ohFact?.certified === false && roles.some((r) => ['building', 'electrical_permit', 'electrical_inspection'].includes(r));
-      const structuralProvider = providerFact.key === 'ky_dhbc_electrical';
-      if (!quoteCoverage && !certifiedCountyCoverage && !structuralProvider) errors.push('provider existence is only a lead — coverage requires a permitting/enforcement sentence');
+      // Non-certification proves only that the LOCAL office is absent; it does
+      // not prove the named county/regional provider affirmatively does the
+      // work. Coverage evidence must both carry action language and name the
+      // provider (or a department inside it). A bare registry/profile sentence
+      // remains only a research lead.
+      const providerName = norm(providerFact.provider || verdict?.covering_office_name || '');
+      const namesProvider = (q) => {
+        const text = norm(q);
+        return Boolean(providerName && text.includes(providerName));
+      };
+      const quoteCoverage = quotes.some((q) => evidenceImpliesCoverage(q) && namesProvider(q));
+      const structuralProvider = providerFact.key === 'ky_dhbc_electrical' && structuralFactApplies(providerFact, roles);
+      if (!quoteCoverage && !structuralProvider) errors.push('provider existence is only a lead — coverage requires a permitting/enforcement sentence naming the provider');
     }
     if (ohFact?.certified && roles.some((r) => ['building', 'electrical_permit', 'electrical_inspection'].includes(r)) && /county|state/i.test(String(verdict?.covering_office_name || ''))) {
       errors.push('Ohio certified jurisdiction building/electrical cannot be pushed to county/state');

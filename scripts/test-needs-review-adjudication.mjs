@@ -86,7 +86,16 @@ if (provider) {
   const leadOnly = { ...validCover, covering_office_id: null, covering_office_name: provider, covering_source_url: null, evidence_quotes: [`${provider} is a regional provider serving Ashtabula County, OH.`], structural_fact_keys: [providerFacts.find((f) => f.provider === provider).key] };
   const leadCheck = validateAdjudicationVerdict(leadOnly, { ...unit.meta, facts: providerFacts }, loc);
   ok(!leadCheck.ok && leadCheck.errors.join(' ').includes('only a lead'), 'regional provider existence alone is rejected as coverage proof');
+  const affirmative = { ...leadOnly, evidence_quotes: [`${provider} reviews subdivision and zoning applications for member townships.`] };
+  ok(validateAdjudicationVerdict(affirmative, { ...unit.meta, facts: providerFacts }, loc).ok, 'provider-specific action evidence can support coverage');
 } else ok(false, 'test fixture: Ashtabula has a regional provider');
+
+// A non-certified Ohio township is evidence that the LOCAL building office is
+// absent; it is not evidence that the county affirmatively covers the role.
+const countyFacts = structuralFactsFor({ ...loc, name: 'Blendon township', county_name: 'Franklin County' }, { name: 'Franklin County', type: 'county', state: 'OH', website_url: 'https://development.franklincountyohio.gov/' }, null);
+const countyCover = { ...validCover, covering_office_id: null, covering_office_name: 'Franklin County', evidence_quotes: ['Blendon township is not on the Ohio Board of Building Standards certified-jurisdiction roster; non-certified areas ordinarily fall to the county or state for building/electrical enforcement.', 'Franklin County has a county jurisdiction profile at https://development.franklincountyohio.gov/.'], structural_fact_keys: ['ohio_bbs_certification', 'county_profile'] };
+const countyMeta = { ...unit.meta, facts: countyFacts, missing_roles: ['building'] };
+ok(!validateAdjudicationVerdict({ ...countyCover, roles_resolved: ['building'] }, countyMeta, loc).ok, 'Ohio non-certification plus a county profile is rejected as coverage proof');
 
 // exists_unproven must name exactly what proof researchers need.
 const unproven = { verdict: 'exists_unproven', confidence: 0.9, roles_resolved: ['electrical_inspection'], reason: 'Evidence is ambiguous: the township has electrical permit references but no sentence naming the inspecting office.', evidence_quotes: [], structural_fact_keys: [], covering_office_id: null, covering_office_name: null, covering_source_url: null, proof_expectation: 'Find an official township or county page/PDF sentence naming the office or certified inspector responsible for electrical inspections in Brimfield township.' };
