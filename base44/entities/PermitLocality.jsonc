@@ -143,6 +143,14 @@
         "type": "string"
       }
     },
+    "archived_offices": {
+      "type": "array",
+      "description": "Soft-retired offices formerly in offices[]. Kept for audit/reversal; entries are full office snapshots plus retired_reason/retired_at/retired_by. Never shown as active permit offices.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
     "offices": {
       "type": "array",
       "description": "Offices belonging to this locality. Each office has its own workflow steps and is applied as a separate line when the locality is selected.",
@@ -179,6 +187,11 @@
                 "other"
               ]
             }
+          },
+          "not_applicable_roles": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Map of authority role \u2192 {na_reason, na_at, na_by, evidence} for roles determined not to exist for this office/jurisdiction. These roles are excluded from authority_roles and must not be reseeded."
           },
           "authority_verification_status": {
             "type": "string",
