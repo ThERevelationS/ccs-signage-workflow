@@ -18,7 +18,7 @@ import { cleanOfficeName, isNonPermitOfficeName } from './lib/office-name-clean.
 import { addBoost } from './lib/research-boost.mjs';
 import { resolveTarget } from './lib/ai-sessions.mjs';
 import { strictRoleEvidence, isOfficialSource } from './permitting-authority-verifier.mjs';
-import { pendingCandidates, verdictMap, appendVerdict, judgeUnit } from './lib/promote-judge.mjs';
+import { pendingCandidates, verdictMap, appendVerdict, judgeUnit, judgeUnitId, JUDGE_PROMPT_VERSION } from './lib/promote-judge.mjs';
 import { enqueue } from './lib/outbox.mjs';
 import { getMirror, mirrorApply } from './lib/entity-mirror.mjs';
 import { waitWhilePaused, heartbeat } from './lib/server-control.mjs';
@@ -269,12 +269,35 @@ async function main() {
     localities.sort((a, b) => score(b) - score(a));
     // ── promotion-judge lane: strict-pass candidates become judge units ──
     // (one office per unit, all candidate roles) — claimed ahead of audit
-    // units by the runBatch judge-first sort.
+    // units by the runBatch judge-first sort. v1 units/outputs are dead:
+    // verdict keys are prompt-versioned, so they are removed once and the
+    // same evidence is regenerated under v2 instead of being consumed as v2.
     {
+      if (!main.legacyJudgePurged) {
+        let purged = 0;
+        for (const dir of ['.audit-work/audit-queue', '.audit-work/audit-out']) {
+          for (const f of readdirSync(dir).filter((x) => x.startsWith('judge-') && x.endsWith('.json'))) {
+            let version = null;
+            try {
+              const j = JSON.parse(readFileSync(`${dir}/${f}`, 'utf8'));
+              version = j?.meta?.prompt_version || j?.__meta?.prompt_version || null;
+            } catch {}
+            if (version !== JUDGE_PROMPT_VERSION) {
+              try { unlinkSync(`${dir}/${f}`); purged++; } catch {}
+            }
+          }
+        }
+        main.legacyJudgePurged = true;
+        if (purged) emit({ stage: 'ai_judge_v1_invalidated', ok: true, detail: `${purged} stale judge unit/output file(s) removed — evidence will be re-judged under ${JUDGE_PROMPT_VERSION}` });
+      }
       const cands = pendingCandidates();
       const verdicts = verdictMap();
       const byOffice = new Map();
-      for (const [k, c] of cands) {
+      const candRows = [...cands.entries()].sort((a, b) => {
+        const ra = a[1].retro === true ? 1 : 0, rb = b[1].retro === true ? 1 : 0;
+        return rb - ra || String(b[1].at || '').localeCompare(String(a[1].at || ''));
+      });
+      for (const [k, c] of candRows) {
         if (verdicts.has(k)) continue;
         const g = byOffice.get(c.office_id) || { meta: { locality_id: c.locality_id, jurisdiction: c.jurisdiction, office_name: c.office_name, retro: false }, roles: [] };
         if (c.retro === true) g.meta.retro = true;
@@ -282,12 +305,12 @@ async function main() {
       }
       let judgeFed = 0;
       for (const [officeId, g] of byOffice) {
-        const qid = `judge-${String(officeId).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60)}`;
+        const qid = judgeUnitId(officeId);
         if (existsSync(`.audit-work/audit-queue/${qid}.json`) || existsSync(`.audit-work/audit-out/${qid}.json`)) continue;
         enqueueUnit(judgeUnit(officeId, g.meta, g.roles));
         judgeFed++;
       }
-      if (judgeFed) emit({ stage: 'ai_judge_fed', ok: true, detail: `${judgeFed} office(s) queued for promotion judgment` });
+      if (judgeFed) emit({ stage: 'ai_judge_fed', ok: true, detail: `${judgeFed} office(s) queued for ${JUDGE_PROMPT_VERSION} promotion judgment` });
     }
     let total = 0, done = 0;
     const limit = PILOT || localities.length;
@@ -319,13 +342,20 @@ async function main() {
         const id = f.slice(0, -5);
         const out = outputFor(id);
         const meta = out?.meta;
+        if (meta?.prompt_version !== JUDGE_PROMPT_VERSION) {
+          emit({ stage: 'ai_judge_stale_output', ok: false, detail: `${id} ignored — prompt ${meta?.prompt_version || 'v1/unknown'} is not ${JUDGE_PROMPT_VERSION}` });
+          clearUnit(id);
+          continue;
+        }
         const results = Array.isArray(out?.output?.results) ? out.output.results : [];
+        const written = [];
         for (const v of results) {
-          const entry = (meta?.roles || []).find((r) => r.role === v?.role) || {};
-          appendVerdict(meta?.office_id || id.replace(/^judge-/, ''), meta?.locality_id || null, meta?.office_name || null, v?.role, v, entry, meta?.retro === true);
+          const found = (meta?.roles || []).find((r) => r.role === v?.role) || {};
+          const entry = { ...found, jurisdiction: meta?.jurisdiction, office_name: meta?.office_name };
+          written.push(appendVerdict(meta?.office_id || id.replace(/^judge-/, ''), meta?.locality_id || null, meta?.office_name || null, v?.role, v, entry, meta?.retro === true));
         }
         stats.judged = (stats.judged || 0) + results.length;
-        emit({ stage: 'ai_judge_answered', address: meta?.jurisdiction ? `${meta.jurisdiction.name}, ${meta.jurisdiction.state}` : id, ok: results.length > 0, detail: results.map((v) => `${v.role}:${v.verdict}`).join(' ') || 'no verdicts' });
+        emit({ stage: 'ai_judge_answered', address: meta?.jurisdiction ? `${meta.jurisdiction.name}, ${meta.jurisdiction.state}` : id, ok: results.length > 0, detail: written.map((v) => `${v.role}:${v.verdict}${v.guard ? `/${v.guard}` : ''}`).join(' ') || 'no verdicts' });
         clearUnit(id);
       }
       for (const f of readdirSync('.audit-work/audit-out').filter((x) => x.startsWith('audit-') && x.endsWith('.json'))) {

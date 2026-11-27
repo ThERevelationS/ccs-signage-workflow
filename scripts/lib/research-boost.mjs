@@ -17,7 +17,7 @@ export const BOOST_CLASS = { demote: 0, jurisdiction: 1, contact: 2, recheck: 3 
 export function boostClassFor(type) {
   if (type === 'demote') return 'demote';
   if (type === 'wrong_jurisdiction' || type === 'wrong_county_or_type') return 'jurisdiction';
-  if (type === 'needs_recheck' || type === 'recheck') return 'recheck';
+  if (type === 'needs_recheck' || type === 'recheck' || type === 'judge_unclear') return 'recheck';
   return 'contact'; // contact_mismatch, duplicate_office, anything else routed
 }
 
@@ -25,6 +25,24 @@ export function addBoost(rec) {
   const bid = `b${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
   append(BOOST_FILE, { bid, cls: boostClassFor(rec.finding?.type || rec.type || 'contact'), at: new Date().toISOString(), ...rec });
   return bid;
+}
+
+// Judge verdicts are re-evaluated every verifier pass. The boost they create
+// must not multiply while it is still waiting for a researcher — same
+// locality + finding type + role/office target is one pending boost.
+const boostFingerprint = (b) => JSON.stringify({
+  locality_id: b.locality_id || null,
+  type: b.finding?.type || b.type || null,
+  roles: [...(b.finding?.roles || [])].sort(),
+  offices: [...(b.finding?.offices || [])].sort(),
+  cand_hash: b.finding?.cand_hash || null,
+});
+export function addBoostOnce(rec) {
+  const fp = boostFingerprint(rec);
+  for (const b of pendingBoosts()) {
+    if (boostFingerprint(b) === fp) return { bid: b.bid, already: true };
+  }
+  return { bid: addBoost(rec), already: false };
 }
 
 export function pendingBoosts(doneFile = DONE_FILE) {

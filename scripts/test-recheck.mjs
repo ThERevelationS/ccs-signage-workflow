@@ -12,7 +12,7 @@ const ok = (cond, label) => { if (cond) { pass++; } else { fail++; console.log('
 // Lane order: audit demote < jurisdiction < contact < recheck (recheck still
 // ahead of every tier/gap target — spliceBoosts puts boosts first).
 ok(BOOST_CLASS.demote < BOOST_CLASS.jurisdiction && BOOST_CLASS.jurisdiction < BOOST_CLASS.contact && BOOST_CLASS.contact < BOOST_CLASS.recheck, 'boost class order demote<jurisdiction<contact<recheck');
-ok(boostClassFor('needs_recheck') === 'recheck' && boostClassFor('recheck') === 'recheck', 'boostClassFor needs_recheck→recheck');
+ok(boostClassFor('needs_recheck') === 'recheck' && boostClassFor('recheck') === 'recheck' && boostClassFor('judge_unclear') === 'recheck', 'boostClassFor needs_recheck/judge_unclear→recheck');
 ok(boostClassFor('contact_mismatch') === 'contact', 'contact_mismatch still contact');
 
 // scan() — fixture: one passing office, one failing (no role kw in quote),

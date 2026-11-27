@@ -36,7 +36,7 @@ import { buildIdentityIndex, withUnionResearch } from './lib/profile-identity.mj
 import { readCooldowns, tierExhausted, tiersDone } from './lib/research-claims.mjs';
 import { cleanOfficeName, isGenericOfficeName, isNonPermitOfficeName, isPlaceholderOffice } from './lib/office-name-clean.mjs';
 import { appendCandidates, verdictMap, pendingCandidates, candHash, vkey, resolveJudged } from './lib/promote-judge.mjs';
-import { addBoost } from './lib/research-boost.mjs';
+import { addBoostOnce } from './lib/research-boost.mjs';
 
 const APP = '68dfcc5e57bbbc35387da97c';
 const FN = `https://base44.app/api/apps/${APP}/functions`;
@@ -393,6 +393,7 @@ async function pass(onlyNames = null) {
   const holdOn = readControl().promote_hold !== false;
   const judgeVerdicts = verdictMap();
   const judgeNoBoosts = []; // {locality_id, office_name, role} — 'no' verdicts needing re-research
+  const judgeUnclearBoosts = []; // unclear verdicts — never promote, but target stronger evidence
   const pendingCands = pendingCandidates(); // dedupe repeated candidate emission
   const only = onlyNames ? new Set(onlyNames.map((h) => `${String(h.name || '').toLowerCase().trim()}|${String(h.state || '').toUpperCase().trim()}`)) : null;
   // Fresh-first ordering: enrichers append name|state to verify-first.jsonl
@@ -553,13 +554,17 @@ async function pass(onlyNames = null) {
         const hashOf = (r) => candHash({ office_id: o.id, role: r, quote: cleanQ.get(r) });
         const toQueue = fresh.filter((r) => !pendingCands.has(vkey(o.id, r.role, candHash({ office_id: o.id, role: r.role, quote: r.quote }))));
         if (toQueue.length) appendCandidates(loc, o, toQueue);
+        const dj = resolveJudged(o.id, proven, hashOf, judgeVerdicts);
+        // Verdict-driven research boosts are not promotions: create them even
+        // while promote_hold is on so no/unclear evidence starts improving
+        // before the promotion gate opens.
+        for (const b of dj.noBoosts) judgeNoBoosts.push({ locality_id: loc.id, jurisdiction: loc.name, state: loc.state, office_name: o.name, role: b.role, reason: b.reason });
+        for (const b of dj.unclearBoosts || []) judgeUnclearBoosts.push({ locality_id: loc.id, jurisdiction: loc.name, state: loc.state, office_name: o.name, role: b.role, reason: b.reason, cand_hash: b.cand_hash });
         if (holdOn) {
           recordOffice(loc, o, { status: o.authority_verification_status === 'needs_recheck' ? 'needs_recheck' : 'needs_verification', reasons: ['promote_hold'], missing: [] });
           continue;
         }
-        const dj = resolveJudged(o.id, proven, hashOf, judgeVerdicts);
         trimmed.push(...dj.gaps);
-        for (const b of dj.noBoosts) judgeNoBoosts.push({ locality_id: loc.id, office_name: o.name, role: b.role, reason: b.reason });
         proven.length = 0; proven.push(...dj.judged);
       }
       if (proven.length) {
@@ -646,15 +651,25 @@ async function pass(onlyNames = null) {
   // AND some for zoning), its queued work orders get their permit lines here —
   // the same create shape the Permitting page uses — then the queue clears.
   if (!DRY && SLICE === 0) await consumePendingApplies(localities);
-  // 'no' verdicts target re-research on exactly the rejected roles — the
-  // judge says the current evidence is for something/somewhere else.
-  if (judgeNoBoosts.length) {
+  // Judge verdicts target re-research on exactly the affected roles. A 'no'
+  // says the evidence is for something/somewhere else; an 'unclear' never
+  // promotes but still sends researchers back for a stronger verbatim quote.
+  for (const [kind, list, type, label] of [
+    ['no', judgeNoBoosts, 'needs_recheck', 'evidence rejected'],
+    ['unclear', judgeUnclearBoosts, 'judge_unclear', 'evidence unclear'],
+  ]) {
+    if (!list.length) continue;
     const byLoc = new Map();
-    for (const b of judgeNoBoosts) {
-      const cur = byLoc.get(b.locality_id) || { roles: new Set(), offices: new Set() };
+    for (const b of list) {
+      const cur = byLoc.get(b.locality_id) || { roles: new Set(), offices: new Set(), jurisdiction: b.jurisdiction, state: b.state, cand_hash: b.cand_hash || null };
       cur.roles.add(b.role); cur.offices.add(b.office_name); byLoc.set(b.locality_id, cur);
     }
-    for (const [locality_id, b] of byLoc) addBoost({ locality_id, type: 'needs_recheck', finding: { type: 'needs_recheck', roles: [...b.roles], offices: [...b.offices], reason: `AI judge: evidence rejected for ${[...b.roles].join(', ')}` } });
+    for (const [locality_id, b] of byLoc) {
+      addBoostOnce({
+        locality_id, jurisdiction: b.jurisdiction, state: b.state, type,
+        finding: { type, roles: [...b.roles], offices: [...b.offices], cand_hash: b.cand_hash, reason: `AI judge: ${label} for ${[...b.roles].join(', ')}` },
+      });
+    }
   }
   writeVerificationLedger(localities, officeState, passStart);
   emit({ stage: 'auth_verify_done', detail: `scanned ${scanned} offices · promoted ${promoted} · gapped ${gapped} · wrote ${wrote}` });

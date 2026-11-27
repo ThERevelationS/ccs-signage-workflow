@@ -75,8 +75,9 @@ function catalog() {
     // when their flag is off, so the dashboard can show why.
     { name: 'ai-extractor', group: 'verification', script: 'scripts/permitting-ai-extractor.mjs', env: { DEVIN_LLM_QUEUE: 'extract', DEVIN_LLM_SESSIONS: '2', DEVIN_LLM_BATCH: '5' }, events: ['ai-extractor'], flag: 'ai_extract' },
     { name: 'ai-auditor', group: 'verification', script: 'scripts/permitting-ai-auditor.mjs', env: { DEVIN_LLM_QUEUE: 'audit', DEVIN_LLM_SESSIONS: '1', DEVIN_LLM_BATCH: '5' }, events: ['ai-auditor'], flag: 'ai_audit' },
-    // Strict relabel — dormant until the needs_recheck flag is flipped on.
+    // Strict relabel + retro judge — dormant until the needs_recheck flag is flipped on.
     { name: 'recheck-relabel', group: 'verification', script: 'scripts/permitting-recheck-relabel.mjs', events: ['recheck-relabel'], flag: 'needs_recheck' },
+    { name: 'judge-retro', group: 'verification', script: 'scripts/permitting-judge-retro.mjs', events: ['judge-retro'], flag: 'needs_recheck' },
   ];
   // 64 interchangeable researcher slots — dynamic claims share work, so the
   // live count is whatever the gates allow (auto) or the user asked (manual).
@@ -919,6 +920,14 @@ const server = http.createServer(async (req, res) => {
       if (url.pathname === '/resume') { writeControl({ state: 'running' }, 'api'); reconcile(); return json(res, 200, { ok: true }); }
       if (url.pathname === '/stop') { stopAll().catch(() => {}); return json(res, 200, { ok: true }); }
       if (url.pathname === '/verification') { writeControl({ verification: Boolean(body.on) }, 'api'); reconcile(); return json(res, 200, { ok: true, verification: Boolean(body.on) }); }
+      // Promotion hold toggle. ON means strict-pass offices remain judge
+      // candidates; OFF lets the verifier promote only v2-yes guarded verdicts.
+      if (url.pathname === '/promote-hold') {
+        const on = body.on !== false;
+        control = writeControl({ promote_hold: on }, 'api');
+        reconcile();
+        return json(res, 200, { ok: true, promote_hold: control.promote_hold !== false });
+      }
       // SWE-2.1 feature flags — off removes the worker from the active set
       // (clean stop); the dashboard reads the flags for its status lines.
       if (url.pathname === '/ai-extract') { control = writeControl({ ai_extract: Boolean(body.on) }, 'api'); reconcile(); return json(res, 200, { ok: true, ai_extract: Boolean(body.on) }); }
