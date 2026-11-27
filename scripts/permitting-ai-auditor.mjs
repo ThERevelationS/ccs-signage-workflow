@@ -347,6 +347,9 @@ function feedAdjudicationUnits(localities, profById, ctrl) {
   const officeState = readJSON(OFFICE_STATE, { offices: {} });
   const adj = adjudicationState();
   const profiles = [...profById.values()];
+  let queueFiles = [];
+  try { queueFiles = readdirSync('.audit-work/audit-queue'); } catch {}
+  const unitPending = (id) => queueFiles.some((f) => f === `${id}.json` || f.startsWith(`${id}.json.claim-`));
   let queued = 0;
   for (const t of adjudicationTargets({ ledgerRows: rows, localities, officeState, adjudicated: adj.offices || {}, limit })) {
     const profile = profById.get(t.loc.jurisdiction_profile_id) || null;
@@ -355,8 +358,9 @@ function feedAdjudicationUnits(localities, profById, ctrl) {
     const key = `${t.loc.id}:${unit.meta.office_id}`;
     const prior = adj.offices?.[key];
     if (prior?.hash === unit.meta.hash && ['not_applicable', 'covered_elsewhere', 'exists_unproven'].includes(prior.verdict)) continue;
-    if (existsSync(`.audit-work/audit-queue/${unit.id}.json`) || existsSync(`.audit-work/audit-out/${unit.id}.json`)) continue;
+    if (unitPending(unit.id) || existsSync(`.audit-work/audit-out/${unit.id}.json`)) continue;
     enqueueUnit(unit);
+    queueFiles.push(`${unit.id}.json`); // do not re-feed inside this same pass
     queued++;
     emit({ stage: 'ai_adjudicate_feed', address: `${t.loc.name}, ${t.loc.state}`, ok: true, detail: `${t.office.name} — ${unit.meta.missing_roles.join('+')} adjudication queued` });
   }

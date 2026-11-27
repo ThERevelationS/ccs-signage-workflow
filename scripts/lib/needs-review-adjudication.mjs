@@ -336,7 +336,11 @@ export function adjudicationTargets({ ledgerRows = [], localities = [], officeSt
   const byId = locById || new Map(localities.map((l) => [l.id, l]));
   const out = [];
   const seen = new Set();
-  for (const row of ledgerRows) {
+  // Ledger order is volatile (the verifier re-sorts by current attempt count).
+  // The pilot cap must name a stable population, so adjudicate in deterministic
+  // locality/office order instead of whichever 20 happen to sort first today.
+  const rows = [...ledgerRows].sort((a, b) => String(a.locality_id).localeCompare(String(b.locality_id)) || String(a.office).localeCompare(String(b.office)));
+  for (const row of rows) {
     if (out.length >= limit) break;
     const loc = byId.get(row.locality_id);
     if (!loc || loc.duplicate_of) continue;
