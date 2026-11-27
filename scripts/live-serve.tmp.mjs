@@ -856,7 +856,7 @@ function renderAudit(){
  +'<div class="card"><h2>Automatic actions</h2>'
  +(a.breaker_tripped?'<div class="warn" style="margin-bottom:10px">Safety stop: the audit flagged more than '+set.breaker_pct+'% of the verified offices it checked, so it stopped sending offices back to re-check. Review the list below, then press <button data-cmd="audit-resume-demote">Allow re-checks again</button>.</div>':'')
  +'<div class="dim small" style="margin-bottom:8px">Demotions this hour: '+num(demoteToks)+' of '+num(set.demote_cap_hr)+' allowed</div>'
- +(actions.length?'<table><tr><th>Office</th><th>Action</th><th>Why</th><th style="width:80px">When</th><th style="width:70px"></th></tr>'+actions.slice().reverse().map(r=>'<tr><td>'+esc(r.office_name||r.office_id||r.before_name||'—')+'</td><td>'+esc(r.action==='demote'?'sent back to re-check':'renamed'+(r.after_name?' → '+r.after_name:''))+'</td><td class="dim small">'+esc(String(r.reason||r.finding||'').slice(0,100))+'</td><td class="dim small">'+agoT(r.at)+'</td><td>'+(revertedIds.has(r.entry_id)?'<span class="dim small">undone</span>':'<button data-cmd="audit-revert" data-entry="'+esc(r.entry_id)+'">Undo</button>')+'</td></tr>').join('')+'</table>':'<div class="empty">No automatic actions yet — demotions and name fixes will appear here with an Undo button.</div>')+'</div>'
+ +(actions.length?'<table><tr><th>Office</th><th>Action</th><th>Why</th><th style="width:80px">When</th><th style="width:70px"></th></tr>'+actions.slice().reverse().map(r=>'<tr><td>'+esc(r.office_name||r.before_name||r.office_id||'—')+'</td><td>'+esc(r.action==='demote'?'sent back to re-check':'renamed'+(r.after_name?' → '+r.after_name:''))+'</td><td class="dim small">'+esc(String(r.reason||r.finding||'').slice(0,100))+'</td><td class="dim small">'+agoT(r.at)+'</td><td>'+(revertedIds.has(r.entry_id)?'<span class="dim small">undone</span>':'<button data-cmd="audit-revert" data-entry="'+esc(r.entry_id)+'">Undo</button>')+'</td></tr>').join('')+'</table>':'<div class="empty">No automatic actions yet — demotions and name fixes will appear here with an Undo button.</div>')+'</div>'
  +'<div class="card"><h2>Audit settings</h2>'
  +'<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">'
  +'<div><label class="dim small">Demotions per hour<br><input id="auditSetCap" type="number" min="1" max="500" value="'+set.demote_cap_hr+'" style="width:90px"></label><div class="dim small" style="max-width:220px">Most verified offices the audit may send back to re-check in one hour. Stops a bad AI run from un-verifying lots of offices at once.</div></div>'
@@ -1032,15 +1032,15 @@ document.addEventListener('click',async e=>{
    return;
   }
   const c=b.dataset.cmd;
-  if(c==='ny-more'){e.preventDefault();nyShowAll=!nyShowAll;render();return;}
+  if(c==='ny-more'){e.preventDefault();nyShowAll=!nyShowAll;holdUntil=0;render(true);return;}
   if(c==='mode-auto')await srvCmd('researchers',{mode:'auto'});
   else if(c==='mode-manual')await srvCmd('researchers',{mode:'manual'});
   else if(c==='max-inc'||c==='max-dec'){const v=c==='max-inc'?Math.min(ceil,cur+1):Math.max(0,cur-1);pendingMax={v,at:Date.now()};const el=$('resmax');if(el)el.textContent=v;await srvCmd('researchers',{mode:'manual',max:v});}
   else if(c==='killres'){if(!confirm('Stop all researchers now? They stay off until you pick a mode or count again.'))return;await srvCmd('researchers',{killall:true});}
   else if(c==='wstop')await srvCmd('worker',{name:b.dataset.name,action:'stop'});
   else if(c==='wstart')await srvCmd('worker',{name:b.dataset.name,action:'start'});
-  else if(c==='audit-stage'){e.preventDefault();auditStage=b.dataset.stage||null;auditPage=0;render();return;}
-  else if(c==='audit-page'){auditPage=Math.max(0,auditPage+Number(b.dataset.dir||0));render();return;}
+  else if(c==='audit-stage'){e.preventDefault();auditStage=b.dataset.stage||null;auditPage=0;holdUntil=0;render(true);return;}
+  else if(c==='audit-page'){auditPage=Math.max(0,auditPage+Number(b.dataset.dir||0));holdUntil=0;render(true);return;}
   else if(c==='audit-pause')await srvCmd('ai-audit',{paused:true});
   else if(c==='audit-resume')await srvCmd('ai-audit',{paused:false});
   else if(c==='audit-resume-demote')await srvCmd('ai-audit/resume-demotion');
@@ -1056,9 +1056,9 @@ document.addEventListener('click',async e=>{
  }
 });
 // — render dispatch —
-function render(){
+function render(force){
  renderHeader();
- if(held())return;
+ if(held()&&!force)return;
  if(tab==='overview')renderOverview();
  else if(tab==='researchers')renderResearchers();
  else if(tab==='verification')renderVerification();
