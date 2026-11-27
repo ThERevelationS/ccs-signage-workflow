@@ -20,7 +20,8 @@
 import { openSync, writeFileSync } from 'fs';
 import { mirrorRead, mirrorApply } from './lib/entity-mirror.mjs';
 import { idleWait } from './lib/event-tail.mjs';
-import { enqueue } from './lib/outbox.mjs';
+import { enqueue, readPendingWritesFor } from './lib/outbox.mjs';
+import { filterArchivedOffices, overlayPendingLocalityWriteData } from './lib/office-archive.mjs';
 import { jurisdictionToPermitLocality, normalizePermitJurisdictionName } from '../src/components/permitting/jurisdictionPermitBridge.js';
 import { normalizeAddressState } from '../src/shared/permittingAddressState.js';
 import { permitCreds } from './lib/permit-creds.mjs';
@@ -246,12 +247,19 @@ async function sweep(onlyNames = null) {
           .filter((r) => r?.role && APPL.test(String(r?.applicability)))
           .map((r) => r.role)
       );
+      // Archive tombstones participate in the completeness check. Otherwise a
+      // row whose active offices otherwise look "complete" is skipped before the
+      // archived duplicate is ever stripped (Venice/Election Inspector stayed
+      // active this way). Coverage is measured on the archive-filtered active
+      // set: a role carried only by a retired non-permit body is still uncovered.
+      const baseArchiveFilter = filterArchivedOffices(loc.offices || [], loc.archived_offices || []);
+      const activeForCoverage = { ...loc, offices: baseArchiveFilter.offices };
       // NA/covered tombstones count as resolved coverage too — otherwise a
       // role correctly removed from authority_roles looks "uncovered" forever
       // and the scanner rebuilds the placeholder it just helped retire.
-      const officeRoles = new Set((loc.offices || []).flatMap((o) => [...activeAuthorityRoles(o), ...Object.keys(o?.not_applicable_roles || {})]));
+      const officeRoles = new Set((activeForCoverage.offices || []).flatMap((o) => [...activeAuthorityRoles(o), ...Object.keys(o?.not_applicable_roles || {})]));
       const uncoveredRoles = [...researchRoles].filter((r) => !officeRoles.has(r)).length;
-      if (!localityNeedsWork(loc) && !uncoveredRoles) {
+      if (!localityNeedsWork(activeForCoverage) && !uncoveredRoles && !baseArchiveFilter.removed.length) {
         done++; continue; // complete records don't spam the event feed every pass
       }
       emit({ start: true, address: label });
@@ -264,19 +272,24 @@ async function sweep(onlyNames = null) {
       const roles = researchProfile?.office_research?.roles || [];
       if (researchProfile && roles.length) {
         const rebuilt = jurisdictionToPermitLocality(researchProfile);
-        // Archive is authoritative. A backfill built from a pre-archive mirror
-        // must neither keep an archived office active nor re-add its research
-        // placeholder; include the archive in the write so the full-array
-        // update cannot separate the two halves again.
-        const archivedKeys = new Set((loc.archived_offices || []).flatMap((o) => [o?.id, normName(o?.name || '')]).filter(Boolean));
-        const notArchived = (o) => !(archivedKeys.has(o?.id) || archivedKeys.has(normName(o?.name || '')));
-        const activeBefore = (loc.offices || []).filter(notArchived);
-        const removedArchived = (loc.offices || []).length - activeBefore.length;
-        const { offices, filled, added } = mergeOffices(activeBefore, (rebuilt.offices || []).filter(notArchived));
+        // Archive is authoritative in both dimensions that matter here:
+        //   1. matching is id OR normalized-name+role-overlap (scan ids are
+        //      positional and scrape duplication is common), and
+        //   2. the write base includes same-row writes still pending in the
+        //      outbox. A full pass takes minutes; without that overlay a
+        //      retirement enqueued after the pass started is clobbered by this
+        //      stale backfill before the flusher ever drains either write.
+        const effectiveLoc = overlayPendingLocalityWriteData(loc, readPendingWritesFor('PermitLocality', loc.id));
+        const archivedOffices = effectiveLoc.archived_offices || [];
+        const activeFilter = filterArchivedOffices(effectiveLoc.offices || [], archivedOffices);
+        const activeBefore = activeFilter.offices;
+        const removedArchived = activeFilter.removed.length;
+        const rebuiltActive = filterArchivedOffices(rebuilt.offices || [], archivedOffices).offices;
+        const { offices, filled, added } = mergeOffices(activeBefore, rebuiltActive);
         if (filled + added + removedArchived > 0) {
           // Local-first: enqueue the update, mirrorApply now so later passes
           // see the offices immediately — the flusher streams it remotely.
-          const data = { offices, archived_offices: loc.archived_offices || [] };
+          const data = { offices, archived_offices: archivedOffices };
           enqueue({ entity: 'PermitLocality', op: 'update', id: loc.id, data, mirror: 'localities', note: `office backfill — ${label}` });
           mirrorApply('localities', { id: loc.id, ...data });
           emit({ stage: 'seed_office_backfilled', address: label, ok: true, detail: `${added} office(s) added, ${filled} filled from ${profile.name} research${removedArchived ? `, ${removedArchived} archived office(s) kept out of active` : ''} — needs staff verification` });
@@ -284,9 +297,24 @@ async function sweep(onlyNames = null) {
           emit({ stage: 'seed_office_ok', address: label, ok: true, detail: 'research present but no new fields to fill' });
         }
       } else {
-        // No research yet — ensure an ACTIVE county-keyed queue row so the
-        // pipeline fills it. Terminal rows (dup/blocked/sources_found) are not
-        // coverage — the locality re-queues instead of waiting on the dead.
+        // No research yet — an archive cleanup is still owed when the active
+        // array carries a tombstoned office. Overlay pending writes first: if a
+        // retirement is already waiting, it has already removed the office and
+        // no redundant cleanup write is needed.
+        if (baseArchiveFilter.removed.length) {
+          const effectiveLoc = overlayPendingLocalityWriteData(loc, readPendingWritesFor('PermitLocality', loc.id));
+          const archivedOffices = effectiveLoc.archived_offices || [];
+          const activeFilter = filterArchivedOffices(effectiveLoc.offices || [], archivedOffices);
+          if (activeFilter.removed.length) {
+            const data = { offices: activeFilter.offices, archived_offices: archivedOffices };
+            enqueue({ entity: 'PermitLocality', op: 'update', id: loc.id, data, mirror: 'localities', note: `archive cleanup — ${label}` });
+            mirrorApply('localities', { id: loc.id, ...data });
+            emit({ stage: 'seed_office_archive_cleaned', address: label, ok: true, detail: `${activeFilter.removed.length} archived office(s) removed from active while research is still pending` });
+          }
+        }
+        // Ensure an ACTIVE county-keyed queue row so the pipeline fills it.
+        // Terminal rows (dup/blocked/sources_found) are not coverage — the
+        // locality re-queues instead of waiting on the dead.
         const locCounty = qCounty(profile?.parent_county?.name || loc.parent_county_name || '');
         const qkey = `${normName(loc.name)}|${locCounty}|${normalizeAddressState(loc.state)}`;
         const looseKey = `${normName(loc.name)}|${normalizeAddressState(loc.state)}`;
